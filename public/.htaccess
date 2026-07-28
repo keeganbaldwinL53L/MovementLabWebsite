@@ -1,0 +1,9 @@
+# Story 1-1. Hostinger's git deploy clones the branch into the document root,
+# so a .git directory ends up inside the web root. Harmless while the repo is
+# public; a full source leak the moment it is made private. Deny it either way.
+RedirectMatch 404 /\.git
+
+# Same reasoning for any other dotfile that ends up served.
+<FilesMatch "^\.">
+  Require all denied
+</FilesMatch>

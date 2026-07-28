@@ -1,0 +1,66 @@
+name: Build and publish to deploy branch
+
+# Story 1-1 / decision D7. Hostinger's shared-hosting git deploy has no build
+# step: it clones a branch into a document root and serves what is there. So
+# this workflow does the build and force-pushes the CONTENTS of dist/ to the
+# root of a `deploy` branch. Hostinger tracks `deploy`, never `main`.
+#
+# `deploy` is a build artifact, not history. It is force-pushed every run and
+# nothing should ever be committed to it by hand.
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  # Never let two runs race to force-push the same branch.
+  group: publish-deploy
+  cancel-in-progress: true
+
+jobs:
+  build-and-publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
+      - name: Set up node
+        uses: actions/setup-node@v4
+        with:
+          # Matches the version the build was proven on locally (v24.18.0).
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Verify the build actually produced what we expect
+        # A build that exits 0 but emits the wrong thing must fail here rather
+        # than force-push an empty or broken site over the live document root.
+        run: |
+          test -f dist/index.html || { echo "::error::dist/index.html missing"; exit 1; }
+          grep -q "MLW-SPIKE-1" dist/index.html || { echo "::error::marker MLW-SPIKE-1 not in dist/index.html"; exit 1; }
+          echo "dist/ contents:"
+          find dist -type f | sort
+
+      - name: Force-push dist/ contents to the deploy branch root
+        run: |
+          cd dist
+          git init -q -b deploy
+          git config user.name  "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "build from ${GITHUB_SHA}"
+          git push --force --quiet \
+            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
+            deploy:deploy
+          echo "published $(git rev-parse --short HEAD) to deploy from main@${GITHUB_SHA::7}"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
