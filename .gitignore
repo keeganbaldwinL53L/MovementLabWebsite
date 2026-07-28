@@ -1,2 +1,8 @@
 node_modules/
+.astro/
+
+# NOTE (story 1-1): dist/ is ignored on the assumption Hostinger runs the
+# build. If the spike lands on the "commit the built output" path instead,
+# this line has to come out and dist/ becomes tracked. Do not remove it
+# without recording the reason in the 1-1 findings file.
 dist/
