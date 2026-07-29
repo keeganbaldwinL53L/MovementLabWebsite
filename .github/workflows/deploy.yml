@@ -77,6 +77,40 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
 
+      - name: Normalise connection settings
+        # Secrets are pasted by hand into a web form, so a trailing space or a
+        # stray newline rides along invisibly and breaks an exact-match lookup
+        # with no useful error. Run #3 died exactly this way: known_hosts was
+        # byte-perfect, but the host/port used to look it up carried whitespace.
+        # Trim once here rather than trusting every paste to be clean forever.
+        # Values stay masked in logs; only LENGTHS are printed, which is what
+        # makes a stray character visible.
+        run: |
+          trim() { printf '%s' "$1" | tr -d '\r\n' | sed 's/^[[:space:]]*//; s/[[:space:]]*$//'; }
+          H=$(trim "${RAW_HOST}");  U=$(trim "${RAW_USER}")
+          P=$(trim "${RAW_PORT}");  D=$(trim "${RAW_PATH}")
+
+          printf 'host: %s -> %s chars\n' "$(printf '%s' "${RAW_HOST}" | wc -c | tr -d ' ')" "$(printf '%s' "$H" | wc -c | tr -d ' ')"
+          printf 'user: %s -> %s chars\n' "$(printf '%s' "${RAW_USER}" | wc -c | tr -d ' ')" "$(printf '%s' "$U" | wc -c | tr -d ' ')"
+          printf 'port: %s -> %s chars\n' "$(printf '%s' "${RAW_PORT}" | wc -c | tr -d ' ')" "$(printf '%s' "$P" | wc -c | tr -d ' ')"
+          printf 'path: %s -> %s chars\n' "$(printf '%s' "${RAW_PATH}" | wc -c | tr -d ' ')" "$(printf '%s' "$D" | wc -c | tr -d ' ')"
+
+          case "$P" in
+            ''|*[!0-9]*) echo "::error::SSH_PORT is not a plain number after trimming"; exit 1 ;;
+          esac
+
+          {
+            echo "H_HOST=$H"
+            echo "H_USER=$U"
+            echo "H_PORT=$P"
+            echo "H_PATH=$D"
+          } >> "$GITHUB_ENV"
+        env:
+          RAW_HOST: ${{ secrets.SSH_HOST }}
+          RAW_USER: ${{ secrets.SSH_USER }}
+          RAW_PORT: ${{ secrets.SSH_PORT }}
+          RAW_PATH: ${{ secrets.DEPLOY_PATH }}
+
       - name: Diagnose — are the secrets well-formed?
         # Every failure so far has been a stored-secret problem, not a logic
         # problem (the steps below are proven against the real server). GitHub
@@ -98,7 +132,7 @@ jobs:
 
           echo "--- known_hosts ---"
           echo "lines: $(wc -l < ~/.ssh/known_hosts), bytes: $(wc -c < ~/.ssh/known_hosts)"
-          if ssh-keygen -F "[${SSH_HOST}]:${SSH_PORT}" -f ~/.ssh/known_hosts > /dev/null 2>&1; then
+          if ssh-keygen -F "[${H_HOST}]:${H_PORT}" -f ~/.ssh/known_hosts > /dev/null 2>&1; then
             echo "host entry FOUND for the configured host/port"
           else
             echo "::error::SSH_KNOWN_HOSTS has no entry matching [SSH_HOST]:SSH_PORT"
@@ -108,42 +142,37 @@ jobs:
           fi
 
           echo "--- deploy path shape ---"
-          case "${DEPLOY_PATH}" in
+          case "${H_PATH}" in
             */staging) echo "ends in /staging: yes" ;;
             *) echo "::error::DEPLOY_PATH does not end in /staging (check for a trailing space or newline in the secret)"; exit 1 ;;
           esac
-          printf 'length: %s chars\n' "$(printf '%s' "${DEPLOY_PATH}" | wc -c | tr -d ' ')"
+          printf 'length: %s chars\n' "$(printf '%s' "${H_PATH}" | wc -c | tr -d ' ')"
 
           echo "--- reachability ---"
-          if ssh -i ~/.ssh/deploy_key -p "${SSH_PORT}" \
+          if ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
                  -o StrictHostKeyChecking=yes \
                  -o UserKnownHostsFile=~/.ssh/known_hosts \
                  -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20 \
-                 "${SSH_USER}@${SSH_HOST}" 'echo AUTH_OK' 2>/tmp/ssherr; then
+                 "${H_USER}@${H_HOST}" 'echo AUTH_OK' 2>/tmp/ssherr; then
             echo "authenticated successfully"
           else
             echo "::error::could not authenticate to the server"
             sed 's/^/  /' /tmp/ssherr
             exit 1
           fi
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
       - name: Guard — refuse to deploy anywhere that isn't the staging root
         # Runs on the server, before rsync. Any failure aborts the job with
         # nothing written. StrictHostKeyChecking=yes is deliberate: an
         # unrecognised host key must fail, not prompt.
         run: |
-          ssh -i ~/.ssh/deploy_key -p "${SSH_PORT}" \
+          ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
               -o StrictHostKeyChecking=yes \
               -o UserKnownHostsFile=~/.ssh/known_hosts \
               -o BatchMode=yes \
               -o IdentitiesOnly=yes \
-              "${SSH_USER}@${SSH_HOST}" \
-              "TARGET='${DEPLOY_PATH}'
+              "${H_USER}@${H_HOST}" \
+              "TARGET='${H_PATH}'
                case \"\$TARGET\" in
                  */staging) ;;
                  *) echo 'REFUSING: deploy path does not end in /staging'; exit 1 ;;
@@ -154,24 +183,14 @@ jobs:
                  exit 1
                fi
                echo \"guard passed for \$TARGET\""
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
 
       - name: Deploy
         # The trailing slash on dist/ is load-bearing: it copies the CONTENTS
         # of dist rather than the directory itself.
         run: |
           rsync -rlvz --delete --checksum \
-            -e "ssh -i ~/.ssh/deploy_key -p ${SSH_PORT} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o BatchMode=yes -o IdentitiesOnly=yes" \
-            dist/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
-        env:
-          SSH_HOST: ${{ secrets.SSH_HOST }}
-          SSH_USER: ${{ secrets.SSH_USER }}
-          SSH_PORT: ${{ secrets.SSH_PORT }}
-          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+            -e "ssh -i ~/.ssh/deploy_key -p ${H_PORT} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o BatchMode=yes -o IdentitiesOnly=yes" \
+            dist/ "${H_USER}@${H_HOST}:${H_PATH}/"
 
       - name: Prove it actually went live
         # Fetches the real public URL and asserts the marker is in the served
