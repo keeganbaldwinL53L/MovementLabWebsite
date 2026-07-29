@@ -77,6 +77,61 @@ jobs:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
 
+      - name: Diagnose — are the secrets well-formed?
+        # Every failure so far has been a stored-secret problem, not a logic
+        # problem (the steps below are proven against the real server). GitHub
+        # masks secret VALUES in logs automatically, so this prints only
+        # shapes, lengths and pass/fail — never the secrets themselves.
+        # The key FINGERPRINT is safe to print: it identifies a public key.
+        run: |
+          echo "--- private key ---"
+          if ssh-keygen -y -f ~/.ssh/deploy_key > /tmp/derived.pub 2>/tmp/keyerr; then
+            echo "parses OK"
+            echo "fingerprint: $(ssh-keygen -lf /tmp/derived.pub | awk '{print $2}')"
+            echo "expected   : SHA256:o8/xsmn90vPPKjiFNSgGzBaMVKVFTz9KB9MN8eilHl8"
+          else
+            echo "::error::SSH_PRIVATE_KEY does not parse as a private key"
+            sed 's/^/  /' /tmp/keyerr
+            echo "  (most likely: incomplete paste — the BEGIN/END lines must both be included)"
+            exit 1
+          fi
+
+          echo "--- known_hosts ---"
+          echo "lines: $(wc -l < ~/.ssh/known_hosts), bytes: $(wc -c < ~/.ssh/known_hosts)"
+          if ssh-keygen -F "[${SSH_HOST}]:${SSH_PORT}" -f ~/.ssh/known_hosts > /dev/null 2>&1; then
+            echo "host entry FOUND for the configured host/port"
+          else
+            echo "::error::SSH_KNOWN_HOSTS has no entry matching [SSH_HOST]:SSH_PORT"
+            echo "  (most likely: the long base64 was truncated or line-wrapped when copied,"
+            echo "   or SSH_HOST/SSH_PORT do not match the host the entry was made for)"
+            exit 1
+          fi
+
+          echo "--- deploy path shape ---"
+          case "${DEPLOY_PATH}" in
+            */staging) echo "ends in /staging: yes" ;;
+            *) echo "::error::DEPLOY_PATH does not end in /staging (check for a trailing space or newline in the secret)"; exit 1 ;;
+          esac
+          printf 'length: %s chars\n' "$(printf '%s' "${DEPLOY_PATH}" | wc -c | tr -d ' ')"
+
+          echo "--- reachability ---"
+          if ssh -i ~/.ssh/deploy_key -p "${SSH_PORT}" \
+                 -o StrictHostKeyChecking=yes \
+                 -o UserKnownHostsFile=~/.ssh/known_hosts \
+                 -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20 \
+                 "${SSH_USER}@${SSH_HOST}" 'echo AUTH_OK' 2>/tmp/ssherr; then
+            echo "authenticated successfully"
+          else
+            echo "::error::could not authenticate to the server"
+            sed 's/^/  /' /tmp/ssherr
+            exit 1
+          fi
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
       - name: Guard — refuse to deploy anywhere that isn't the staging root
         # Runs on the server, before rsync. Any failure aborts the job with
         # nothing written. StrictHostKeyChecking=yes is deliberate: an
