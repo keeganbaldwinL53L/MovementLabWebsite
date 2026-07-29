@@ -30,7 +30,11 @@ permissions:
 
 concurrency:
   group: deploy-staging
-  cancel-in-progress: true
+  # Deploys QUEUE, they do not race (AG-1 F7). Cancelling mid-run can kill
+  # rsync partway through --delete, which leaves the target half-deleted and
+  # serving a broken site until the next run finishes. On staging that is
+  # annoying; at production cutover it is an outage. Queuing costs a minute.
+  cancel-in-progress: false
 
 env:
   STAGING_URL: https://staging.keegansmovementlab.com/
@@ -39,11 +43,16 @@ jobs:
   build-and-deploy:
     runs-on: ubuntu-latest
     steps:
+      # Actions are pinned to commit SHAs, not tags (AG-1 F4). A tag is
+      # mutable: whoever controls it can change what runs here, and this job
+      # holds an SSH key to the server that serves production. The SHAs below
+      # are what v4 resolved to on 2026-07-29. Both actions are on v7 now;
+      # bumping the major is a separate, deliberate decision.
       - name: Check out main
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
 
       - name: Set up node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
         with:
           # Matches the version the build was proven on locally (v24.18.0).
           node-version: '24'
@@ -55,17 +64,40 @@ jobs:
       - name: Build
         run: npm run build
 
+      - name: Stamp the build with this exact commit
+        # AG-1 F1. The live check further down used to grep for MLW-SPIKE-1,
+        # which is a CONSTANT — identical on every deploy. So a silent no-op
+        # (rsync writes nothing, or writes somewhere stale) left the PREVIOUS
+        # deploy's marker being served, the grep passed, and CI reported
+        # "LIVE" having published nothing. Only the first-ever deploy could
+        # ever have failed that check.
+        #
+        # This file makes the asserted value unique per commit, so the check
+        # can actually fail for the reason it exists. It also lives OUTSIDE
+        # the page content, so replacing the spike page in Phase 1 does not
+        # break the assertion.
+        run: |
+          printf '%s\n' "${GITHUB_SHA}" > dist/build-id.txt
+          echo "build id: ${GITHUB_SHA}"
+
       - name: Gate — the build must have produced what we expect
         # A build that exits 0 but emits nothing must fail HERE, rather than
         # rsync --delete faithfully replicating an empty directory onto the
         # live staging root.
         run: |
-          test -f dist/index.html || { echo "::error::dist/index.html missing"; exit 1; }
+          test -s dist/index.html || { echo "::error::dist/index.html missing or empty"; exit 1; }
           grep -q "MLW-SPIKE-1" dist/index.html || { echo "::error::marker MLW-SPIKE-1 not in dist/index.html"; exit 1; }
-          test -s dist/index.html || { echo "::error::dist/index.html is empty"; exit 1; }
+          test -s dist/build-id.txt || { echo "::error::dist/build-id.txt missing or empty"; exit 1; }
+          # The .htaccess is what denies dotfiles on the server. rsync --delete
+          # would happily remove it if a build stopped emitting it, silently
+          # disabling the guard the last step asserts. Fail closed instead.
+          test -s dist/.htaccess || { echo "::error::dist/.htaccess missing — the dotfile guard would be deleted from the server"; exit 1; }
           echo "build output:"
           find dist -type f | sort
 
+      # ORDER IS LOAD-BEARING (AG-1 F4): npm ci and the build run ABOVE this
+      # point, so a malicious dependency lifecycle script does not find the
+      # deploy key on disk. Do not move the SSH setup earlier.
       - name: Configure SSH
         run: |
           install -d -m 700 ~/.ssh
@@ -98,6 +130,17 @@ jobs:
           case "$P" in
             ''|*[!0-9]*) echo "::error::SSH_PORT is not a plain number after trimming"; exit 1 ;;
           esac
+
+          # Character whitelist (AG-1 F8). These three values get interpolated
+          # into a command that runs on the SERVER — the guard's quoted string
+          # and rsync's remote path, which rsync also hands to a remote shell.
+          # A quote, backtick, semicolon or $ in a pasted secret would break out
+          # of that quoting. Nobody but a repo admin can set a secret, so this
+          # is not a privilege boundary; it is the difference between a named
+          # error here and a baffling server-side syntax error later.
+          case "$D" in *[!A-Za-z0-9._/-]*) echo "::error::DEPLOY_PATH contains characters outside A-Za-z0-9._/-"; exit 1 ;; esac
+          case "$H" in *[!A-Za-z0-9.-]*)   echo "::error::SSH_HOST contains characters outside A-Za-z0-9.-"; exit 1 ;; esac
+          case "$U" in *[!A-Za-z0-9._-]*)  echo "::error::SSH_USER contains characters outside A-Za-z0-9._-"; exit 1 ;; esac
 
           {
             echo "H_HOST=$H"
@@ -178,6 +221,27 @@ jobs:
                  *) echo 'REFUSING: deploy path does not end in /staging'; exit 1 ;;
                esac
                test -d \"\$TARGET\" || { echo 'REFUSING: target directory does not exist'; exit 1; }
+               # AG-1 F3. The name test above is satisfied by ANY directory
+               # called staging, and test -d follows symlinks — so a symlink
+               # named staging pointing somewhere else passes both.
+               #
+               # Deliberately NOT requiring \$TARGET to equal its own resolved
+               # path: shared hosts often symlink /home itself, which would
+               # make a byte-equality check refuse a perfectly good target.
+               # Instead: reject a symlinked final component (the actual
+               # attack), then re-apply the same safety tests to the RESOLVED
+               # path so a traversal cannot smuggle us somewhere else.
+               test ! -L \"\$TARGET\" || { echo 'REFUSING: target itself is a symlink'; exit 1; }
+               REAL=\$(readlink -f \"\$TARGET\")
+               echo \"target resolves to: \$REAL\"
+               case \"\$REAL\" in
+                 */staging) ;;
+                 *) echo \"REFUSING: resolved path does not end in /staging (\$REAL)\"; exit 1 ;;
+               esac
+               if [ -f \"\$REAL/wp-config.php\" ] || [ -d \"\$REAL/wp-admin\" ]; then
+                 echo 'REFUSING: resolved path looks like a WordPress root'
+                 exit 1
+               fi
                if [ -f \"\$TARGET/wp-config.php\" ] || [ -d \"\$TARGET/wp-admin\" ]; then
                  echo 'REFUSING: target looks like a WordPress root, not our staging dir'
                  exit 1
@@ -192,13 +256,26 @@ jobs:
             -e "ssh -i ~/.ssh/deploy_key -p ${H_PORT} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o BatchMode=yes -o IdentitiesOnly=yes" \
             dist/ "${H_USER}@${H_HOST}:${H_PATH}/"
 
-      - name: Prove it actually went live
-        # Fetches the real public URL and asserts the marker is in the served
-        # bytes. This is what makes "deployed" a fact rather than a claim: if
-        # the deploy silently no-ops, this step fails.
+      - name: Prove THIS commit actually went live
+        # AG-1 F1. Asserts the build id served by the real public URL equals
+        # the commit that just built. A constant marker could not do this: it
+        # survives a no-op deploy and reports green. This value cannot.
         run: |
           echo "waiting a moment for the filesystem to settle..."
           sleep 5
+
+          SERVED=$(curl -fsSL --max-time 30 "${STAGING_URL}build-id.txt" | tr -d '[:space:]') || {
+            echo "::error::could not fetch build-id.txt from ${STAGING_URL}"; exit 1; }
+          if [ "$SERVED" != "${GITHUB_SHA}" ]; then
+            echo "::error::the staging URL is NOT serving this commit"
+            echo "  served : ${SERVED:-<empty>}"
+            echo "  expected: ${GITHUB_SHA}"
+            echo "  (the deploy silently did not land — check the rsync step and DEPLOY_PATH)"
+            exit 1
+          fi
+          echo "LIVE: ${STAGING_URL} is serving ${GITHUB_SHA}"
+
+          # Secondary: the page itself renders and still carries its marker.
           BODY=$(curl -fsSL --max-time 30 "${STAGING_URL}") || {
             echo "::error::staging URL did not return a successful response"; exit 1; }
           if ! printf '%s' "$BODY" | grep -q "MLW-SPIKE-1"; then
@@ -206,15 +283,32 @@ jobs:
             printf '%s' "$BODY" | head -40
             exit 1
           fi
-          echo "LIVE: marker present at ${STAGING_URL}"
           printf '%s' "$BODY" | grep -o 'deploy-stamp: [0-9]*'
 
-      - name: Confirm the .git guard is not serving anything
-        # The .htaccess denies /.git. Assert it, rather than trusting it.
+      - name: Confirm the dotfile guard is actively denying
+        # AG-1 F2. This used to accept ANY non-200, which meant a DNS blip or
+        # a timeout (curl -> 000) reported "guard OK" having proved nothing.
+        # Worse, it could not tell 403 (actively denied) from 404 (nothing
+        # there to serve) — and since rsync only ships dist/, there is no .git
+        # on the server at all, so it passed identically with the .htaccess
+        # deleted. It was measuring absence, not denial.
+        #
+        # Verified live 2026-07-29: /.git/config -> 403, a nonexistent path
+        # -> 404. So 403 is the specific correct answer, and the control
+        # below makes the test fail loudly if the server ever stops
+        # distinguishing the two.
         run: |
-          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_URL}.git/config" || echo 000)
-          echo ".git/config returned HTTP ${CODE}"
-          case "$CODE" in
-            200) echo "::error::.git is being served — the .htaccess guard is not working"; exit 1 ;;
-            *)   echo "guard OK (not 200)" ;;
-          esac
+          DENIED=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_URL}.git/config" || echo 000)
+          CONTROL=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_URL}no-such-path-control" || echo 000)
+          echo ".git/config    -> HTTP ${DENIED}"
+          echo "control path   -> HTTP ${CONTROL}"
+
+          if [ "$DENIED" != "403" ]; then
+            echo "::error::expected 403 (actively denied) for /.git/config, got ${DENIED}"
+            exit 1
+          fi
+          if [ "$CONTROL" = "403" ]; then
+            echo "::error::the control path also returned 403 — this test cannot distinguish denial from absence"
+            exit 1
+          fi
+          echo "guard OK: dotfiles denied (403) while a missing path returns ${CONTROL}"
