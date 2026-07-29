@@ -1,28 +1,42 @@
-name: Build and publish to deploy branch
+name: Build and deploy to staging
 
-# Story 1-1 / decision D7. Hostinger's shared-hosting git deploy has no build
-# step: it clones a branch into a document root and serves what is there. So
-# this workflow does the build and force-pushes the CONTENTS of dist/ to the
-# root of a `deploy` branch. Hostinger tracks `deploy`, never `main`.
+# Story 1-1. Supersedes the deploy-branch design (D7).
 #
-# `deploy` is a build artifact, not history. It is force-pushed every run and
-# nothing should ever be committed to it by hand.
+# WHY THE CHANGE: Hostinger's hPanel git integration could not be connected —
+# the current UI offers only a GitHub App flow, which loops back to its own
+# install prompt even with the app installed and repo access granted, and the
+# manual repository-URL field the docs describe no longer exists. Rather than
+# keep fighting it, this deploys straight to the server over SSH. That removes
+# Hostinger's integration from the chain entirely and makes "push publishes"
+# true by construction instead of dependent on an undocumented auto-pull.
+#
+# The deploy-branch push was REMOVED rather than kept as a fallback: two
+# publish paths that can disagree is a divergence waiting to happen. If the
+# hPanel integration is ever fixed, re-adding it is ten lines.
+#
+# SAFETY: the staging directory lives INSIDE the live WordPress document root
+# (public_html/staging). rsync --delete aimed one level high would delete the
+# production site, so the target is validated on the server BEFORE anything
+# destructive runs. See the "Guard" step.
 
 on:
   push:
     branches: [main]
   workflow_dispatch:
 
+# Read-only. Nothing here writes back to the repo.
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  # Never let two runs race to force-push the same branch.
-  group: publish-deploy
+  group: deploy-staging
   cancel-in-progress: true
 
+env:
+  STAGING_URL: https://staging.keegansmovementlab.com/
+
 jobs:
-  build-and-publish:
+  build-and-deploy:
     runs-on: ubuntu-latest
     steps:
       - name: Check out main
@@ -41,26 +55,92 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Verify the build actually produced what we expect
-        # A build that exits 0 but emits the wrong thing must fail here rather
-        # than force-push an empty or broken site over the live document root.
+      - name: Gate — the build must have produced what we expect
+        # A build that exits 0 but emits nothing must fail HERE, rather than
+        # rsync --delete faithfully replicating an empty directory onto the
+        # live staging root.
         run: |
           test -f dist/index.html || { echo "::error::dist/index.html missing"; exit 1; }
           grep -q "MLW-SPIKE-1" dist/index.html || { echo "::error::marker MLW-SPIKE-1 not in dist/index.html"; exit 1; }
-          echo "dist/ contents:"
+          test -s dist/index.html || { echo "::error::dist/index.html is empty"; exit 1; }
+          echo "build output:"
           find dist -type f | sort
 
-      - name: Force-push dist/ contents to the deploy branch root
+      - name: Configure SSH
         run: |
-          cd dist
-          git init -q -b deploy
-          git config user.name  "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add -A
-          git commit -q -m "build from ${GITHUB_SHA}"
-          git push --force --quiet \
-            "https://x-access-token:${GITHUB_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" \
-            deploy:deploy
-          echo "published $(git rev-parse --short HEAD) to deploy from main@${GITHUB_SHA::7}"
+          install -d -m 700 ~/.ssh
+          printf '%s\n' "${SSH_PRIVATE_KEY}" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "${SSH_KNOWN_HOSTS}" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+
+      - name: Guard — refuse to deploy anywhere that isn't the staging root
+        # Runs on the server, before rsync. Any failure aborts the job with
+        # nothing written. StrictHostKeyChecking=yes is deliberate: an
+        # unrecognised host key must fail, not prompt.
+        run: |
+          ssh -i ~/.ssh/deploy_key -p "${SSH_PORT}" \
+              -o StrictHostKeyChecking=yes \
+              -o UserKnownHostsFile=~/.ssh/known_hosts \
+              -o BatchMode=yes \
+              -o IdentitiesOnly=yes \
+              "${SSH_USER}@${SSH_HOST}" \
+              "TARGET='${DEPLOY_PATH}'
+               case \"\$TARGET\" in
+                 */staging) ;;
+                 *) echo 'REFUSING: deploy path does not end in /staging'; exit 1 ;;
+               esac
+               test -d \"\$TARGET\" || { echo 'REFUSING: target directory does not exist'; exit 1; }
+               if [ -f \"\$TARGET/wp-config.php\" ] || [ -d \"\$TARGET/wp-admin\" ]; then
+                 echo 'REFUSING: target looks like a WordPress root, not our staging dir'
+                 exit 1
+               fi
+               echo \"guard passed for \$TARGET\""
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
+      - name: Deploy
+        # The trailing slash on dist/ is load-bearing: it copies the CONTENTS
+        # of dist rather than the directory itself.
+        run: |
+          rsync -rlvz --delete --checksum \
+            -e "ssh -i ~/.ssh/deploy_key -p ${SSH_PORT} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o BatchMode=yes -o IdentitiesOnly=yes" \
+            dist/ "${SSH_USER}@${SSH_HOST}:${DEPLOY_PATH}/"
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_PORT: ${{ secrets.SSH_PORT }}
+          DEPLOY_PATH: ${{ secrets.DEPLOY_PATH }}
+
+      - name: Prove it actually went live
+        # Fetches the real public URL and asserts the marker is in the served
+        # bytes. This is what makes "deployed" a fact rather than a claim: if
+        # the deploy silently no-ops, this step fails.
+        run: |
+          echo "waiting a moment for the filesystem to settle..."
+          sleep 5
+          BODY=$(curl -fsSL --max-time 30 "${STAGING_URL}") || {
+            echo "::error::staging URL did not return a successful response"; exit 1; }
+          if ! printf '%s' "$BODY" | grep -q "MLW-SPIKE-1"; then
+            echo "::error::marker MLW-SPIKE-1 NOT found in the served page"
+            printf '%s' "$BODY" | head -40
+            exit 1
+          fi
+          echo "LIVE: marker present at ${STAGING_URL}"
+          printf '%s' "$BODY" | grep -o 'deploy-stamp: [0-9]*'
+
+      - name: Confirm the .git guard is not serving anything
+        # The .htaccess denies /.git. Assert it, rather than trusting it.
+        run: |
+          CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_URL}.git/config" || echo 000)
+          echo ".git/config returned HTTP ${CODE}"
+          case "$CODE" in
+            200) echo "::error::.git is being served — the .htaccess guard is not working"; exit 1 ;;
+            *)   echo "guard OK (not 200)" ;;
+          esac
