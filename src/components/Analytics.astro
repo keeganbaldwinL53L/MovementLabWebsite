@@ -1,0 +1,19 @@
+---
+// Story 1-8. Emits the Cloudflare Web Analytics beacon, and ONLY when a token
+// is configured — see src/lib/analytics.mjs for why the privacy policy reads
+// the same flag.
+//
+// No cookies, no localStorage, no fingerprinting, so no consent banner is
+// required. If that ever changes, the policy changes with it.
+import { ANALYTICS_TOKEN, IS_ANALYTICS_ENABLED } from '../lib/analytics.mjs';
+---
+
+{
+  IS_ANALYTICS_ENABLED && (
+    <script
+      defer
+      src="https://static.cloudflareinsights.com/beacon.min.js"
+      data-cf-beacon={`{"token": "${ANALYTICS_TOKEN}"}`}
+    />
+  )
+}

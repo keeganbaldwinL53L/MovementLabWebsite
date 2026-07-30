@@ -1,0 +1,219 @@
+---
+// Story 1-8. The privacy policy.
+//
+// This story PLACES already-drafted content; it does not write it. Source:
+// px-output/vigil/privacy-and-analytics-2026-07-29.md § Part 3. Do not
+// paraphrase it — the wording is researched against the Privacy Act 1988 and
+// the Australian Privacy Principles.
+//
+// ⚠️ IT IS NOT OPTIONAL AND IT SHIPS WITH LAUNCH, NOT AFTER.
+// The $3M small-business exemption has an explicit carve-out for health service
+// providers and the OAIC names chiropractic directly, so the Act and the APPs
+// apply regardless of turnover. This is a standing APP 1 obligation the site has
+// been missing, not a gate that trips when email capture switches on.
+//
+// ⚠️ THE OVERSEAS PROVIDERS TABLE IS THE PART THAT GOES STALE.
+// Whoever adds an email platform, a form service, a chat widget or any embed
+// that phones home MUST add a row. Omnisend's row is written and commented out
+// below: it goes in the day an email form does, not before.
+//
+// Researched and drafted, NOT legal advice.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import business from '../data/business.json' with { type: 'json' };
+import { IS_ANALYTICS_ENABLED } from '../lib/analytics.mjs';
+
+// DELIBERATELY NOT the build date. A privacy policy's "last updated" means the
+// date the POLICY changed. Wiring it to the build would bump it on every deploy
+// and tell readers the terms changed when they did not. Edit this by hand, and
+// only when the wording actually changes.
+const POLICY_LAST_UPDATED = new Date('2026-07-31T00:00:00+10:00');
+const policyDate = POLICY_LAST_UPDATED.toLocaleDateString('en-AU', {
+  timeZone: 'Australia/Sydney',
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+
+const providers = [
+  { name: 'Cliniko', handles: 'Appointment bookings', where: 'Australia' },
+  { name: 'Hostinger', handles: 'Website hosting', where: 'Australia (Sydney)' },
+  // Only listed when the beacon is actually running — see src/lib/analytics.mjs.
+  ...(IS_ANALYTICS_ENABLED
+    ? [
+        {
+          name: 'Cloudflare',
+          handles: 'Website analytics (cookieless)',
+          where: 'United States and other countries where Cloudflare operates',
+        },
+      ]
+    : []),
+  // ADD THIS ROW THE DAY AN EMAIL FORM GOES LIVE, not before:
+  // { name: 'Omnisend', handles: 'Email subscriptions',
+  //   where: 'European Union and United States — confirm from their DPA at signup' },
+];
+---
+
+<BaseLayout
+  title={`Privacy policy | ${business.name}`}
+  description="How this website collects, uses and protects your personal information."
+  updated={POLICY_LAST_UPDATED}
+>
+  <article class="policy">
+    <h1>Privacy Policy</h1>
+    <p class="policy-date"><strong>Last updated: {policyDate}</strong></p>
+
+    <p>
+      {business.name} is operated by Keegan Baldwin as a sole trader, ABN {business.abn}. In this
+      policy, "we", "us" and "our" mean that business. We respect your privacy, and this policy
+      explains what personal information we collect through this website, why we collect it, and
+      what we do with it.
+    </p>
+
+    <p>
+      Keegan Baldwin is a chiropractor registered with the Australian Health Practitioner
+      Regulation Agency (registration {business.ahpra}). As a health service provider, the
+      <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles apply to us regardless
+      of the size of the business.
+    </p>
+
+    <p>
+      <strong>A note on scope.</strong> This policy covers <strong>this website</strong>. Your
+      clinical records, meaning consultation notes, examination findings and treatment history, are
+      held separately in our practice management system (Cliniko) under the clinic's own privacy
+      arrangements, and are not collected by this website.
+    </p>
+
+    <h2>What we collect</h2>
+    <ul>
+      <li><strong>When you contact us</strong>: your name, email address, phone number, and whatever you choose to write in your message.</li>
+      <li><strong>When you subscribe</strong>: your name and email address.</li>
+      <li>
+        <strong>When you book an appointment</strong>: bookings are handled by <strong>Cliniko</strong>,
+        our practice management provider. Their booking form is embedded on this site, and the
+        information you enter goes to Cliniko, not to this website. Cliniko stores that data in
+        Australia.
+      </li>
+      {
+        IS_ANALYTICS_ENABLED ? (
+          <li>
+            <strong>Automatically, as you browse</strong>: we use Cloudflare Web Analytics, which
+            collects page views, referring sites, general device and country information, and
+            page-performance timings. It <strong>does not use cookies</strong>, does not store
+            anything on your device, and does not identify or profile you individually.
+          </li>
+        ) : (
+          <li>
+            <strong>Automatically, as you browse</strong>: nothing. This website does not currently
+            run analytics, does not set cookies, and does not store anything on your device.
+          </li>
+        )
+      }
+    </ul>
+
+    <p>
+      We do not collect health information through this website, and we ask you not to include
+      health details in a website enquiry. If you need to tell us something clinical, do it at your
+      appointment or by phone.
+    </p>
+
+    <h2>Why we collect it</h2>
+    <ul>
+      <li>To answer your enquiry and arrange your appointment.</li>
+      <li>To send you the material you asked for, if you subscribed.</li>
+      <li>To understand which pages people read, so we can improve the site.</li>
+    </ul>
+
+    <h2>Email, and how to stop it</h2>
+    <p>
+      We only email marketing material to people who have asked for it. Every email we send
+      identifies us and carries a working unsubscribe link. Unsubscribing takes one click, and it
+      takes effect for all future marketing email.
+    </p>
+
+    <h2>Who else sees your information</h2>
+    <p>
+      We do not sell your personal information, and we do not share it for anyone else's marketing.
+    </p>
+    <p>
+      We use a small number of service providers to run this site, and some of them hold or process
+      data overseas:
+    </p>
+
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr><th>Provider</th><th>What it handles</th><th>Where</th></tr>
+        </thead>
+        <tbody>
+          {providers.map((p) => (
+            <tr><td>{p.name}</td><td>{p.handles}</td><td>{p.where}</td></tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+
+    <p>We may also disclose your information where the law requires it.</p>
+
+    <h2>Keeping it safe</h2>
+    <p>
+      We hold your information on reputable providers' systems, protected by access controls and
+      passwords. No system online is perfectly secure, but we take reasonable steps to protect what
+      you give us, and we only keep it for as long as we need it.
+    </p>
+
+    <h2>Seeing and correcting your information</h2>
+    <p>
+      You can ask us what personal information we hold about you, and ask us to correct it if it is
+      wrong. Email <a href={`mailto:${business.email}`}>{business.email}</a>. We will respond within
+      a reasonable time, normally 30 days. We may need to verify who you are first.
+    </p>
+
+    <h2>Complaints</h2>
+    <p>
+      If you think we have mishandled your personal information, email
+      <a href={`mailto:${business.email}`}>{business.email}</a> with the details. We will look into
+      it and reply in writing, normally within 30 days.
+    </p>
+    <p>
+      If you are not satisfied with our response, you can take it to the Office of the Australian
+      Information Commissioner: <a href="https://www.oaic.gov.au" rel="noopener">oaic.gov.au</a>, or
+      1300 363 992.
+    </p>
+
+    <h2>Changes to this policy</h2>
+    <p>
+      We will update this page when our practices change, and the date at the top will tell you when
+      it last changed.
+    </p>
+  </article>
+</BaseLayout>
+
+<style>
+  .policy h2 {
+    margin-top: 2.5rem;
+  }
+  .policy-date {
+    color: #5b6560;
+  }
+  /* Wide content scrolls inside its own container so the page body never
+     scrolls horizontally on a phone. */
+  .table-scroll {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+  }
+  .policy table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 32rem;
+  }
+  .policy th,
+  .policy td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid #e4e1da;
+    vertical-align: top;
+  }
+  .policy th {
+    background: #f1efea;
+  }
+</style>

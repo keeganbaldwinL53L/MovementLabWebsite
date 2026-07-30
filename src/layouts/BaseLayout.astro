@@ -8,6 +8,7 @@
 import { INDEXABLE, SITE_URL, GSC_TOKEN } from '../lib/site-env.mjs';
 import { medicalBusiness } from '../lib/schema.mjs';
 import Footer from '../components/Footer.astro';
+import Analytics from '../components/Analytics.astro';
 
 interface Props {
   title: string;
@@ -80,6 +81,11 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
     <slot name="head-jsonld" />
 
     <slot name="head" />
+
+    {/* Story 1-8. Cookieless, so no consent banner. Emits nothing at all when
+        no token is configured, and the privacy policy reads the same flag so
+        the two can never disagree about whether analytics are running. */}
+    <Analytics />
 
     <style>
       body {

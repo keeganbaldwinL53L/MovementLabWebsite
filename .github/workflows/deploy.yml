@@ -183,6 +183,21 @@ jobs:
             console.log('visible NAP: address and phone present in the body');
           "
 
+          # Story 1-8. The privacy policy must exist and must not contradict
+          # what the site actually does. The single-flag design in
+          # src/lib/analytics.mjs already makes divergence structurally
+          # impossible; this is defence in depth on a legal document, where
+          # being wrong is the one thing it cannot afford.
+          test -s dist/privacy/index.html || { echo "::error::the privacy policy page is missing — it is a standing APP 1 obligation, not optional"; exit 1; }
+          BEACON=$(grep -c cloudflareinsights dist/privacy/index.html || true)
+          CLAIMS=$(grep -c "we use Cloudflare Web Analytics" dist/privacy/index.html || true)
+          if [ "$BEACON" != "$CLAIMS" ]; then
+            echo "::error::the privacy policy and the analytics beacon disagree (beacon=${BEACON}, policy claims=${CLAIMS})"
+            echo "  a policy that describes collection which is not happening, or omits collection that is, is the document being wrong about its own subject"
+            exit 1
+          fi
+          echo "privacy policy: present, and consistent with the analytics state (beacon=${BEACON})"
+
           echo "build output:"
           find dist -type f | sort
 
