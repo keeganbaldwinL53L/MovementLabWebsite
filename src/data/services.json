@@ -1,0 +1,85 @@
+{
+  "_comment": [
+    "Story 1-3. The five bookable Cliniko types. Source: Vigil VG-1, read from the",
+    "LIVE Cliniko account 2026-07-29, not from Keegan's recollection. The three",
+    "prices independently match decision D1.",
+    "",
+    "⚠️ SCOPING IS CORRECTNESS, NOT POLISH. The account is the SHARED Restore Health",
+    "Clinic account: unscoped it offers 13 appointment types across 4 practitioners,",
+    "so an unscoped booking embed on Keegan's own site lets a visitor book Adrian",
+    "Tomiak, Jake Williams or a naturopath. business_id + practitioner_id below are a",
+    "HARD FLOOR that story 1-4's component must not let a caller omit.",
+    "",
+    "⚠️ IDs BREAK SILENTLY. If a type is deleted and recreated in Cliniko it gets a",
+    "new id, and a stale deep link does not error — it falls back to a WIDER list.",
+    "That is why every id lives in this one file and why launch day needs a",
+    "click-through of all five links.",
+    "",
+    "price: null means Cliniko has NO billable item set, not that it is free.",
+    "Story 1-5 must OMIT the schema.org offers node for those rather than invent a",
+    "price (spec G-8).",
+    "",
+    "clinikoName is reproduced EXACTLY as Cliniko stores it, including the",
+    "'(Keegan B)' suffix, because the booking widget renders that name verbatim. The",
+    "suffix disambiguates practitioners inside a four-practitioner diary; tidying it",
+    "is a Cliniko-side decision for Keegan, NOT something a website story may solve."
+  ],
+  "cliniko": {
+    "subdomain": "jake-williams-chiropractic.au1.cliniko.com",
+    "bookingsBaseUrl": "https://jake-williams-chiropractic.au1.cliniko.com/bookings",
+    "businessId": "80066",
+    "practitionerId": "1317763537279387367"
+  },
+  "currency": "AUD",
+  "services": [
+    {
+      "slug": "new-patient",
+      "label": "New patient consultation and treatment",
+      "clinikoName": "NEW PATIENT Consultation and Treatment (Keegan B)",
+      "appointmentTypeId": "1999176796741830533",
+      "durationMinutes": 60,
+      "price": 120,
+      "bookable": true
+    },
+    {
+      "slug": "existing-patient",
+      "label": "Existing patient consultation and treatment",
+      "clinikoName": "EXISTING PATIENT Consultation and Treatment (Keegan B)",
+      "appointmentTypeId": "1999174152258324356",
+      "durationMinutes": 30,
+      "price": 95,
+      "bookable": true
+    },
+    {
+      "slug": "movement-plan-analysis",
+      "label": "Movement Plan Analysis",
+      "clinikoName": "Movement Plan Analysis (Keegan B)",
+      "appointmentTypeId": "1943226610232591813",
+      "durationMinutes": 60,
+      "price": 160,
+      "bookable": true,
+      "note": "Absent from the current website entirely (decision D1). Must appear in the pricing block and on the services hub."
+    },
+    {
+      "slug": "group-class",
+      "label": "Mobility & Flexibility Group Class",
+      "clinikoName": "Mobility & Flexibility Group Class",
+      "appointmentTypeId": "1942668663068820867",
+      "durationMinutes": 60,
+      "price": null,
+      "bookable": true,
+      "maxAttendees": 15,
+      "note": "⚠️ OPS PRECONDITION: had NO bookable sessions scheduled as of 2026-07-29, so a scoped link renders 'no appointments available this month'. Keegan must schedule sessions in Cliniko or this CTA lands on an empty state at launch."
+    },
+    {
+      "slug": "handstand-class",
+      "label": "Handstand Class",
+      "clinikoName": "Handstand Class",
+      "appointmentTypeId": "1975223327521768528",
+      "durationMinutes": 60,
+      "price": null,
+      "bookable": true,
+      "maxAttendees": 15
+    }
+  ]
+}

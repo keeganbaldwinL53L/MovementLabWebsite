@@ -1,0 +1,34 @@
+{
+  "_comment": [
+    "Story 1-3. Opening hours. Authoritative source: the reconciliation § E.2 table,",
+    "which Keegan confirmed on 2026-07-29.",
+    "",
+    "⚠️ NINE RANGES, NOT SEVEN. Tuesday and Thursday each emit TWO entries around a",
+    "14:00-16:30 break. Publishing those days as a flat 08:00-20:00 would send",
+    "someone to a locked door at 3pm — the exact failure this data exists to prevent,",
+    "just introduced from the other direction. Any implementation producing seven",
+    "entries has silently dropped the break and must fail review.",
+    "scripts/check-data.mjs asserts the count and the split days by name.",
+    "",
+    "These values also correct three errors currently live on the Google Business",
+    "Profile: Wednesday closes 17:30 (profile said 19:00), Saturday closes 14:30",
+    "(profile said 14:00), Sunday opens 09:00 (profile said 08:00).",
+    "",
+    "Times are local (Australia/Sydney) and 24-hour, matching schema.org's",
+    "openingHoursSpecification format so 1-5 can emit them without transformation.",
+    "Story 1-9 may later pull these from Cliniko's ROSTER (never its availability —",
+    "a booked-out hour and an unrostered hour look identical in slot data)."
+  ],
+  "timezone": "Australia/Sydney",
+  "openingHours": [
+    { "day": "Monday", "opens": "08:00", "closes": "13:30" },
+    { "day": "Tuesday", "opens": "08:00", "closes": "14:00" },
+    { "day": "Tuesday", "opens": "16:30", "closes": "20:00" },
+    { "day": "Wednesday", "opens": "08:00", "closes": "17:30" },
+    { "day": "Thursday", "opens": "08:00", "closes": "14:00" },
+    { "day": "Thursday", "opens": "16:30", "closes": "20:00" },
+    { "day": "Friday", "opens": "08:00", "closes": "17:00" },
+    { "day": "Saturday", "opens": "08:00", "closes": "14:30" },
+    { "day": "Sunday", "opens": "09:00", "closes": "14:00" }
+  ]
+}
