@@ -123,10 +123,23 @@ if (!existsSync(join(DATA, 'business.json'))) {
   check('business: postcode 2097', biz.address?.postalCode === '2097');
   check('business: ABN present', biz.abn === '58 560 412 976');
   check('business: AHPRA registration present', biz.ahpra === 'CHI0002779763');
+  // The invariant is "no such FIELD exists", so walk the keys rather than
+  // grepping the serialised blob. The blob version had a false positive on its
+  // own explanatory comment — the probe was measuring prose, not structure.
+  const keysOf = (v, acc = []) => {
+    if (Array.isArray(v)) v.forEach((x) => keysOf(x, acc));
+    else if (v && typeof v === 'object')
+      for (const [k, val] of Object.entries(v)) {
+        acc.push(k);
+        keysOf(val, acc);
+      }
+    return acc;
+  };
+  const banned = keysOf(biz).filter((k) => /review|rating|testimonial/i.test(k));
   check(
-    'business: no review/rating field exists (AHPRA s133)',
-    !JSON.stringify(biz).match(/review|rating|testimonial/i),
-    'a criminal offence, not a ranking penalty — the field must not exist to be filled in',
+    'business: no review/rating/testimonial FIELD exists (AHPRA s133)',
+    banned.length === 0,
+    `found field(s): ${banned.join(', ')} — a criminal offence, not a ranking penalty; the field must not exist to be filled in`,
   );
 }
 

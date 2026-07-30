@@ -72,6 +72,17 @@ jobs:
         # gate. Mutation-tested: hardcoding either polarity fails this step.
         run: npm run check:indexing
 
+      - name: Verify the shared data layer
+        # Story 1-3. These values go to a public page AND to a Google Business
+        # Profile, so being wrong sends a real person to a locked door or to
+        # another practitioner's booking page.
+        #
+        # Notably it asserts NINE opening-hours ranges, not seven: Tuesday and
+        # Thursday each split around a 14:00-16:30 break. The story wrote that
+        # as a review criterion, and a criterion a human has to remember is one
+        # a human eventually forgets.
+        run: npm run check:data
+
       - name: Build
         # ⚠️ SITE_ENV=staging is what hides this deploy from search engines.
         #

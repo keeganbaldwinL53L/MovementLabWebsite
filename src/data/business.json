@@ -1,0 +1,55 @@
+{
+  "_comment": [
+    "Story 1-3. THE single source for name, address and phone (NAP). Nothing may",
+    "inline any of these values in a page.",
+    "",
+    "⚠️ THE NAME HAS NO APOSTROPHE, AND THAT IS A DECISION, NOT A TYPO.",
+    "Keegan, 2026-07-31, verbatim: 'keegans movement lab is my business name and",
+    "should remain that way across all areas.' This closed spec E-1, which had",
+    "correctly flagged the apostrophe as an unconfirmed assumption the spec was",
+    "stating as fact.",
+    "",
+    "It must be spelled IDENTICALLY on every surface: site copy, title tags, schema",
+    "name, Google Business Profile, Foursquare, Bing Places, Instagram. Cross-source",
+    "name consistency IS the mechanism Google uses to connect the profile to the",
+    "site, and that connection is why story 1-5 exists — Google REJECTED Keegan's",
+    "profile edits for lack of corroboration. A one-character mismatch is therefore",
+    "worse than an absence. Do not 'correct' this to an apostrophe form.",
+    "",
+    "⚠️ AHPRA s133: no field for a review, a rating or a testimonial exists in this",
+    "file, by design. Structural, not remembered — a field that does not exist",
+    "cannot be filled in. check-data.mjs walks the KEYS and asserts the absence,",
+    "and that assertion is mutation-tested."
+  ],
+
+  "name": "Keegans Movement Lab",
+  "legalNote": "Practises from Restore Health Clinic, which is a separate business with its own Cliniko account.",
+
+  "phone": "0403 887 360",
+  "phoneE164": "+61403887360",
+  "phoneNote": "This is the NAP number and matches the Google Business Profile. The current website also shows 0451 782 249 described as 'call the clinic' — that is Restore Health Clinic's line, NOT the NAP number, and must not be used in schema or the footer. [ASSUMED from Vigil's measurement that the profile carries 0403 887 360; Keegan has not contradicted it, but it is worth one glance at the profile before 1-5 ships.]",
+
+  "email": "hello@keegansmovementlab.com",
+
+  "address": {
+    "streetAddress": "29 Lantana Avenue",
+    "addressLocality": "Wheeler Heights",
+    "addressRegion": "NSW",
+    "postalCode": "2097",
+    "addressCountry": "AU",
+    "venue": "Restore Health Clinic"
+  },
+
+  "geo": null,
+  "geoNote": "DELIBERATELY NULL, not forgotten. Spec G-8 wants a geo node on the MedicalBusiness schema, but inventing coordinates for a real clinic address would be fabricating a fact that sends people to a physical location. Needs a real lookup (Google Maps 'copy coordinates' on the pin, or a geocoder) before 1-5 emits it. 1-5 must OMIT the geo node while this is null rather than guess.",
+
+  "sameAs": [],
+  "sameAsNote": "Spec G-8 wants the Google Business Profile URL and Instagram here — sameAs is a strong entity signal and the profile link is what ties the two together. Neither URL is recorded in any project artifact. Needs Keegan before 1-5.",
+
+  "areaServed": "Northern Beaches, Sydney",
+  "medicalSpecialty": "Chiropractic",
+
+  "abn": "58 560 412 976",
+  "ahpra": "CHI0002779763",
+  "ahpraNote": "Emitted as an identifier on the Physician node on /about/ (spec G-8), never as a marketing claim."
+}
