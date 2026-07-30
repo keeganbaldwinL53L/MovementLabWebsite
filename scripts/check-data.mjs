@@ -101,6 +101,43 @@ check(
   'it is missing from the current live site entirely (D1) and must not be missing again',
 );
 
+// ------------------------------------------- the booking scope floor (1-4)
+// Pure checks, no network. The live "does Cliniko agree" proof is
+// scripts/check-booking-links.mjs, which is deliberately NOT a deploy gate
+// because it talks to a third party. What CAN be guaranteed offline is that
+// every URL this codebase can construct carries the scope floor.
+const { buildBookingUrl, bookingUrlForSlug, SERVICES } = await import('../src/lib/cliniko.mjs');
+
+const everyUrl = [buildBookingUrl(), buildBookingUrl({ embedded: true }), ...SERVICES.map((x) => bookingUrlForSlug(x.slug))];
+
+check(
+  'booking: EVERY constructible url carries business_id',
+  everyUrl.every((u) => u.includes('business_id=80066')),
+  'a url without it offers all four practitioners',
+);
+check(
+  'booking: EVERY constructible url carries practitioner_id',
+  everyUrl.every((u) => u.includes('practitioner_id=1317763537279387367')),
+  'a url without it lets a visitor book someone else',
+);
+check(
+  'booking: a deep link restricts to exactly one appointment type',
+  SERVICES.every((x) => bookingUrlForSlug(x.slug).includes(`appointment_type_id=${x.appointmentTypeId}`)),
+);
+// An unknown slug must fail the BUILD, not silently widen the scope to
+// "all of Keegan's types" — that is the quiet-wrong-answer failure mode.
+let threw = false;
+try {
+  bookingUrlForSlug('not-a-real-service');
+} catch {
+  threw = true;
+}
+check(
+  'booking: an unknown slug throws rather than widening the scope',
+  threw,
+  'a typo would otherwise silently render a broader booking list',
+);
+
 // ------------------------------------------------------------- business.json
 // BLOCKING until the name question is answered. Deliberately a hard failure
 // rather than a skip: an absent NAP file is the exact condition that made

@@ -1,0 +1,90 @@
+---
+// Story 1-4. The full Cliniko booking widget.
+//
+// ⚠️ ONE PER PAGE, MAXIMUM. Cliniko's own snippet hard-codes a single element
+// id and its resize listener resolves that id GLOBALLY, so pasting it twice
+// makes both iframes post resize messages, both handlers grab the same element,
+// and one frame resizes to the other's height (VG-1, read verbatim off the
+// live /contact/ page).
+//
+// This component fixes that properly rather than relying on the rule: the id is
+// unique per instance and the listener only accepts messages whose source IS
+// this iframe's contentWindow. So two on a page would work. The "one per page"
+// guidance still stands as a design preference — deep links are lighter
+// everywhere else — but a mistake is no longer silently disfiguring.
+import { buildBookingUrl, serviceBySlug } from '../lib/cliniko.mjs';
+
+interface Props {
+  /** Restrict to these service slugs. Omit for all of Keegan's types. */
+  slugs?: string[];
+  title?: string;
+  /**
+   * Reserved vertical space before the iframe reports its height (spec G-6).
+   * An unsized embed is a main cause of layout shift.
+   */
+  minHeight?: number;
+}
+
+const { slugs = [], title = 'Book an appointment', minHeight = 700 } = Astro.props;
+
+// serviceBySlug throws on an unknown slug, so a typo fails the build rather
+// than silently widening the booking scope.
+const appointmentTypeIds = slugs.map((s) => serviceBySlug(s).appointmentTypeId);
+const src = buildBookingUrl({ appointmentTypeIds, embedded: true });
+
+// Unique per instance. crypto.randomUUID is available in the Node build.
+const frameId = `cliniko-${crypto.randomUUID().slice(0, 8)}`;
+---
+
+<section class="cliniko-booking" aria-label={title}>
+  <div class="cliniko-frame-wrap" style={`min-height:${minHeight}px`}>
+    <iframe
+      id={frameId}
+      src={src}
+      title={title}
+      loading="lazy"
+      scrolling="auto"
+      frameborder="0"
+      allow="payment"
+      style={`min-height:${minHeight}px`}></iframe>
+  </div>
+
+  <noscript>
+    <p>
+      <a href={buildBookingUrl({ appointmentTypeIds })} rel="noopener">
+        Open the booking page
+      </a>
+      — the embedded booking form needs JavaScript.
+    </p>
+  </noscript>
+</section>
+
+<script is:inline define:vars={{ frameId }}>
+  (function () {
+    var frame = document.getElementById(frameId);
+    if (!frame) return;
+    window.addEventListener('message', function (e) {
+      // SCOPED, unlike Cliniko's own snippet: only react to messages from THIS
+      // iframe. Without this, a second embed on the page resizes the first.
+      if (!frame.contentWindow || e.source !== frame.contentWindow) return;
+      var h = parseInt(e.data, 10);
+      if (!isNaN(h) && h > 0) frame.style.height = h + 'px';
+    });
+  })();
+</script>
+
+<style>
+  .cliniko-booking {
+    margin: 2rem 0;
+  }
+  /* Reserves the space up front so the page does not jump when the iframe
+     reports its real height (spec G-6). */
+  .cliniko-frame-wrap {
+    width: 100%;
+  }
+  .cliniko-booking iframe {
+    width: 100%;
+    border: 0;
+    display: block;
+  }
+</style>

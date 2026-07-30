@@ -1,0 +1,66 @@
+---
+// Story 1-4. A deep link to exactly ONE appointment type.
+//
+// Preferred over an embed everywhere except the Book page: no JavaScript, no
+// resize dance, no layout shift, and it keeps the widget to a single page.
+//
+// The price and label come from src/data/services.json via the slug — a page
+// may NOT pass its own price text. Prices appear on the site, in schema and on
+// a Google profile, so one source is the only way they stay in agreement.
+import { bookingUrlForSlug, serviceBySlug } from '../lib/cliniko.mjs';
+
+interface Props {
+  /** A slug from src/data/services.json. An unknown slug fails the build. */
+  slug: string;
+  /** Override the link text. Defaults to the service label. */
+  label?: string;
+  /** Show duration and price alongside. Off for classes, which have no price. */
+  showDetail?: boolean;
+}
+
+const { slug, label, showDetail = false } = Astro.props;
+
+const service = serviceBySlug(slug);
+const href = bookingUrlForSlug(slug);
+
+// price === null means Cliniko has no billable item set. Render nothing rather
+// than inventing a number or printing "$null".
+const priceText = service.price === null ? null : `$${service.price}`;
+---
+
+<p class="book-cta">
+  <a href={href} rel="noopener">
+    {label ?? `Book ${service.label.toLowerCase()}`}
+  </a>
+  {
+    showDetail && (
+      <span class="book-cta-detail">
+        {service.durationMinutes} min{priceText ? ` · ${priceText}` : ''}
+      </span>
+    )
+  }
+</p>
+
+<style>
+  .book-cta {
+    margin: 1rem 0;
+  }
+  .book-cta a {
+    display: inline-block;
+    background: #ff3502;
+    color: #fdfbf8;
+    padding: 0.6rem 1.2rem;
+    border-radius: 4px;
+    text-decoration: none;
+    font-weight: 600;
+  }
+  .book-cta a:hover,
+  .book-cta a:focus-visible {
+    background: #1f3330;
+  }
+  .book-cta-detail {
+    margin-left: 0.75rem;
+    color: #5b6560;
+    font-size: 0.9375rem;
+  }
+</style>
