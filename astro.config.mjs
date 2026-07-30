@@ -13,6 +13,21 @@ export default defineConfig({
   // served at the root path.
   base: '/',
 
+  // G-1. WordPress serves every URL with a trailing slash and the existing
+  // canonicals say so. Without this, every URL on the rebuilt site becomes a
+  // redirect hop — site-wide, silent, and invisible in review because each
+  // individual page still loads fine. It only shows up as diluted link equity
+  // and an extra round trip on every navigation.
+  //
+  // `format: 'directory'` emits /about/index.html so the server resolves
+  // /about/ natively; `trailingSlash: 'always'` makes Astro's own canonicals
+  // and sitemap agree with that. Both are needed — the first shapes the files,
+  // the second shapes the URLs that point at them.
+  trailingSlash: 'always',
+  build: {
+    format: 'directory',
+  },
+
   integrations: [
     // @astrojs/sitemap writes sitemap-index.xml + sitemap-0.xml. The canonical
     // path the SEO brief requires is /sitemap.xml, which public/.htaccess
