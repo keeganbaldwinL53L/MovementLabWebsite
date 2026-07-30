@@ -7,3 +7,17 @@ RedirectMatch 404 /\.git
 <FilesMatch "^\.">
   Require all denied
 </FilesMatch>
+
+# Story 1-2. @astrojs/sitemap emits sitemap-index.xml (plus sitemap-N.xml
+# shards) and gives no option to rename them. The SEO brief requires the
+# canonical path /sitemap.xml — that is the URL already registered with Search
+# Console, and changing it costs the migration's own monitoring.
+#
+# Rewrite rather than hand-roll a sitemap: the integration stays correct as
+# pages are added in 1-6, where a hand-written file would silently go stale.
+# Internal rewrite, not a redirect, so /sitemap.xml IS the sitemap rather than
+# pointing at one.
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^sitemap\.xml$ /sitemap-index.xml [L]
+</IfModule>

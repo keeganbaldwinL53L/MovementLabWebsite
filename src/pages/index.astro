@@ -1,41 +1,26 @@
 ---
-// Story 1-1 spike page. No real content: this exists only to prove the
-// Astro -> GitHub -> Hostinger deploy chain end to end.
-// The DEPLOY_STAMP line below is the one AC5 changes to test push-to-visible.
+// Story 1-2 placeholder. Real content arrives in story 1-6.
+//
+// ⚠️ CI TRIPWIRE: `MLW-SPIKE-1` below is asserted by the deploy workflow's
+// build gate AND its live check. Story 1-6 replaces this page — when it does,
+// update .github/workflows/deploy.yml in the SAME commit or the build fails
+// closed. (The per-commit proof is dist/build-id.txt, which lives outside page
+// content and is unaffected.)
+import BaseLayout from '../layouts/BaseLayout.astro';
+
 const MARKER = 'MLW-SPIKE-1';
 const DEPLOY_STAMP = 'deploy-stamp: 002';
 ---
 
-<html lang="en">
-  <head>
-    <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="robots" content="noindex, nofollow" />
-    <title>Movement Lab — deploy chain spike</title>
-    <style>
-      body {
-        text-wrap: pretty;
-        font-family: system-ui, -apple-system, sans-serif;
-        max-width: 40rem;
-        margin: 4rem auto;
-        padding: 0 1.5rem;
-        line-height: 1.6;
-      }
-      h1 { text-wrap: balance; }
-      code {
-        background: #f1efea;
-        padding: 0.15em 0.4em;
-        border-radius: 3px;
-      }
-    </style>
-  </head>
-  <body>
-    <h1>Movement Lab &mdash; deploy chain spike</h1>
-    <p>
-      Staging only. This page is not the Movement Lab website. It exists to
-      prove that a change pushed to git becomes visible on a real URL.
-    </p>
-    <p>Marker: <code>{MARKER}</code></p>
-    <p>Stamp: <code>{DEPLOY_STAMP}</code></p>
-  </body>
-</html>
+<BaseLayout
+  title="Movement Lab — deploy chain spike"
+  description="Staging placeholder for the Movement Lab website rebuild. Real content lands in story 1-6."
+>
+  <h1>Movement Lab &mdash; deploy chain spike</h1>
+  <p>
+    Staging only. This page is not the Movement Lab website. It exists to prove
+    that a change pushed to git becomes visible on a real URL.
+  </p>
+  <p>Marker: <code>{MARKER}</code></p>
+  <p>Stamp: <code>{DEPLOY_STAMP}</code></p>
+</BaseLayout>

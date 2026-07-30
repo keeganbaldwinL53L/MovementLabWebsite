@@ -1,0 +1,117 @@
+---
+// Story 1-2. The one layout every page uses.
+//
+// The `robots` meta below is env-driven and MUST STAY THAT WAY. A hardcoded
+// `noindex` here de-indexes production, which is worse than the duplicate it
+// would prevent (spec § 1.2). The polarity comes from src/lib/site-env.mjs and
+// is asserted in both directions by scripts/check-indexing-polarity.mjs.
+import { INDEXABLE, SITE_URL, GSC_TOKEN } from '../lib/site-env.mjs';
+
+interface Props {
+  title: string;
+  description: string;
+  /** Override the OG image path. Root-relative. */
+  image?: string;
+  /** Visible "last updated" date. Defaults to the build date. */
+  updated?: Date;
+}
+
+const { title, description, image = '/og-default.png', updated = new Date() } = Astro.props;
+
+// Canonical is SELF-referential, including on staging. Pointing staging's
+// canonical at production would be a lie about which document this is; the
+// noindex is what keeps staging out of the index.
+const canonical = new URL(Astro.url.pathname, SITE_URL).href;
+const ogImage = new URL(image, SITE_URL).href;
+
+// BOTH forms are pinned to Australia/Sydney, deliberately.
+//
+// toISOString() is UTC. The build runs on a UTC CI runner, and Sydney is
+// UTC+10/+11, so any build after 2pm Sydney lands on the PREVIOUS UTC date —
+// the machine-readable datetime and the visible text would disagree, and an
+// Australian reader would be shown yesterday. Caught locally on the first
+// build: datetime="2026-07-30" next to "31 July 2026".
+const SYDNEY = 'Australia/Sydney';
+// en-CA gives YYYY-MM-DD, which is the format <time datetime> wants.
+const updatedISO = updated.toLocaleDateString('en-CA', { timeZone: SYDNEY });
+const updatedHuman = updated.toLocaleDateString('en-AU', {
+  timeZone: SYDNEY,
+  day: 'numeric',
+  month: 'long',
+  year: 'numeric',
+});
+---
+
+<!doctype html>
+<html lang="en-AU">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>{title}</title>
+    <meta name="description" content={description} />
+    <link rel="canonical" href={canonical} />
+
+    {/* Env-driven. See the comment at the top of this file before touching it. */}
+    <meta name="robots" content={INDEXABLE ? 'index, follow' : 'noindex, nofollow'} />
+
+    {/* Search Console ownership. Must survive the migration. */}
+    <meta name="google-site-verification" content={GSC_TOKEN} />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:locale" content="en_AU" />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    {/* JSON-LD slot. Story 1-5 fills this with MedicalBusiness + per-page nodes.
+        AHPRA s133: no Review or AggregateRating node, ever. */}
+    <slot name="head-jsonld" />
+
+    <slot name="head" />
+
+    <style>
+      body {
+        text-wrap: pretty;
+        font-family: system-ui, -apple-system, sans-serif;
+        max-width: 44rem;
+        margin: 0 auto;
+        padding: 2rem 1.5rem 4rem;
+        line-height: 1.6;
+        color: #1b211f;
+        background: #fdfbf8;
+      }
+      h1,
+      h2,
+      h3 {
+        text-wrap: balance;
+      }
+      code {
+        background: #e9e6df;
+        padding: 0.15em 0.4em;
+        border-radius: 3px;
+      }
+      .site-updated {
+        margin-top: 3rem;
+        padding-top: 1rem;
+        border-top: 1px solid #e4e1da;
+        font-size: 0.875rem;
+        color: #5b6560;
+      }
+    </style>
+  </head>
+
+  <body>
+    <slot />
+
+    {/* Visible last-updated date. Concrete on-page facts are what the
+        controlled evidence actually supports (reconciliation § 2). */}
+    <p class="site-updated">
+      Last updated <time datetime={updatedISO}>{updatedHuman}</time>
+    </p>
+
+    <slot name="body-end" />
+  </body>
+</html>
