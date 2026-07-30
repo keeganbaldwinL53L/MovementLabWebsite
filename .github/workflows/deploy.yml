@@ -149,6 +149,40 @@ jobs:
             exit 1; }
           echo "last-updated date: ${WANT_DATE} (Sydney)"
 
+          # Story 1-5. The schema and the visible NAP are the corroboration
+          # Google looked for and did not find when it rejected Keegan's
+          # profile edits, so their absence must fail the build rather than
+          # ship a page that quietly cannot do its job.
+          node --input-type=module -e "
+            import { readFileSync } from 'node:fs';
+            const html = readFileSync('dist/index.html', 'utf8');
+            const fail = (m) => { console.log('::error::' + m); process.exitCode = 1; };
+
+            const blocks = [...html.matchAll(/<script type=\"application\/ld\+json\">([\s\S]*?)<\/script>/g)].map(m => m[1]);
+            if (!blocks.length) fail('no JSON-LD on the page');
+            let biz;
+            for (const b of blocks) {
+              let j; try { j = JSON.parse(b); } catch { fail('JSON-LD does not parse'); continue; }
+              if (j['@type'] === 'MedicalBusiness') biz = j;
+              // AHPRA s133 — a criminal offence, not a ranking penalty.
+              if (JSON.stringify(j).match(/\"(aggregateRating|review|Review)\"/)) fail('a Review/AggregateRating node reached the page — AHPRA s133');
+            }
+            if (!biz) fail('no MedicalBusiness node');
+            else {
+              const n = (biz.openingHoursSpecification || []).length;
+              if (n !== 9) fail('openingHoursSpecification has ' + n + ' entries, expected 9 (Tue+Thu each split around the 14:00-16:30 break)');
+              if (!biz.telephone) fail('MedicalBusiness has no telephone');
+              if (!biz.address?.streetAddress) fail('MedicalBusiness has no street address');
+              console.log('schema: MedicalBusiness with ' + n + ' hours ranges, telephone and address');
+            }
+
+            // The visible half. Schema alone is not what a human reads, and
+            // Google asked for the details to be ON the site.
+            if (!html.includes('29 Lantana Avenue')) fail('the street address is not visible on the page');
+            if (!html.includes('0403 887 360')) fail('the phone number is not visible on the page');
+            console.log('visible NAP: address and phone present in the body');
+          "
+
           echo "build output:"
           find dist -type f | sort
 

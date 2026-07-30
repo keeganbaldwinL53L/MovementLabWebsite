@@ -6,6 +6,8 @@
 // would prevent (spec § 1.2). The polarity comes from src/lib/site-env.mjs and
 // is asserted in both directions by scripts/check-indexing-polarity.mjs.
 import { INDEXABLE, SITE_URL, GSC_TOKEN } from '../lib/site-env.mjs';
+import { medicalBusiness } from '../lib/schema.mjs';
+import Footer from '../components/Footer.astro';
 
 interface Props {
   title: string;
@@ -66,8 +68,15 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
     <meta property="og:locale" content="en_AU" />
     <meta name="twitter:card" content="summary_large_image" />
 
-    {/* JSON-LD slot. Story 1-5 fills this with MedicalBusiness + per-page nodes.
+    {/* Story 1-5. The site-wide MedicalBusiness is emitted on EVERY page
+        automatically rather than per-page, because the profile corroboration it
+        exists for has to hold wherever Google lands. Pages add their own
+        Physician / Service / FAQPage nodes through the slot below.
         AHPRA s133: no Review or AggregateRating node, ever. */}
+    <script
+      type="application/ld+json"
+      set:html={JSON.stringify(medicalBusiness(SITE_URL))}
+    />
     <slot name="head-jsonld" />
 
     <slot name="head" />
@@ -111,6 +120,10 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
     <p class="site-updated">
       Last updated <time datetime={updatedISO}>{updatedHuman}</time>
     </p>
+
+    {/* Story 1-5. Visible NAP on EVERY page — the corroboration Google looked
+        for and did not find when it rejected Keegan's profile edits. */}
+    <Footer />
 
     <slot name="body-end" />
   </body>

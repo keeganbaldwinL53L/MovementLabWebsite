@@ -1,0 +1,129 @@
+---
+// Story 1-5. The visible NAP block. Renders on EVERY page via BaseLayout.
+//
+// This is the corroboration Google asked for and did not find. Before this,
+// Keegan's phone appeared on zero pages and his address on zero pages, which is
+// why his Business Profile edits were rejected. The schema in the head is the
+// machine half; this is the half a person and a crawler both read.
+//
+// Every value comes from src/data/business.json. Nothing here is typed by hand:
+// the name, phone and address must match the Google profile CHARACTER FOR
+// CHARACTER, and a second copy is how two records drift apart.
+import business from '../data/business.json' with { type: 'json' };
+import hours from '../data/hours.json' with { type: 'json' };
+
+const { address } = business;
+
+// Group the nine ranges by day so Tuesday and Thursday read as one line with a
+// break ("8:00am–2:00pm, 4:30pm–8:00pm") rather than as two separate days.
+const DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+const byDay = DAY_ORDER.map((day) => ({
+  day,
+  ranges: hours.openingHours.filter((r) => r.day === day),
+})).filter((d) => d.ranges.length > 0);
+
+const fmt = (t) => {
+  const [h, m] = t.split(':').map(Number);
+  const suffix = h < 12 ? 'am' : 'pm';
+  const h12 = h % 12 === 0 ? 12 : h % 12;
+  return m === 0 ? `${h12}${suffix}` : `${h12}:${String(m).padStart(2, '0')}${suffix}`;
+};
+---
+
+<footer class="site-footer">
+  <div class="nap">
+    <p class="nap-name">{business.name}</p>
+
+    <p class="nap-address">
+      <span>{address.venue}</span><br />
+      <span>{address.streetAddress}</span><br />
+      <span>{address.addressLocality} {address.addressRegion} {address.postalCode}</span>
+    </p>
+
+    <p class="nap-contact">
+      {/* tel: uses the E.164 form so it dials correctly from overseas, while
+          the visible text stays in the local format people recognise. */}
+      <a href={`tel:${business.phoneE164}`}>{business.phone}</a><br />
+      <a href={`mailto:${business.email}`}>{business.email}</a>
+    </p>
+  </div>
+
+  <div class="hours">
+    <p class="hours-heading">Opening hours</p>
+    <dl>
+      {
+        byDay.map(({ day, ranges }) => (
+          <div class="hours-row">
+            <dt>{day}</dt>
+            <dd>{ranges.map((r) => `${fmt(r.opens)}–${fmt(r.closes)}`).join(', ')}</dd>
+          </div>
+        ))
+      }
+    </dl>
+  </div>
+
+  <p class="footer-legal">
+    <a href="/privacy/">Privacy policy</a>
+    <span class="sep">·</span>
+    <span>ABN {business.abn}</span>
+  </p>
+</footer>
+
+<style>
+  .site-footer {
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid #e4e1da;
+    font-size: 0.9375rem;
+    color: #1b211f;
+    display: grid;
+    gap: 2rem;
+  }
+  @media (min-width: 40rem) {
+    .site-footer {
+      grid-template-columns: 1fr 1fr;
+    }
+    .footer-legal {
+      grid-column: 1 / -1;
+    }
+  }
+  .nap-name {
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .nap-address,
+  .nap-contact {
+    margin: 0 0 0.75rem;
+    line-height: 1.5;
+  }
+  .hours-heading {
+    font-weight: 700;
+    margin: 0 0 0.5rem;
+  }
+  .hours dl {
+    margin: 0;
+  }
+  .hours-row {
+    display: flex;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.15rem 0;
+  }
+  .hours-row dt {
+    color: #5b6560;
+  }
+  .hours-row dd {
+    margin: 0;
+    text-align: right;
+  }
+  .footer-legal {
+    margin: 0;
+    color: #5b6560;
+  }
+  .sep {
+    margin: 0 0.5rem;
+  }
+  .site-footer a {
+    color: inherit;
+  }
+</style>
