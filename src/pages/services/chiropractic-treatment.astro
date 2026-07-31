@@ -1,0 +1,272 @@
+---
+// Story 1-6. THE main service page.
+//
+// ⚠️ THE SLUG DOES NOT CHANGE (D4, Keegan: "agreed").
+// The Chiropractic & Movement reframe is delivered by the title, the h1 and the
+// content. This is the deepest-content page on the site and it has whatever
+// ranking history the site has; renaming it for a cosmetic gain risks that for
+// nothing. /services/mobility-coaching/ 301s HERE (story 1-7) — this page
+// absorbs it.
+//
+// 🔴 THE FAQ BLOCK BELOW IS PORTED VERBATIM AND IS OUT OF REWRITE SCOPE.
+// It is the most citation-shaped asset the site owns. Anyone MAY ADD a question;
+// nobody may reword an existing one. See the note above FAQ_ENTRIES for the one
+// merge decision this page had to make, and who owns it.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BookCta from '../../components/BookCta.astro';
+import Faq from '../../components/Faq.astro';
+import { service } from '../../lib/schema.mjs';
+import { SITE_URL } from '../../lib/site-env.mjs';
+import business from '../../data/business.json' with { type: 'json' };
+
+const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+
+// Service schema for the three bookable one-to-one types. Group class and
+// handstand class are NOT here — they belong to their own pages, and they carry
+// no offers node because Cliniko has no billable item for them (G-8).
+const SERVICE_NODES = ['new-patient', 'existing-patient', 'movement-plan-analysis'].map((slug) =>
+  service(SITE_URL, slug),
+);
+
+// ---------------------------------------------------------------------------
+// FAQ — VERBATIM. Transcribed from px-output/website-content-capture-2026-07-20.txt
+// ---------------------------------------------------------------------------
+// ELEVEN questions: the six from /services/chiropractic-treatment/ and five from
+// /services/mobility-coaching/, which folds into this page.
+//
+// ⚠️ ONE DELIBERATE MERGE, AND SMITH OWNS IT — flagged for Keegan and Manny.
+// Both source pages ended with a "Can I claim my health fund?" question. Keeping
+// both would put two near-identical questions on one page, which reads as
+// sloppy and splits any citation between them. I kept the MOBILITY page's
+// wording verbatim, because it is a strict superset: it adds the parenthetical
+// "(even for mobility and flexibility services)", which is exactly the question
+// a reader of this merged page would have. The chiropractic version's wording is
+// otherwise identical and nothing in it is lost. No other question was touched.
+const FAQ_ENTRIES = [
+  {
+    question: 'Does the adjustment hurt?',
+    answer:
+      'Most people find chiropractic treatment comfortable, and many leave feeling immediate relief. Some techniques involve a bit of firm pressure, and occasionally you might feel a little sore afterward (similar to how you’d feel after a good workout). I always work within your comfort level and adjust my approach based on your feedback, so please never hesitate to speak up.',
+  },
+  {
+    question: 'Do you just crack backs?',
+    answer:
+      'The "cracking" sound you might have heard about is simply gas releasing from a joint as it moves – it’s a harmless yet satisfying side effect of what we are really trying to achieve – joint movement! Adjustments are just one tool in my kit. Depending on what you need, I may also use softer techniques that involve no cracking at all, so if the idea of it makes you nervous, just let me know.',
+  },
+  {
+    question: 'Is Chiropractic safe?',
+    answer:
+      'Yes! Chiropractic is one of the most thoroughly researched and widely used forms of manual therapy in the world. It has an excellent safety record, particularly for common complaints like back and neck pain. Before any treatment, I’ll always take a thorough history and assessment to make sure chiropractic is appropriate for you. If I ever feel something is outside my scope or needs further investigation, I’ll tell you and refer you to the right person. Chiropractors actually have the lowest insurance premiums of any healthcare profession in Australia!',
+  },
+  {
+    question: 'How much training do chiropractors have?',
+    answer:
+      'Chiropractors in Australia complete a minimum five-year university degree, which includes extensive study in anatomy, physiology, neurology, pathology, radiology, and clinical practice. We’re registered health professionals regulated by AHPRA, the same body that oversees doctors, physios, and nurses. So while we might be best known for back cracking, there’s a lot of science behind what we do! I graduated from Macquarie University in 2023 with a Bachelors and Masters of Chiropractic Science. Since then I have worked as a registered Chiropractor and continued to learn through experience and post graduate study.',
+  },
+  {
+    question: 'How are Chiropractors, Physiotherapists and Osteopaths different?',
+    answer:
+      'All three professions work with the muscles and joints to reduce pain and improve how your body moves – there’s more overlap than most people realise. Traditionally, chiropractors are known for spinal adjustments, physios for exercise rehab, and osteopaths for whole-body manual therapy, but in practice the lines are pretty blurry. My style sits somewhere in the middle – I’m registered as a chiropractor, but I incorporate a lot of muscle testing, muscle release, and targeted rehab that you’d more commonly associate with physiotherapy. Many of my patients tell me I feel more like a physio who also does adjustments. At the end of the day, the profession matters less than finding someone who actually listens, does a thorough assessment, and tailors care to you.',
+  },
+  {
+    question: 'How much time do I need to dedicate to mobility for results?',
+    answer:
+      'Not as much time as people typically think. Most of my clients only perform one or two, 25-30 minute, dedicated sessions per week. Less is actually more with flexibility training as your body needs time to rest and adapt to the changes we are making.',
+  },
+  {
+    question: 'How long does it take to get more flexible?',
+    answer:
+      'The answer to this one will always depend on the individual. I typically see clients make a big jump in progress in just the first few sessions, but then progress slows down a little (much like beginner gains in the gym when strength training). I personally only trained 2 sessions per week for 2.5 months when training for my pancake and went from sitting at almost 90 degrees and struggling to lean forwards to touching my head on the floor.',
+  },
+  {
+    question: 'Can I incorporate mobility training around or alongside my usual training?',
+    answer:
+      'Yes! There are multiple ways to do it but flexibility training doesn’t take away from your strength or sport specific training. Depending on your training load, you may need to time sessions carefully, but it isn’t usually an issue. I personally train hybrid calisthenics strength training 3 times per week and I usually just add my mobility sessions at the end of two of those sessions.',
+  },
+  {
+    question: 'Does flexibility training hurt?',
+    answer:
+      'No! If stretching hurts, you are either pushing it too hard, not resting enough, or have an injury or troublesome compensation pattern holding you back. I always emphasise that mobility and flexibility training should be moderately uncomfortable in the extreme ranges, but definitely not painful. Pain will cause your body to feel unsafe and hold extra tension to protect itself.',
+  },
+  {
+    question: 'Can I claim my health fund?',
+    answer:
+      'Yes you can! If your private health fund has chiropractic care included, you can claim it with me (even for mobility and flexibility services). We can process it in clinic at the time of payment if you have your card with you or I can send you an invoice after the consult and you can claim it yourself if you forget your card.',
+  },
+];
+---
+
+<BaseLayout
+  title={`Chiropractic & Mobility Treatment, Wheeler Heights | ${business.name}`}
+  description="Hands-on chiropractic care for pain, stiffness and dysfunction, plus personalised mobility coaching. 30-minute appointments, joint adjustments, muscle release and a rehab plan built from your assessment."
+  updated={LAST_CHANGED}
+>
+  {SERVICE_NODES.map((node) => (
+    <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(node)} />
+  ))}
+
+  <h1>Chiropractic &amp; Movement</h1>
+
+  <p class="lead">
+    Hands-on chiropractic care that settles the immediate problem, then addresses the movement
+    pattern underneath it. Most patients need fewer visits overall, because a 30-minute appointment
+    is long enough to treat the cause rather than just the site of the pain.
+  </p>
+
+  <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
+
+  <h2>What is chiropractic?</h2>
+  <p>
+    Chiropractic is a combination of two Greek words that translates as ‘Done By Hand’. Chiropractic
+    care is a hands-on, drug-free approach to health that focuses on the nervous, skeletal and
+    muscular systems and how they relate to overall wellbeing. When the joints of your spine and body
+    aren’t moving the way they should, it can result in tension, pain, discomfort and reduced
+    performance – and that’s where chiropractic comes in.
+  </p>
+  <p>
+    Using gentle, targeted adjustments, chiropractic care works to restore proper movement, reduce
+    pain, and support your body’s natural ability to heal. Whether you’re dealing with a niggling
+    back problem, recovering from an injury, managing a sports load, or simply want to stay on top of
+    your health – chiropractic can play a valuable role at every stage of life, for every kind of
+    body.
+  </p>
+  <p>
+    I blend the best of clinical evidence with a whole-body perspective, so you’re never just treated
+    as a set of symptoms. I take the time to understand what’s going on, explain what I find, and
+    work with you toward lasting results – not just short-term relief.
+  </p>
+
+  <h2>Why am I different?</h2>
+  <p>
+    I see every patient for 30-minute appointments, and I treat the whole picture rather than the
+    spine alone. Traditional chiropractic tends to follow a pretty set formula – short appointments,
+    high frequency, and a heavy focus on spinal adjustments. Many chiropractors see patients for as
+    little as 10 minutes, expect multiple visits a week early on, and then keep you coming back
+    indefinitely for "maintenance care." And in those appointments, it’s usually just the adjustment
+    – a quick pop and crack, and you’re done.
+  </p>
+  <p>
+    I do things differently, because I believe you can’t do a proper job in 10 minutes. In that time,
+    I’m not just working on your spine – I look at the whole picture. If your shoulder, hip, or knee
+    is part of the problem, we address it. I combine spinal and joint adjustments with hands-on
+    muscle release and massage, because muscles and joints work together and ignoring one while
+    treating the other only gets you so far. I also place a big emphasis on specific, targeted
+    rehabilitation exercises based on what I actually find in your assessment – not a generic sheet
+    handed to everyone.
+  </p>
+  <p>
+    The result of this more thorough approach is that most of my patients need fewer visits overall
+    and get better faster. My goal is to get you out of my clinic and back to your life – not to keep
+    you coming back indefinitely.
+  </p>
+
+  {/* The fold. /services/mobility-coaching/ 301s here (story 1-7), so its
+      content lives on this page rather than being lost. */}
+  <h2>Why does mobility matter if I am not in pain?</h2>
+  <p>
+    Because restricted range of motion is what puts most people back in pain later. As a
+    chiropractor, I work with people every day whose pain, dysfunction or performance limitations
+    stem from restricted range of motion (and strength within their available range of motion).
+    Addressing this in the treatment room is one thing, but what my patients often need to stay out
+    of pain over the long term is a dedicated plan to build lasting and functional mobility.
+  </p>
+  <p>
+    Beginning with a thorough flexibility and mobility analysis, I’ll map out precisely where your
+    restrictions are and why, then build you a detailed, personalised program to systematically
+    address them. From there, regular check-ins keep your progress on track and your plan evolving as
+    you do.
+  </p>
+  <p>
+    This service is naturally integrated into the care of all my clients. If you come to me with no
+    pain or injuries, we focus on this side of care. If you are in pain or have an injury, we will
+    focus more on using regular chiropractic care to address it then naturally progress you to
+    functional mobility goals. Either way, you’re getting something that a generic yoga or pilates
+    class simply can’t offer – a plan specifically built for your body and your goals that meets you
+    at the right point in your movement health journey.
+  </p>
+
+  <h2>What will it cost, and what do I get?</h2>
+
+  <h3>Initial consultation — 1 hour, $120</h3>
+  <p>
+    <strong>Who is this for?</strong> If you suffer from long or short term pain or tension in your
+    body and want to get to the bottom of it, then this is for you. All ages, demographics and levels
+    of health and fitness are welcome.
+  </p>
+  <p>
+    <strong>What is included?</strong> A detailed verbal investigation, physical assessment,
+    structural analysis, warm up massage, joint adjustment, muscle compensation correction and a
+    rehab plan.
+  </p>
+  <p>
+    <strong>What do you need to know?</strong> Treatments are health fund rebatable for those that
+    have chiropractic care cover as an extra. This can be claimed immediately at payment or post
+    payment with an invoice. Patient gowns are provided although comfortable and mobile pants are
+    recommended. Treatment modalities can be declined if you do not wish to use them although this
+    may alter results. I will always discuss your treatment options and obtain informed consent
+    before proceeding with a technique or modality.
+  </p>
+  <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
+
+  <h3>Follow-up consultation — 30 minutes, $95</h3>
+  <p>
+    <strong>Who is this for?</strong> If you have already seen me in an initial consult in the past
+    and are returning for further treatment of a new or old condition, problem or injury.
+  </p>
+  <p>
+    <strong>What is included?</strong> These consults start with a warm up massage where I get up to
+    date on your progress since last session. This is followed by a reassessment of your
+    musculoskeletal structure and a retesting of any joint compensations. We then proceed to joint
+    adjustments and active muscle release or dry needling to address any current dysfunction in your
+    body. We then finish with a rehab plan update if this is needed.
+  </p>
+  <BookCta slug="existing-patient" label="Book a follow-up consultation" showDetail={true} />
+
+  {/* D1 — the Movement Plan Analysis is NEW to the website. It exists in
+      Cliniko and is absent from the current site entirely. */}
+  <h3>Movement Plan Analysis — 1 hour, $160</h3>
+  <p>
+    <strong>Who is this for?</strong> If you are not in pain right now but you want to understand
+    your body’s limitations and build a plan around them. This is the dedicated version of the
+    mobility work above: a full analysis session that produces your personalised routine.
+  </p>
+  <p>
+    <strong>How does it work?</strong> I will analyse and treat your body for any joint or muscle
+    dysfunction using chiropractic skills to create the best environment for mobility progress. We
+    will then test different flexibility positions which I will use to formulate the most efficient
+    mobility routine for you to follow and increase your range of motion.
+  </p>
+  <p>
+    <strong>What you need to know.</strong> Health funds with chiropractic cover included can claim a
+    rebate at time of payment or afterwards through an invoice. Comfortable and non-restrictive
+    clothing such as active wear is required.
+  </p>
+  <BookCta slug="movement-plan-analysis" label="Book a Movement Plan Analysis" showDetail={true} />
+
+  <Faq entries={FAQ_ENTRIES} />
+
+  {/* G-9 — internal links to the Book page and between related services. */}
+  <h2>Where to next?</h2>
+  <ul class="next-links">
+    <li><a href="/contact/">Book an appointment</a> — all booking types, including group sessions.</li>
+    <li><a href="/services/">Services and pricing</a> — everything at a glance.</li>
+    <li><a href="/services/group-classes/">Group classes</a> — a lower-commitment way to start.</li>
+    <li><a href="/about/">About Keegan</a> — background, training and approach.</li>
+  </ul>
+</BaseLayout>
+
+<style>
+  .lead {
+    font-size: 1.125rem;
+    color: var(--ml-ink);
+  }
+  h3 {
+    margin-top: 2rem;
+  }
+  .next-links {
+    padding-left: 1.1rem;
+  }
+  .next-links li {
+    margin: 0.35rem 0;
+  }
+</style>

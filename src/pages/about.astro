@@ -1,0 +1,128 @@
+---
+// Story 1-6. About — elevated, and the page that carries the entity fix.
+//
+// ⚠️ THE OPENING LINE NAMES "CHIROPRACTOR" FIRST. THAT IS THE WHOLE POINT
+// (MN-48 decision 4). A search engine's own one-line summary of Keegan today
+// reads "a passionate Mobility and Flexibility coach and certified Chiropractor"
+// — coach first, chiropractor second. That summary is THIS PAGE talking, and it
+// is the same entity-confusion problem as the wrong Google Business Profile
+// category. Chiro is who he is; movement-focused is HOW. Once the opening
+// sentence leads with the noun, the machine summary follows.
+//
+// Do not reintroduce "movement coach" as a competing job title anywhere on this
+// page. The differentiator is an adjective ON chiropractor.
+//
+// ⚠️ HANDSTANDS LIVE HERE AS AUTHORITY AND STORY (Manny A1), not as a service
+// pitch. The acrobatics background is the credential behind the movement work;
+// the handstand SERVICE is demoted to its own page.
+//
+// Two typos from the old site are fixed here and are NOT a copy rewrite:
+// "fucntional" -> "functional" on this page, and "chiriopractor" -> "chiropractor"
+// in the old handstand page's meta description.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BookCta from '../components/BookCta.astro';
+import { physician } from '../lib/schema.mjs';
+import { SITE_URL } from '../lib/site-env.mjs';
+import business from '../data/business.json' with { type: 'json' };
+
+const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+
+// G-8 — Physician on About, carrying the AHPRA registration as an identifier
+// and worksFor pointing at the site-wide MedicalBusiness node.
+const PHYSICIAN = physician(SITE_URL);
+---
+
+<BaseLayout
+  title="About Keegan Baldwin, Chiropractor | Northern Beaches"
+  description="Keegan Baldwin is a movement-focused chiropractor on Sydney's Northern Beaches. Ten years of acrobatic training, then a Bachelor's and Master's of Chiropractic Science from Macquarie University."
+  updated={LAST_CHANGED}
+>
+  <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(PHYSICIAN)} />
+
+  <h1>About Keegan Baldwin</h1>
+
+  <p class="lead">
+    Keegan Baldwin is a movement-focused chiropractor on the Northern Beaches. He helps active people
+    get out of pain and keep moving well for life, combining chiropractic care with a background in
+    movement and mobility.
+  </p>
+
+  <h2>Why should you work with me?</h2>
+  <p>
+    Because I do not think one size fits all, and I can point at the results. All my methods have not
+    only worked to improve my own movement, but many of my clients as well. You won’t find
+    cookie-cutter approaches when working with me. Every body is different, therefore every client of
+    mine gets unique advice and techniques to achieve the best results for them.
+  </p>
+  <p>
+    I take a holistic approach to physical health using evidence-based techniques. That means helping
+    you feel your best by targeting the root cause of your movement limitation and supporting you in
+    building an efficient program to tackle it. If you are not happy with how your body feels or
+    functions, I can help.
+  </p>
+
+  <h2>How did you get here?</h2>
+  <p>
+    Ten years of acrobatic training, then five years of study for a Bachelor’s and Master’s of
+    Chiropractic Science. I’m Keegan, a passionate chiropractor with a heavy focus on mobility and
+    functional movement, helping people transform their lives through better movement health.
+  </p>
+  <p>
+    I have been involved with movement all my life. My childhood and teenage years set a solid
+    foundation through team sports like soccer and hockey, as well as competitive swimming and Surf
+    Life Saving. After leaving school, I dedicated 10 years of athletic training to mastering
+    acrobatics. The pursuit of mastering my body’s movement led me to explore many adjacent
+    disciplines, including handbalancing, yoga, flying trapeze, juggling, firespinning, and
+    calisthenics.
+  </p>
+  <p>
+    I developed a passion for movement and wanted to learn more and help others understand how to get
+    the most out of their bodies. This led me to 5 years of study, resulting in a Bachelor’s and
+    Master’s of Chiropractic Science. I graduated from Macquarie University in 2023. Now I leverage
+    my knowledge of the body to help others master movement, whether that’s overcoming a painful
+    injury or increasing their strength, flexibility, or coordination, supporting you in achieving
+    and maintaining a healthy, balanced life.
+  </p>
+
+  <h2>Why does the handbalancing matter?</h2>
+  <p>
+    Because it is where the movement side of the practice comes from. Handstands demand strength,
+    balance, mobility and body awareness at the same time, and training them for years is what taught
+    me how those qualities depend on each other. That is the lens I bring to a patient who is stiff,
+    sore, or stuck at a plateau.
+  </p>
+  <p>
+    I still coach it, and I organise handstand meetups around the Northern Beaches.{' '}
+    <a href="/services/handstand/">Handstand coaching and classes</a> have their own page if that is
+    what brought you here.
+  </p>
+
+  <h2>Are you registered?</h2>
+  <p>
+    Yes. I am a chiropractor registered with the Australian Health Practitioner Regulation Agency,
+    registration {business.ahpra}. Chiropractors in Australia complete a minimum five-year university
+    degree covering anatomy, physiology, neurology, pathology, radiology and clinical practice, and
+    are regulated by AHPRA, the same body that oversees doctors, physiotherapists and nurses.
+  </p>
+
+  <BookCta slug="new-patient" label="Book an appointment" showDetail={true} />
+
+  <h2>Where to next?</h2>
+  <ul class="next-links">
+    <li><a href="/services/chiropractic-treatment/">Chiropractic &amp; Movement</a> — what a session actually involves</li>
+    <li><a href="/contact/">Book an appointment</a></li>
+    <li><a href="/services/">Services and pricing</a></li>
+  </ul>
+</BaseLayout>
+
+<style>
+  .lead {
+    font-size: 1.125rem;
+  }
+  .next-links {
+    padding-left: 1.1rem;
+  }
+  .next-links li {
+    margin: 0.35rem 0;
+  }
+</style>

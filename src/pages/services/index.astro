@@ -1,0 +1,141 @@
+---
+// Story 1-6. The services hub.
+//
+// PRICES COME FROM src/data/services.json, NEVER TYPED HERE (spec § 3.4).
+// These numbers appear on the site, in the JSON-LD, and on a Google Business
+// Profile. A second hand-typed copy is exactly how two of them end up
+// disagreeing, and a wrong price is a real-world problem, not a display bug.
+//
+// D1 — the Movement Plan Analysis at $160 is NEW to the website and must appear
+// in this summary as well as on the main service page. It is absent from the
+// current site entirely.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BookCta from '../../components/BookCta.astro';
+import { SERVICES } from '../../lib/cliniko.mjs';
+import business from '../../data/business.json' with { type: 'json' };
+
+const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+
+const oneToOne = SERVICES.filter((s) => s.price !== null);
+const classes = SERVICES.filter((s) => s.price === null);
+---
+
+<BaseLayout
+  title={`Services & Pricing | ${business.name}`}
+  description="Chiropractic and movement services on Sydney's Northern Beaches. Initial consultation $120, follow-up $95, Movement Plan Analysis $160, and $20 weekly group classes in Cromer."
+  updated={LAST_CHANGED}
+>
+  <h1>Services and pricing</h1>
+
+  <p class="lead">
+    Three one-to-one appointment types and two weekly group classes. Everything one-to-one happens at
+    {' '}{business.address.venue} in {business.address.addressLocality}.
+  </p>
+
+  <h2>What are the one-to-one appointments?</h2>
+  <p>
+    Chiropractic consultations that combine assessment, hands-on treatment and a rehab plan, plus a
+    dedicated mobility analysis if you are not in pain and want a plan built around your body. All
+    three are health fund rebatable if you have chiropractic cover as an extra.
+  </p>
+
+  <div class="table-scroll" tabindex="0" role="region" aria-label="One-to-one appointment types and prices">
+    <table>
+      <thead>
+        <tr><th>Appointment</th><th>Length</th><th>Price</th></tr>
+      </thead>
+      <tbody>
+        {
+          oneToOne.map((s) => (
+            <tr>
+              <td>{s.label}</td>
+              <td>{s.durationMinutes} min</td>
+              <td>${s.price}</td>
+            </tr>
+          ))
+        }
+      </tbody>
+    </table>
+  </div>
+
+  <p>
+    <a href="/services/chiropractic-treatment/">Full detail on what each appointment involves</a>.
+  </p>
+
+  <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
+
+  <h2>What about the group classes?</h2>
+  <p>
+    Two weekly classes at Just Train Gym in Cromer, $20 each, one hour, and both open to complete
+    beginners. They are designed as a low-commitment way to sample the same methods.
+  </p>
+  <ul>
+    {classes.map((s) => <li>{s.label}</li>)}
+  </ul>
+  <p>
+    <a href="/services/group-classes/">Class times and what to bring</a>, or{' '}
+    <a href="/services/handstand/">handstand coaching and classes</a>.
+  </p>
+
+  <h2>Do you run workshops?</h2>
+  <p>
+    Yes, for businesses, gyms and studios that want a one-off event for their members. Each workshop
+    is a stand-alone deep dive into a specific skill: handstands, pancake, front splits, side splits,
+    back bends, or arms-overhead full flexion. Skills are modular, so longer workshops can combine
+    several. Pricing is per engagement rather than fixed.
+  </p>
+  <p>
+    Email <a href={`mailto:${business.email}`}>{business.email}</a> to talk about running one in your
+    space.
+  </p>
+
+  <h2>Where to next?</h2>
+  <ul class="next-links">
+    <li><a href="/contact/">Book an appointment</a></li>
+    <li><a href="/services/chiropractic-treatment/">Chiropractic &amp; Movement</a></li>
+    <li><a href="/about/">About Keegan</a></li>
+  </ul>
+</BaseLayout>
+
+<style>
+  .lead {
+    font-size: 1.125rem;
+  }
+  /* Wide content scrolls inside its own container so the page body never
+     scrolls horizontally on a phone (LN-2). */
+  .table-scroll {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    background:
+      linear-gradient(to right, var(--ml-paper) 40%, rgba(var(--ml-paper-rgb), 0)) left center / 2.5rem 100% no-repeat,
+      linear-gradient(to left, var(--ml-paper) 40%, rgba(var(--ml-paper-rgb), 0)) right center / 2.5rem 100% no-repeat,
+      radial-gradient(farthest-side at 0 50%, rgba(var(--ml-ink-rgb), 0.22), rgba(var(--ml-ink-rgb), 0)) left center / 0.9rem 100% no-repeat,
+      radial-gradient(farthest-side at 100% 50%, rgba(var(--ml-ink-rgb), 0.22), rgba(var(--ml-ink-rgb), 0)) right center / 0.9rem 100% no-repeat;
+    background-attachment: local, local, scroll, scroll;
+  }
+  .table-scroll:focus-visible {
+    outline: 2px solid var(--ml-deep);
+    outline-offset: 2px;
+  }
+  table {
+    border-collapse: collapse;
+    width: 100%;
+    min-width: 26rem;
+  }
+  th,
+  td {
+    text-align: left;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 1px solid var(--ml-rule);
+    vertical-align: top;
+  }
+  th {
+    background: var(--ml-shade);
+  }
+  .next-links {
+    padding-left: 1.1rem;
+  }
+  .next-links li {
+    margin: 0.35rem 0;
+  }
+</style>

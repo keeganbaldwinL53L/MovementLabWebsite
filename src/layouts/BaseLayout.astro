@@ -7,6 +7,7 @@
 // is asserted in both directions by scripts/check-indexing-polarity.mjs.
 import { INDEXABLE, SITE_URL, GSC_TOKEN } from '../lib/site-env.mjs';
 import { medicalBusiness } from '../lib/schema.mjs';
+import Nav from '../components/Nav.astro';
 import Footer from '../components/Footer.astro';
 import Analytics from '../components/Analytics.astro';
 
@@ -172,7 +173,13 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
   </head>
 
   <body>
-    <slot />
+    <Nav current={Astro.url.pathname} />
+
+    {/* The skip link in Nav targets this id. A landmark <main> is also how a
+        screen-reader user jumps past the header on every page. */}
+    <main id="main">
+      <slot />
+    </main>
 
     {/* Visible last-updated date. Concrete on-page facts are what the
         controlled evidence actually supports (reconciliation § 2). */}

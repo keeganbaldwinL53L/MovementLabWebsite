@@ -1,0 +1,101 @@
+---
+// Story 1-6. Handstand coaching — KEPT but MINIMAL and DEMOTED (A1).
+//
+// ⚠️ MOVED FROM /handstand-coaching/ AT THE ROOT. This is a nesting
+// normalisation, not a rename for its own sake: every other service lives under
+// /services/, and one at the root is the odd one out. The old URL 301s here
+// (story 1-7, D4).
+//
+// The old page's meta description carried "chiriopractor". That typo is fixed
+// here and is a correction, not a copy rewrite.
+//
+// AUTHORITY LIVES ON /about/, NOT HERE (Manny A1). The acrobatics-and-
+// handbalancing background is the credential behind the movement work and it is
+// told as a story on the About page. This page is the service: what it is, what
+// it costs, how to get it.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BookCta from '../../components/BookCta.astro';
+import { service } from '../../lib/schema.mjs';
+import { SITE_URL } from '../../lib/site-env.mjs';
+import business from '../../data/business.json' with { type: 'json' };
+
+const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+
+// No offers node — Cliniko has no billable item for the class (G-8).
+const SERVICE_NODE = service(SITE_URL, 'handstand-class');
+---
+
+<BaseLayout
+  title={`Handstand Coaching, Northern Beaches | ${business.name}`}
+  description="Handstand coaching and weekly beginner handstand classes on Sydney's Northern Beaches. From never going upside down to a confident 10-second hold."
+  updated={LAST_CHANGED}
+>
+  <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(SERVICE_NODE)} />
+
+  <h1>Handstand coaching</h1>
+
+  <p class="lead">
+    Structured handstand training for complete beginners through to people refining more advanced
+    skills. Strength, balance, mobility and body awareness all develop through this one skill, which
+    is why I keep coaching it alongside the clinical work.
+  </p>
+
+  <h2>Who is handstand training for?</h2>
+  <p>
+    Anyone who wants to get upside down, at any starting point. Didn’t everyone want to do these as a
+    child? Whether you’re chasing the thrill of finally holding it away from the wall, want a fun and
+    challenging addition to your training, or simply love the idea of being upside down again,
+    handstand coaching is a structured, supportive way to get there.
+  </p>
+  <p>
+    I work with complete beginners through to those refining more advanced handstand skills, although
+    if you’re an elite level gymnast or Cirque du Soleil performer, I probably can’t help.
+  </p>
+
+  <h2>What does a one-to-one session involve?</h2>
+  <p>
+    A completely personalised hour. I analyse what level you are up to and identify the things
+    holding you back most, then we work through drills that address them with in-the-moment feedback.
+    Whether you’re a complete beginner or have been working on handstands for a while, I can help.
+  </p>
+  <p>
+    <strong>Location and how to book.</strong> The location is up to you. I can meet you at your
+    home, outside, in a neutral location, or I can organise a studio space hire. Because that means
+    variable travel time and costs, this service is not on the online booking system. Email{' '}
+    <a href={`mailto:${business.email}`}>{business.email}</a> and we will organise a session that
+    suits us both.
+  </p>
+
+  <h2>Is there a class instead?</h2>
+  <p>
+    Yes. The weekly handstand class at Just Train Gym in Cromer is $20 for an hour and is designed
+    for complete beginners and intermediate students, taking you from never going upside down to your
+    first 10-second hold and beyond.
+  </p>
+  <p>
+    We focus on proper technique and time-tested drills that build the strength and control to
+    reliably stay upside down. The classes are community focused and designed to get you to a level
+    where you can join the handstand meetups I organise around the Northern Beaches.
+  </p>
+  <BookCta slug="handstand-class" label="Reserve a spot in the handstand class" />
+
+  <h2>Where to next?</h2>
+  <ul class="next-links">
+    <li><a href="/services/group-classes/">All group classes</a> — including mobility and flexibility</li>
+    <li><a href="/contact/">Book an appointment</a></li>
+    <li><a href="/about/">About Keegan</a> — the acrobatics background behind this</li>
+    <li><a href="/services/chiropractic-treatment/">Chiropractic &amp; Movement</a></li>
+  </ul>
+</BaseLayout>
+
+<style>
+  .lead {
+    font-size: 1.125rem;
+  }
+  .next-links {
+    padding-left: 1.1rem;
+  }
+  .next-links li {
+    margin: 0.35rem 0;
+  }
+</style>

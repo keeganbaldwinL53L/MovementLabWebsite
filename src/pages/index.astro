@@ -1,33 +1,117 @@
 ---
-// Story 1-2 placeholder. Real content arrives in story 1-6.
+// Story 1-6. The home page. Replaces the story 1-2 deploy-chain placeholder.
 //
-// ⚠️ CI TRIPWIRE: `MLW-SPIKE-1` below is asserted by the deploy workflow's
-// build gate AND its live check. Story 1-6 replaces this page — when it does,
-// update .github/workflows/deploy.yml in the SAME commit or the build fails
-// closed. (The per-commit proof is dist/build-id.txt, which lives outside page
-// content and is unaffected.)
+// ⚠️ THE CI TRIPWIRE IS GONE ON PURPOSE. The old placeholder carried a
+// MLW-SPIKE-1 marker that the deploy workflow asserted. That assertion was
+// removed in the SAME commit as this page, which is what the 1-2 comment warned
+// had to happen. The per-commit proof is dist/build-id.txt, which lives outside
+// page content and is unaffected.
+//
+// COPY DIRECTION IS MANNY'S, AND DECISION 3 IS LOCKED (MN-48, confirmed by
+// Keegan 2026-07-31): the h1 carries the SERVICE and the brand tagline sits
+// above it as styled text. "Move Better, Live Longer" is a good brand line that
+// tells a search engine, and a stranger, nothing about what Keegan does. For a
+// business that needs to be found, a service-bearing h1 wins and the tagline
+// loses nothing by sitting just above.
+//
+// Sections are ANSWER-FIRST (MN-48 decision 1): every h2 is a question a real
+// person asks, and the first 40-60 words answer it outright before any context.
+// The retrieval unit is a section, not a page — a section that builds to its
+// answer mostly does not get extracted at all.
 import BaseLayout from '../layouts/BaseLayout.astro';
+import BookCta from '../components/BookCta.astro';
+import business from '../data/business.json' with { type: 'json' };
 
-const MARKER = 'MLW-SPIKE-1';
-const DEPLOY_STAMP = 'deploy-stamp: 002';
-
-// AG-3 F5. Hand-set, because `updated` no longer defaults to the build date —
-// a page rebuilt by a push it had nothing to do with must not claim it changed.
-// Edit this when the page content actually changes. Story 1-6 replaces the page
-// and will set its own.
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 ---
 
 <BaseLayout
-  title="Movement Lab — deploy chain spike"
-  description="Staging placeholder for the Movement Lab website rebuild. Real content lands in story 1-6."
+  title={`Movement-Focused Chiropractor, Northern Beaches | ${business.name}`}
+  description="Movement-focused chiropractic in Wheeler Heights on Sydney's Northern Beaches. Get out of pain, find out why it happened, and build a body that keeps up. 30-minute appointments with Keegan Baldwin."
   updated={LAST_CHANGED}
 >
-  <h1>Movement Lab &mdash; deploy chain spike</h1>
+  <p class="brandline">{business.name} · Live Better, Longer</p>
+
+  <h1>Movement-focused chiropractic on the Northern Beaches</h1>
+
+  <p class="lead">Get out of pain, find why it happened, and build a body that keeps up.</p>
+
+  <BookCta slug="new-patient" label="Book an appointment" showDetail={true} />
+
+  <h2>What is movement-focused chiropractic?</h2>
   <p>
-    Staging only. This page is not the Movement Lab website. It exists to prove
-    that a change pushed to git becomes visible on a real URL.
+    It is chiropractic that treats how you move, not just where it hurts. I settle the acute problem,
+    find the movement pattern behind it, and give you a plan so it stops coming back. Appointments
+    are 30 minutes rather than 10, which is what makes that possible.
   </p>
-  <p>Marker: <code>{MARKER}</code></p>
-  <p>Stamp: <code>{DEPLOY_STAMP}</code></p>
+  <p>
+    If your shoulder, hip or knee is part of the problem, we address it. I combine spinal and joint
+    adjustments with hands-on muscle release and massage, and I base your rehab on what your
+    assessment actually showed rather than a generic sheet. Most patients need fewer visits overall.{' '}
+    <a href="/services/chiropractic-treatment/">More about chiropractic and movement</a>.
+  </p>
+
+  <h2>Who is this for?</h2>
+  <p>
+    Anyone in pain or stiffness who wants to know why, and anyone with no pain at all who wants more
+    out of their body. Those are the same problem seen at two stages. All ages, demographics and
+    levels of health and fitness are welcome.
+  </p>
+
+  <h2>What does it cost?</h2>
+  <p>
+    An initial consultation is $120 for one hour. A follow-up is $95 for 30 minutes. A Movement Plan
+    Analysis, which is the full mobility assessment and personalised routine, is $160 for one hour.
+    Treatments are health fund rebatable if you have chiropractic cover as an extra, and you can
+    claim at the time of payment or later with an invoice.{' '}
+    <a href="/services/">Full services and pricing</a>.
+  </p>
+
+  <h2>Where are you, and when are you open?</h2>
+  <p>
+    I practise from {business.address.venue} at {business.address.streetAddress},{' '}
+    {business.address.addressLocality}, on Sydney’s Northern Beaches. Full opening hours, the address
+    and my phone number are at the bottom of every page on this site.
+  </p>
+
+  <h2>Can I try something smaller first?</h2>
+  <p>
+    Yes. Weekly group classes at Just Train Gym in Cromer are $20 for an hour and are designed as a
+    low-commitment way to sample the same methods. There is a mobility and flexibility class and a
+    handstand class, both open to complete beginners.{' '}
+    <a href="/services/group-classes/">More about group classes</a>.
+  </p>
+
+  <h2>Where to next?</h2>
+  <ul class="next-links">
+    <li><a href="/contact/">Book an appointment</a></li>
+    <li><a href="/services/chiropractic-treatment/">Chiropractic &amp; Movement</a> — the main service page</li>
+    <li><a href="/about/">About Keegan</a> — background and approach</li>
+    <li><a href="/services/">Services and pricing</a></li>
+  </ul>
 </BaseLayout>
+
+<style>
+  /* The brand line Decision 3 moved off the h1. Styled as a mark, not as a
+     heading — it must not be an <h6> above the <h1>, which is exactly the
+     decorative-heading mistake G-7 exists to stop the rebuild reproducing. */
+  .brandline {
+    margin: 0 0 0.35rem;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--ml-muted);
+  }
+  h1 {
+    margin-top: 0;
+  }
+  .lead {
+    font-size: 1.125rem;
+  }
+  .next-links {
+    padding-left: 1.1rem;
+  }
+  .next-links li {
+    margin: 0.35rem 0;
+  }
+</style>

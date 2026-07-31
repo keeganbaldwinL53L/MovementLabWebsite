@@ -240,13 +240,16 @@ for (const file of pages) {
   //    asserted a PAGE uses it, so 1-6 could hand-type an apostrophe into eight
   //    titles and every check in this repo would pass.
   //
-  //    Exempt while the story 1-2 placeholder marker is still on the page. The
-  //    exemption removes itself: 1-6 deletes the marker, and this becomes a hard
-  //    requirement the moment it does.
-  const isPlaceholder = html.includes('MLW-SPIKE-1');
-  const title = html.match(/<title>([\s\S]*?)<\/title>/i)?.[1] ?? '';
-  if (!isPlaceholder && !title.includes(business.name)) {
-    fail(at(`<title> is "${title}" — it must carry "${business.name}" exactly (business.json)`));
+  //    PAGE-level, not TITLE-level, and that distinction matters. An earlier
+  //    version of this check demanded the exact name inside every <title>, and
+  //    it immediately failed the About page — whose title is "About Keegan
+  //    Baldwin, Chiropractor | Northern Beaches", a LOCKED copy decision
+  //    (MN-48 decision 2, revision 2). The check was wrong, not the title.
+  //    The actual risk F10 names is a MISSPELLING of the name, and the
+  //    apostrophe assertion below is what catches that, on every page, in copy
+  //    and titles and schema alike.
+  if (!html.includes(business.name)) {
+    fail(at(`the business name "${business.name}" appears nowhere on the page`));
   }
   if (/Keegan['’]s Movement Lab/.test(html)) {
     fail(

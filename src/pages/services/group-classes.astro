@@ -1,0 +1,125 @@
+---
+// Story 1-6. Group classes — KEPT but deliberately MINIMAL and DEMOTED (A1).
+//
+// Findable, not front. Keegan is not driving traffic here and it is out of the
+// launch nav; someone may still book, so the page has to be correct and
+// complete, just not competing with the main service page for attention.
+//
+// ⚠️ THE CLASS TIMES ON THE OLD SITE DISAGREED WITH THEMSELVES.
+// /services/group-classes/ said the handstand class is "Saturday 10am"; the old
+// /handstand-coaching/ page said "Sunday 11am". Both were live at the same time.
+// I cannot resolve that from the capture, and publishing a wrong class time
+// sends someone to a gym on the wrong day, so this page names the days WITHOUT
+// inventing a resolution and points at Cliniko for the actual bookable session.
+// Flagged for Keegan — see the desk handoff.
+//
+// ⚠️ OPS PRECONDITION carried from services.json: the Mobility & Flexibility
+// Group Class had NO bookable sessions scheduled in Cliniko as of 2026-07-29, so
+// its deep link renders "no appointments available this month". That is a Cliniko
+// data problem, not a build one, and it is Keegan's to schedule before launch.
+import BaseLayout from '../../layouts/BaseLayout.astro';
+import BookCta from '../../components/BookCta.astro';
+import { service } from '../../lib/schema.mjs';
+import { SITE_URL } from '../../lib/site-env.mjs';
+import business from '../../data/business.json' with { type: 'json' };
+
+const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+
+// G-8 — Service with NO offers node. Cliniko has no billable item for the
+// classes, so compact() drops offers rather than publishing a price the booking
+// system cannot honour. The $20 is stated in the page text, where it is a fact
+// about the class rather than a machine-readable offer Cliniko would have to
+// back.
+const SERVICE_NODE = service(SITE_URL, 'group-class');
+---
+
+<BaseLayout
+  title={`Group Classes, Northern Beaches | ${business.name}`}
+  description="Weekly mobility, flexibility and handstand classes at Just Train Gym, Cromer. $20 per class, one hour, all levels welcome. A low-commitment way to start."
+  updated={LAST_CHANGED}
+>
+  <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(SERVICE_NODE)} />
+
+  <h1>Group classes</h1>
+
+  <p class="lead">
+    Two weekly classes at Just Train Gym in Cromer, $20 each, one hour. Both are designed as a
+    low-barrier way to sample the same methods I use one-to-one, and both welcome complete beginners.
+  </p>
+
+  <h2>What happens in the mobility and flexibility class?</h2>
+  <p>
+    A general warm-up, then 5 to 6 targeted drills covering the major muscle groups of the lower
+    body. Each class is designed for all levels, with different levels of each exercise offered so
+    you can tailor it to yourself.
+  </p>
+  <p>
+    Some exercises involve weights or other tools like resistance bands to adjust the difficulty to
+    your individual level. Some will also be prescribed based on basic mobility tests, so you get a
+    personalised experience inside a group setting. If you have always wanted to touch your toes or
+    be comfortable in a squat, but only have the time or funds to chip away at it for an hour each
+    week, this class is for you.
+  </p>
+  <p>
+    <strong>What do I need?</strong> A yoga mat, foam roller or massage ball, and a towel are
+    recommended, although I often have a spare or two if you don’t have one.
+  </p>
+  <BookCta slug="group-class" label="Reserve a spot in the mobility class" />
+
+  <h2>What happens in the handstand class?</h2>
+  <p>
+    It takes you from never going upside down to your first 10-second hold and beyond. The class is
+    designed for complete beginners and intermediate students, focusing on proper technique and
+    time-tested drills that build the strength and control to reliably stay upside down.
+  </p>
+  <p>
+    These classes are community focused and designed to get you to a level where you can join the
+    handstand meetups I organise around the Northern Beaches. Hand balancing is usually a solitary
+    practice, and the meetups turn it into a group activity where we share knowledge and cheer each
+    other on.
+  </p>
+  <BookCta slug="handstand-class" label="Reserve a spot in the handstand class" />
+  <p>
+    <a href="/services/handstand/">One-to-one handstand coaching</a> is on its own page.
+  </p>
+
+  <h2>When and where do the classes run?</h2>
+  <p>
+    All group classes are held at Just Train Gym in Cromer. Current days and times are shown on the
+    booking page for each class, which is the only place they are guaranteed to be right.
+  </p>
+  <p>
+    <a href="/contact/">Open the booking page</a> to see the next available session.
+  </p>
+
+  <h2>Do you run workshops instead?</h2>
+  <p>
+    Yes, if you run a business with a space and a member group. Workshops are stand-alone deep dives
+    into a single skill: handstands, pancake, front splits, side splits, back bends, or arms-overhead
+    full flexion. Each is tailor made, and skills are modular so several can be combined into a
+    longer session.
+  </p>
+  <p>
+    Email <a href={`mailto:${business.email}`}>{business.email}</a> to talk about running one in your
+    space.
+  </p>
+
+  <h2>Where to next?</h2>
+  <ul class="next-links">
+    <li><a href="/contact/">Book a class or an appointment</a></li>
+    <li><a href="/services/chiropractic-treatment/">Chiropractic &amp; Movement</a> — the one-to-one work</li>
+    <li><a href="/services/">Services and pricing</a></li>
+  </ul>
+</BaseLayout>
+
+<style>
+  .lead {
+    font-size: 1.125rem;
+  }
+  .next-links {
+    padding-left: 1.1rem;
+  }
+  .next-links li {
+    margin: 0.35rem 0;
+  }
+</style>

@@ -152,8 +152,16 @@ jobs:
           DEPLOY_URL: ${{ env.DEPLOY_URL }}
 
       - name: Gate — the deploy artifacts exist
+        # ⚠️ THE MLW-SPIKE-1 ASSERTION WAS REMOVED HERE, IN THE SAME COMMIT AS
+        # story 1-6 (which replaced the placeholder home page that carried it).
+        # The 1-2 comment warned this had to happen together or the build fails
+        # closed, and it was right.
+        #
+        # Nothing is lost: the marker was a CONSTANT, so it survived a no-op
+        # deploy and reported green. dist/build-id.txt is the per-commit proof
+        # that can actually fail for the reason it exists, and it lives outside
+        # page content precisely so replacing a page cannot break it.
         run: |
-          grep -q "MLW-SPIKE-1" dist/index.html || { echo "::error::marker MLW-SPIKE-1 not in dist/index.html"; exit 1; }
           test -s dist/build-id.txt || { echo "::error::dist/build-id.txt missing or empty"; exit 1; }
 
           echo "build output:"
@@ -339,15 +347,19 @@ jobs:
           fi
           echo "LIVE: ${DEPLOY_URL} is serving ${GITHUB_SHA}"
 
-          # Secondary: the page itself renders and still carries its marker.
+          # Secondary: the page itself actually renders. The MLW-SPIKE-1 marker
+          # check that used to live here went with the placeholder page in story
+          # 1-6; the served page now has to carry the real business name, which
+          # is a stronger assertion because it is the name the whole Google
+          # corroboration depends on.
           BODY=$(curl -fsSL --max-time 30 "${DEPLOY_URL}") || {
             echo "::error::${DEPLOY_URL} did not return a successful response"; exit 1; }
-          if ! printf '%s' "$BODY" | grep -q "MLW-SPIKE-1"; then
-            echo "::error::marker MLW-SPIKE-1 NOT found in the served page"
+          if ! printf '%s' "$BODY" | grep -q "Keegans Movement Lab"; then
+            echo "::error::the served home page does not carry the business name"
             printf '%s' "$BODY" | head -40
             exit 1
           fi
-          printf '%s' "$BODY" | grep -o 'deploy-stamp: [0-9]*'
+          echo "served page renders and carries the business name"
 
       - name: Confirm the SERVED page matches the declared environment
         # Story 1-2. The build gate proved the ARTEFACT; this proves the thing

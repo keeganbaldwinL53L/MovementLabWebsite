@@ -1,0 +1,116 @@
+---
+// Story 1-6. The Book page.
+//
+// ⚠️ THIS IS THE ONE PAGE THAT GETS THE FULL CLINIKO EMBED (D5). Every other
+// page deep-links a single appointment type through <BookCta>. Two embeds on one
+// page is a known defect class — Cliniko's own snippet hard-codes a single
+// element id — and although ClinikoBooking fixes that properly with a per-
+// instance id, one embed per page remains the design preference because deep
+// links are lighter everywhere else.
+//
+// ⚠️ SCOPING IS CORRECTNESS, NOT POLISH. The Cliniko account is the SHARED
+// Restore Health Clinic account: unscoped it offers 13 appointment types across
+// 4 practitioners. An unscoped embed on Keegan's own site would let a visitor
+// book Adrian Tomiak, Jake Williams or a naturopath. ClinikoBooking makes the
+// business and practitioner ids a floor the caller cannot omit, so an unscoped
+// URL is not constructible through this API.
+//
+// ⚠️ THE OLD PAGE'S BOOKING NOTE IS DELIBERATELY NOT PORTED. It read
+// "Chiropractic and Mobility Services are provided within the same booking type.
+// Just leave a message in the booking note indicating which you would like to
+// focus on this session." That describes the PRE-redesign structure and is now
+// false: the Movement Plan Analysis is its own bookable type (D1/D5). Porting it
+// would have told patients to do the wrong thing. Recorded here because it is a
+// deliberate removal, not an oversight.
+//
+// ⚠️ THE PHONE NUMBER ON THE OLD PAGE IS NOT OURS. It read "call the clinic on
+// 0451 782 249" — that is Restore Health Clinic's line, not the NAP number. It
+// must never reach schema or the footer (business.json phoneNote). This page
+// uses business.phone, which is the number on the Google profile.
+import BaseLayout from '../layouts/BaseLayout.astro';
+import ClinikoBooking from '../components/ClinikoBooking.astro';
+import business from '../data/business.json' with { type: 'json' };
+
+const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+const { address } = business;
+---
+
+<BaseLayout
+  title={`Book an Appointment | ${business.name}`}
+  description="Book a chiropractic, movement or group class session with Keegan Baldwin at Restore Health Clinic, Wheeler Heights. Questions before booking? Call or email first."
+  updated={LAST_CHANGED}
+>
+  <h1>Book an appointment</h1>
+
+  <p class="lead">
+    Pick a time below. Every appointment type here is one of mine, so whichever you choose you are
+    booking with me.
+  </p>
+
+  {/* One embed, scoped by construction. slugs omitted = all five of Keegan's
+      types and nobody else's. */}
+  <ClinikoBooking title="Book an appointment with Keegan" />
+
+  <h2>Which appointment should I book?</h2>
+  <ul>
+    <li>
+      <strong>New patient, 1 hour, $120</strong> — if you have not seen me before, whatever the
+      reason.
+    </li>
+    <li>
+      <strong>Existing patient, 30 minutes, $95</strong> — a return visit for a new or old problem.
+    </li>
+    <li>
+      <strong>Movement Plan Analysis, 1 hour, $160</strong> — the full mobility assessment that
+      produces your personalised routine. You do not need to be in pain for this one.
+    </li>
+    <li>
+      <strong>Group classes, $20</strong> — mobility and flexibility, or handstands, at Just Train
+      Gym in Cromer. <a href="/services/group-classes/">More about the classes</a>.
+    </li>
+  </ul>
+
+  <h2>Have questions before booking?</h2>
+  <p>
+    Get in touch and I will answer them first. Email{' '}
+    <a href={`mailto:${business.email}`}>{business.email}</a> or call{' '}
+    <a href={`tel:${business.phoneE164}`}>{business.phone}</a>.
+  </p>
+
+  <h2>Where are the appointments?</h2>
+  <p>
+    All one-on-one in-person services are at {address.venue}, {address.streetAddress},{' '}
+    {address.addressLocality} {address.addressRegion} {address.postalCode}. Group classes are held
+    separately at Just Train Gym in Cromer.
+  </p>
+  {/* ⚠️ NO LINK HERE ON PURPOSE. The old page had a "visit the website" button,
+      but the capture recorded the button TEXT and not its href, and no project
+      artifact records the Restore Health Clinic URL. Guessing a domain for a
+      real third-party business is fabricating a fact that sends patients
+      somewhere I have not checked, so the sentence ships without the link and
+      the link goes in when Keegan supplies the address. */}
+  <p>
+    Restore Health Clinic is a separate business with its own practitioners and its own privacy
+    arrangements. Your clinical records are held there, in their practice management system, not by
+    this website.
+  </p>
+
+  <h2>Will I get a confirmation?</h2>
+  <p>
+    Yes, always. You will receive a confirmation email after booking. If you don’t see one, please
+    check your spam folder, then get in touch if it still hasn’t arrived.
+  </p>
+
+  <h2>Can I claim my health fund?</h2>
+  <p>
+    Yes, if your private health fund includes chiropractic cover. We can process it in clinic at the
+    time of payment if you have your card with you, or I can send you an invoice afterwards and you
+    can claim it yourself.
+  </p>
+</BaseLayout>
+
+<style>
+  .lead {
+    font-size: 1.125rem;
+  }
+</style>

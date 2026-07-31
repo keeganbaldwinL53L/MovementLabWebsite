@@ -1,0 +1,75 @@
+---
+// Story 1-6. A reusable FAQ block.
+//
+// ⚠️ THIS COMPONENT EMITS BOTH HALVES FROM ONE ARRAY, AND THAT IS THE POINT.
+// Spec G-8: FAQPage schema goes ONLY where the questions genuinely appear in the
+// page body. Marking up questions a visitor cannot see is precisely the mismatch
+// Google penalises. Passing the entries to a schema builder in the page head and
+// separately writing the visible questions in the body would let the two drift
+// the first time someone edits one of them.
+//
+// So the visible list and the JSON-LD are generated from the same `entries`
+// prop, by the same component. They cannot disagree. (Same shape as the
+// analytics flag in src/lib/analytics.mjs — one source, two consumers.)
+//
+// JSON-LD in the body is valid and is read by Google; it does not need to be in
+// the head, and putting it here is what keeps it welded to the visible content.
+//
+// 🔴 THE CHIROPRACTIC FAQ IS PORTED VERBATIM AND IS OUT OF REWRITE SCOPE.
+// It is the most citation-shaped asset the site owns: real questions, answers
+// that lead with the answer, prices visible in the text. Anyone MAY ADD a
+// question. Nobody may reword an existing one as a side effect of a content
+// pass — that is a deliberate decision with a named owner.
+import { faqPage } from '../lib/schema.mjs';
+
+interface Props {
+  /** Real questions with real answers. Rendered AND marked up from this array. */
+  entries: { question: string; answer: string }[];
+  heading?: string;
+  /** Heading level, so the block nests correctly wherever it is used (G-7). */
+  level?: 2 | 3;
+}
+
+const { entries, heading = 'Frequently Asked Questions', level = 2 } = Astro.props;
+const Heading = `h${level}` as 'h2' | 'h3';
+const schema = faqPage(entries);
+---
+
+<section class="faq">
+  <Heading>{heading}</Heading>
+
+  {
+    entries.map((e) => (
+      <details class="faq-item">
+        <summary>{e.question}</summary>
+        <p>{e.answer}</p>
+      </details>
+    ))
+  }
+
+  {/* Generated from the same array the visitor just read. */}
+  {schema && <script type="application/ld+json" set:html={JSON.stringify(schema)} />}
+</section>
+
+<style>
+  .faq {
+    margin: 2.5rem 0;
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--ml-rule);
+    padding: 0.85rem 0;
+  }
+  .faq-item summary {
+    cursor: pointer;
+    font-weight: 600;
+    /* The marker is the only affordance saying these open, so keep it. */
+    list-style-position: outside;
+  }
+  .faq-item summary:focus-visible {
+    outline: 2px solid var(--ml-deep);
+    outline-offset: 2px;
+  }
+  .faq-item p {
+    margin: 0.75rem 0 0.25rem;
+  }
+</style>

@@ -1,0 +1,110 @@
+---
+// Story 1-6. The launch navigation.
+//
+// FOUR ITEMS, AND THE SHORTNESS IS THE DECISION (Manny A2, Keegan D3).
+// The old WordPress nav carried eight: Home, Services, Chiropractic Treatment,
+// Mobility Coaching, Group Classes, Handstand Coaching, About Me, Book Here.
+// That spread a visitor's attention across four service pages when one of them
+// is the business. The launch nav is Home · Chiropractic & Movement · About ·
+// Book, and everything else stays findable through the services hub and links
+// in the body.
+//
+// ⚠️ BLOG IS DELIBERATELY ABSENT (D3). It is built and reachable at /blog/, and
+// it joins the nav once there are posts worth showing. Keegan: "we can start
+// making content but as a back up we can just leave it off at launch." Adding it
+// here early is how a launch ends up with an empty blog in the primary nav.
+import business from '../data/business.json' with { type: 'json' };
+
+interface Props {
+  /** Pathname of the current page, so the nav can mark where you are. */
+  current: string;
+}
+
+const { current } = Astro.props;
+
+const LINKS = [
+  { href: '/', label: 'Home' },
+  { href: '/services/chiropractic-treatment/', label: 'Chiropractic & Movement' },
+  { href: '/about/', label: 'About' },
+  { href: '/contact/', label: 'Book' },
+];
+
+// Trailing slashes everywhere, matching astro.config's trailingSlash: 'always'.
+// A link written without one costs a redirect hop on every click (G-1).
+const isCurrent = (href: string) => current === href;
+---
+
+{/* Skip link first in the DOM: a keyboard or screen-reader user should not have
+    to walk the whole nav on every page to reach the content. */}
+<a class="skip-link" href="#main">Skip to content</a>
+
+<header class="site-header">
+  <a class="brand" href="/">{business.name}</a>
+
+  <nav aria-label="Main">
+    <ul>
+      {
+        LINKS.map((l) => (
+          <li>
+            <a href={l.href} aria-current={isCurrent(l.href) ? 'page' : undefined}>
+              {l.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+  </nav>
+</header>
+
+<style>
+  .skip-link {
+    position: absolute;
+    left: -9999px;
+    top: 0;
+    background: var(--ml-paper);
+    color: var(--ml-ink);
+    padding: 0.6rem 1rem;
+    z-index: 10;
+  }
+  .skip-link:focus {
+    left: 0;
+  }
+  .site-header {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0.75rem 1.5rem;
+    padding-bottom: 1.25rem;
+    margin-bottom: 2.5rem;
+    border-bottom: 1px solid var(--ml-rule);
+  }
+  .brand {
+    font-weight: 700;
+    text-decoration: none;
+    color: var(--ml-ink);
+  }
+  .site-header nav ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    font-size: 0.9375rem;
+  }
+  .site-header nav a {
+    color: var(--ml-muted);
+    text-decoration: none;
+  }
+  .site-header nav a:hover,
+  .site-header nav a:focus-visible {
+    color: var(--ml-ink);
+    text-decoration: underline;
+  }
+  /* Where you are now, marked for sighted users as well as assistive tech. */
+  .site-header nav a[aria-current='page'] {
+    color: var(--ml-ink);
+    font-weight: 600;
+  }
+</style>
