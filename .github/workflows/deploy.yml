@@ -277,8 +277,16 @@ jobs:
           # build if all three fail. What it must NOT do is silently mask a
           # genuinely dead key — hence the per-attempt output and the final
           # error naming how many attempts were made.
+          # BUDGET WIDENED after run #19 failed THROUGH the first version of this
+          # retry (3 attempts, ~30s of backoff). Measured pattern across runs
+          # 12-19: fail, success, success, fail, success, fail — roughly half,
+          # and NOT explained by spacing, since #18 passed 148s after #17 failed
+          # while #19 failed 654s after #18 passed. So the outage windows are
+          # longer than 30s but shorter than the gaps between runs. 5 attempts
+          # with 15/30/60/120s backoff covers ~3.7 minutes, which is a much
+          # better match for a window that survived 30s.
           AUTH_OK=0
-          for ATTEMPT in 1 2 3; do
+          for ATTEMPT in 1 2 3 4 5; do
             if ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
                    -o StrictHostKeyChecking=yes \
                    -o UserKnownHostsFile=~/.ssh/known_hosts \
@@ -290,12 +298,12 @@ jobs:
             fi
             echo "attempt ${ATTEMPT} failed:"
             sed 's/^/    /' /tmp/ssherr
-            [ "$ATTEMPT" -lt 3 ] && sleep $((ATTEMPT * 10))
+            case "$ATTEMPT" in 1) sleep 15 ;; 2) sleep 30 ;; 3) sleep 60 ;; 4) sleep 120 ;; esac
           done
 
           if [ "$AUTH_OK" != "1" ]; then
-            echo "::error::could not authenticate to the server after 3 attempts"
-            echo "  Three failures in a row is NOT the intermittent pattern this retry exists for."
+            echo "::error::could not authenticate to the server after 5 attempts over ~3.7 minutes"
+            echo "  Five failures over ~3.7 minutes is NOT the intermittent pattern this retry exists for."
             echo "  Check the secrets, and check hPanel for an SSH or host-key change."
             sed 's/^/  /' /tmp/ssherr
             exit 1
