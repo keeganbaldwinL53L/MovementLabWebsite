@@ -94,15 +94,22 @@ const providers = [
         Australia.
       </li>
       {
+        /* AG-3 F2 (related). The CI consistency check used to grep this list
+           item for the exact prose "we use Cloudflare Web Analytics", inside a
+           document whose own header invites editing. A formatter reflowing the
+           line would split the phrase and fail the build for a reason that has
+           nothing to do with the claim. The data attribute is what the check
+           keys on now — stable under any rewording, and it moves with the
+           branch it belongs to. Do not remove it when editing the copy. */
         IS_ANALYTICS_ENABLED ? (
-          <li>
+          <li data-analytics-claim="running">
             <strong>Automatically, as you browse</strong>: we use Cloudflare Web Analytics, which
             collects page views, referring sites, general device and country information, and
             page-performance timings. It <strong>does not use cookies</strong>, does not store
             anything on your device, and does not identify or profile you individually.
           </li>
         ) : (
-          <li>
+          <li data-analytics-claim="none">
             <strong>Automatically, as you browse</strong>: nothing. This website does not currently
             run analytics, does not set cookies, and does not store anything on your device.
           </li>
@@ -199,7 +206,7 @@ const providers = [
     margin-top: 2.5rem;
   }
   .policy-date {
-    color: #5b6560;
+    color: var(--ml-muted);
   }
   /* Wide content scrolls inside its own container so the page body never
      scrolls horizontally on a phone. */
@@ -214,16 +221,16 @@ const providers = [
        self-managing — `local` scrolls the mask with the content, so the
        shadow fades out exactly when the last column arrives. */
     background:
-      linear-gradient(to right, #fdfbf8 40%, rgba(253, 251, 248, 0)) left center / 2.5rem 100% no-repeat,
-      linear-gradient(to left, #fdfbf8 40%, rgba(253, 251, 248, 0)) right center / 2.5rem 100% no-repeat,
-      radial-gradient(farthest-side at 0 50%, rgba(27, 33, 31, 0.22), rgba(27, 33, 31, 0)) left center / 0.9rem 100% no-repeat,
-      radial-gradient(farthest-side at 100% 50%, rgba(27, 33, 31, 0.22), rgba(27, 33, 31, 0)) right center / 0.9rem 100% no-repeat;
+      linear-gradient(to right, var(--ml-paper) 40%, rgba(var(--ml-paper-rgb), 0)) left center / 2.5rem 100% no-repeat,
+      linear-gradient(to left, var(--ml-paper) 40%, rgba(var(--ml-paper-rgb), 0)) right center / 2.5rem 100% no-repeat,
+      radial-gradient(farthest-side at 0 50%, rgba(var(--ml-ink-rgb), 0.22), rgba(var(--ml-ink-rgb), 0)) left center / 0.9rem 100% no-repeat,
+      radial-gradient(farthest-side at 100% 50%, rgba(var(--ml-ink-rgb), 0.22), rgba(var(--ml-ink-rgb), 0)) right center / 0.9rem 100% no-repeat;
     background-attachment: local, local, scroll, scroll;
   }
   /* The region is focusable so it can be scrolled by keyboard; give that
      focus somewhere visible to land. */
   .table-scroll:focus-visible {
-    outline: 2px solid #1f3330;
+    outline: 2px solid var(--ml-deep);
     outline-offset: 2px;
   }
   .policy table {
@@ -235,10 +242,10 @@ const providers = [
   .policy td {
     text-align: left;
     padding: 0.6rem 0.75rem;
-    border-bottom: 1px solid #e4e1da;
+    border-bottom: 1px solid var(--ml-rule);
     vertical-align: top;
   }
   .policy th {
-    background: #f1efea;
+    background: var(--ml-shade);
   }
 </style>

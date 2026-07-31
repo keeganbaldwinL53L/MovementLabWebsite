@@ -47,8 +47,8 @@ const priceText = service.price === null ? null : `$${service.price}`;
   }
   .book-cta a {
     display: inline-block;
-    background: #ff3502;
-    color: #fdfbf8;
+    background: var(--ml-accent);
+    color: var(--ml-paper);
     padding: 0.6rem 1.2rem;
     border-radius: 4px;
     text-decoration: none;
@@ -56,11 +56,11 @@ const priceText = service.price === null ? null : `$${service.price}`;
   }
   .book-cta a:hover,
   .book-cta a:focus-visible {
-    background: #1f3330;
+    background: var(--ml-deep);
   }
   .book-cta-detail {
     margin-left: 0.75rem;
-    color: #5b6560;
+    color: var(--ml-muted);
     font-size: 0.9375rem;
   }
 </style>

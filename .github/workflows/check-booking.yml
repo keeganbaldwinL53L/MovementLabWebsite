@@ -1,0 +1,61 @@
+name: Booking links still point at Keegan's five types
+
+# AG-3 F8. This exists because the project named its own silent-failure mode and
+# then had no trigger for the one detector that catches it.
+#
+# src/data/services.json says it plainly: if an appointment type is deleted and
+# recreated in Cliniko it gets a NEW id, and the stale deep link does not error —
+# it falls back to a WIDER list. The link keeps working. It just quietly starts
+# offering the shared Restore Health Clinic's other practitioners.
+#
+# check-booking-links.mjs detects exactly that, and keeping it OUT of the deploy
+# gate is the right call: it calls a third party, and a Cliniko outage must never
+# block shipping a text change. But the consequence was that the detector ran
+# only when a human remembered, while the ids can change on any day after launch
+# and the symptom is invisible from the site.
+#
+# So it runs on a schedule instead, in its OWN workflow. A failure here is a
+# notification; it cannot touch the deploy path.
+
+on:
+  schedule:
+    # 09:00 Sydney on Mondays (23:00 UTC Sunday during AEDT, 22:00 during AEST —
+    # cron is UTC-only, so this drifts by an hour across daylight saving. That is
+    # fine for a weekly canary and not worth two cron lines to fix).
+    - cron: '0 22 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-booking:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out main
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
+
+      - name: Set up node
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
+        with:
+          node-version: '24'
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Ask Cliniko what each booking link actually renders
+        # The anti-tautology control is inside the script: it also fetches the
+        # UNSCOPED endpoint and asserts it returns MORE types than the scoped
+        # one. Without that comparison every check would pass just as happily if
+        # Cliniko had started ignoring the parameters entirely.
+        run: npm run check:booking
+
+      - name: Say what a failure here means
+        if: failure()
+        run: |
+          echo "::warning::A booking link no longer renders the appointment type it should."
+          echo "Most likely cause: a type was deleted and recreated in Cliniko, so its id changed."
+          echo "The site is still live and the links still work — they are just offering the wrong thing,"
+          echo "and possibly another practitioner at the shared clinic."
+          echo "Fix: update the appointment_type_id values in src/data/services.json."

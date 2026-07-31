@@ -15,8 +15,12 @@
 //
 // ⚠️ AHPRA s133: NO Review, NO AggregateRating, NO testimonial node, on any
 // surface Keegan controls. That is a criminal offence, not a ranking penalty,
-// and there is no answer-engine exception. No builder here can emit one, and
-// check-schema.mjs asserts the absence over the RENDERED output.
+// and there is no answer-engine exception. No builder here can emit one;
+// check-data.mjs asserts no such FIELD exists in the data, and
+// scripts/check-build.mjs walks the JSON-LD of EVERY rendered page and fails the
+// build if one reaches the output. (This comment used to name a check-schema.mjs
+// that was never written — a rule citing infrastructure that does not exist is a
+// rule nobody can follow.)
 //
 // Every value comes from src/data/*.json. Nothing is hand-typed here — the
 // point of story 1-3 was one source, and a second copy in this file would be

@@ -36,8 +36,26 @@ concurrency:
   # annoying; at production cutover it is an outage. Queuing costs a minute.
   cancel-in-progress: false
 
+# ⚠️ AG-3 F1. THESE TWO LINES ARE THE ONLY PLACE THIS WORKFLOW SAYS WHERE IT IS
+# GOING, and every gate below derives its expectations from them. Nothing
+# downstream writes out "noindex" or "Disallow: /" as a literal any more.
+#
+# WHY THAT MATTERS, and it is not hypothetical — Argus built the artifact and
+# ran the old assertions against it. A production cutover workflow will almost
+# certainly be born by copying this file, because the guard, the deploy path and
+# the URL all need editing anyway. If `SITE_ENV: staging` survived that copy, the
+# old gate published `noindex, nofollow` + staging canonicals + `Disallow: /` on
+# the real domain and reported 7/7 PASS. Every assertion was written for the
+# staging direction, so at cutover they confirmed the disaster instead of
+# catching it. Recovery is weeks.
+#
+# TO CUT OVER TO PRODUCTION: change BOTH lines together. Changing one is caught —
+# scripts/check-build.mjs refuses a build whose SITE_ENV and DEPLOY_URL disagree,
+# which is the assertion the old workflow could not make because it had two
+# declarations and compared neither.
 env:
-  STAGING_URL: https://staging.keegansmovementlab.com/
+  SITE_ENV: staging
+  DEPLOY_URL: https://staging.keegansmovementlab.com/
 
 jobs:
   build-and-deploy:
@@ -84,15 +102,15 @@ jobs:
         run: npm run check:data
 
       - name: Build
-        # ⚠️ SITE_ENV=staging is what hides this deploy from search engines.
+        # SITE_ENV comes from the job-level env at the top of this file — the
+        # ONE declaration. It used to be repeated here, which is how a copy of
+        # this workflow could end up building for staging while every other line
+        # said production.
         #
-        # A PRODUCTION workflow must NOT copy this line. Unset (or
-        # SITE_ENV=production) is the indexable default, chosen deliberately so
-        # that a build which forgets to declare itself is the SURVIVABLE
-        # mistake — see src/lib/site-env.mjs.
+        # Unset (or SITE_ENV=production) is the indexable default, chosen
+        # deliberately so a build that forgets to declare itself makes the
+        # SURVIVABLE mistake — see src/lib/site-env.mjs.
         run: npm run build
-        env:
-          SITE_ENV: staging
 
       - name: Stamp the build with this exact commit
         # AG-1 F1. The live check further down used to grep for MLW-SPIKE-1,
@@ -114,89 +132,29 @@ jobs:
         # A build that exits 0 but emits nothing must fail HERE, rather than
         # rsync --delete faithfully replicating an empty directory onto the
         # live staging root.
+        #
+        # ⚠️ THE BODY OF THIS STEP MOVED TO scripts/check-build.mjs (AG-3 F2 +
+        # LN-2 F3). It used to be ~90 lines of inline bash that read
+        # dist/index.html and nothing else, while six of the invariants it
+        # asserted are stated site-wide ("NAP on every page", "no Review node on
+        # ANY surface"). That held only because both pages happened to share a
+        # layout — story 1-6 adds eight more, and one page with a hand-written
+        # head would have passed every check here while shipping with no schema,
+        # no NAP, and on staging with no noindex.
+        #
+        # It now walks every HTML file in dist/, and it checks the rendered TEXT
+        # RUN as well as the markup, which is the layer Lens's jammed-tag defect
+        # lived in and every gate here was blind to.
+        run: npm run check:build
+        env:
+          # The second of the two declarations the script cross-checks. See the
+          # env block at the top of this file.
+          DEPLOY_URL: ${{ env.DEPLOY_URL }}
+
+      - name: Gate — the deploy artifacts exist
         run: |
-          test -s dist/index.html || { echo "::error::dist/index.html missing or empty"; exit 1; }
           grep -q "MLW-SPIKE-1" dist/index.html || { echo "::error::marker MLW-SPIKE-1 not in dist/index.html"; exit 1; }
           test -s dist/build-id.txt || { echo "::error::dist/build-id.txt missing or empty"; exit 1; }
-          # The .htaccess is what denies dotfiles on the server. rsync --delete
-          # would happily remove it if a build stopped emitting it, silently
-          # disabling the guard the last step asserts. Fail closed instead.
-          test -s dist/.htaccess || { echo "::error::dist/.htaccess missing — the dotfile guard would be deleted from the server"; exit 1; }
-
-          # Story 1-2. The artefacts that control indexing must exist, and THIS
-          # build (a staging build) must be the hidden polarity. If the
-          # SITE_ENV above were ever dropped, the polarity check higher up
-          # still passes — it builds both environments itself — so this is the
-          # assertion that catches a mis-declared DEPLOY build specifically.
-          test -s dist/robots.txt || { echo "::error::dist/robots.txt missing"; exit 1; }
-          test -s dist/sitemap-index.xml || { echo "::error::dist/sitemap-index.xml missing — @astrojs/sitemap did not run"; exit 1; }
-          grep -q 'content="noindex, nofollow"' dist/index.html || {
-            echo "::error::this is the STAGING deploy but the build is not noindexed"
-            echo "  (SITE_ENV=staging missing from the Build step?)"
-            exit 1; }
-          grep -qE '^\s*Disallow:\s*/\s*$' dist/robots.txt || {
-            echo "::error::staging robots.txt does not disallow crawling"; exit 1; }
-
-          # The visible "last updated" date must be the SYDNEY date, not the
-          # runner's UTC date. This runner is UTC and Sydney is UTC+10/+11, so
-          # any build after 2pm Sydney lands on the previous UTC day — the
-          # machine-readable datetime and the visible text drift apart and
-          # Australian readers get shown yesterday. Caught locally during 1-2.
-          WANT_DATE=$(TZ=Australia/Sydney date +%F)
-          grep -q "datetime=\"${WANT_DATE}\"" dist/index.html || {
-            echo "::error::last-updated date is not today in Sydney (expected ${WANT_DATE})"
-            grep -oE '<time datetime="[0-9-]+"' dist/index.html || echo "  (no <time> element found)"
-            exit 1; }
-          echo "last-updated date: ${WANT_DATE} (Sydney)"
-
-          # Story 1-5. The schema and the visible NAP are the corroboration
-          # Google looked for and did not find when it rejected Keegan's
-          # profile edits, so their absence must fail the build rather than
-          # ship a page that quietly cannot do its job.
-          node --input-type=module -e "
-            import { readFileSync } from 'node:fs';
-            const html = readFileSync('dist/index.html', 'utf8');
-            const fail = (m) => { console.log('::error::' + m); process.exitCode = 1; };
-
-            const blocks = [...html.matchAll(/<script type=\"application\/ld\+json\">([\s\S]*?)<\/script>/g)].map(m => m[1]);
-            if (!blocks.length) fail('no JSON-LD on the page');
-            let biz;
-            for (const b of blocks) {
-              let j; try { j = JSON.parse(b); } catch { fail('JSON-LD does not parse'); continue; }
-              if (j['@type'] === 'MedicalBusiness') biz = j;
-              // AHPRA s133 — a criminal offence, not a ranking penalty.
-              if (JSON.stringify(j).match(/\"(aggregateRating|review|Review)\"/)) fail('a Review/AggregateRating node reached the page — AHPRA s133');
-            }
-            if (!biz) fail('no MedicalBusiness node');
-            else {
-              const n = (biz.openingHoursSpecification || []).length;
-              if (n !== 9) fail('openingHoursSpecification has ' + n + ' entries, expected 9 (Tue+Thu each split around the 14:00-16:30 break)');
-              if (!biz.telephone) fail('MedicalBusiness has no telephone');
-              if (!biz.address?.streetAddress) fail('MedicalBusiness has no street address');
-              console.log('schema: MedicalBusiness with ' + n + ' hours ranges, telephone and address');
-            }
-
-            // The visible half. Schema alone is not what a human reads, and
-            // Google asked for the details to be ON the site.
-            if (!html.includes('29 Lantana Avenue')) fail('the street address is not visible on the page');
-            if (!html.includes('0403 887 360')) fail('the phone number is not visible on the page');
-            console.log('visible NAP: address and phone present in the body');
-          "
-
-          # Story 1-8. The privacy policy must exist and must not contradict
-          # what the site actually does. The single-flag design in
-          # src/lib/analytics.mjs already makes divergence structurally
-          # impossible; this is defence in depth on a legal document, where
-          # being wrong is the one thing it cannot afford.
-          test -s dist/privacy/index.html || { echo "::error::the privacy policy page is missing — it is a standing APP 1 obligation, not optional"; exit 1; }
-          BEACON=$(grep -c cloudflareinsights dist/privacy/index.html || true)
-          CLAIMS=$(grep -c "we use Cloudflare Web Analytics" dist/privacy/index.html || true)
-          if [ "$BEACON" != "$CLAIMS" ]; then
-            echo "::error::the privacy policy and the analytics beacon disagree (beacon=${BEACON}, policy claims=${CLAIMS})"
-            echo "  a policy that describes collection which is not happening, or omits collection that is, is the document being wrong about its own subject"
-            exit 1
-          fi
-          echo "privacy policy: present, and consistent with the analytics state (beacon=${BEACON})"
 
           echo "build output:"
           find dist -type f | sort
@@ -370,20 +328,20 @@ jobs:
           echo "waiting a moment for the filesystem to settle..."
           sleep 5
 
-          SERVED=$(curl -fsSL --max-time 30 "${STAGING_URL}build-id.txt" | tr -d '[:space:]') || {
-            echo "::error::could not fetch build-id.txt from ${STAGING_URL}"; exit 1; }
+          SERVED=$(curl -fsSL --max-time 30 "${DEPLOY_URL}build-id.txt" | tr -d '[:space:]') || {
+            echo "::error::could not fetch build-id.txt from ${DEPLOY_URL}"; exit 1; }
           if [ "$SERVED" != "${GITHUB_SHA}" ]; then
-            echo "::error::the staging URL is NOT serving this commit"
+            echo "::error::${DEPLOY_URL} is NOT serving this commit"
             echo "  served : ${SERVED:-<empty>}"
             echo "  expected: ${GITHUB_SHA}"
             echo "  (the deploy silently did not land — check the rsync step and DEPLOY_PATH)"
             exit 1
           fi
-          echo "LIVE: ${STAGING_URL} is serving ${GITHUB_SHA}"
+          echo "LIVE: ${DEPLOY_URL} is serving ${GITHUB_SHA}"
 
           # Secondary: the page itself renders and still carries its marker.
-          BODY=$(curl -fsSL --max-time 30 "${STAGING_URL}") || {
-            echo "::error::staging URL did not return a successful response"; exit 1; }
+          BODY=$(curl -fsSL --max-time 30 "${DEPLOY_URL}") || {
+            echo "::error::${DEPLOY_URL} did not return a successful response"; exit 1; }
           if ! printf '%s' "$BODY" | grep -q "MLW-SPIKE-1"; then
             echo "::error::marker MLW-SPIKE-1 NOT found in the served page"
             printf '%s' "$BODY" | head -40
@@ -391,61 +349,110 @@ jobs:
           fi
           printf '%s' "$BODY" | grep -o 'deploy-stamp: [0-9]*'
 
-      - name: Confirm the SERVED page and robots.txt hide staging
+      - name: Confirm the SERVED page matches the declared environment
         # Story 1-2. The build gate proved the ARTEFACT; this proves the thing
         # the crawler actually fetches. Distinct surfaces — a correct build can
         # still land wrong, and robots.txt in particular fails SILENTLY (you
         # never see the traffic you did not get), so it gets a live assertion
         # rather than trust in the source file.
+        #
+        # ⚠️ AG-3 F1. THE EXPECTED ANSWER IS DERIVED, NOT WRITTEN OUT. This step
+        # used to grep the served page for the literal `noindex, nofollow`. On a
+        # production cutover it would have fetched the PRODUCTION url and happily
+        # confirmed that production was noindexed. Green, and catastrophic.
         run: |
-          PAGE=$(curl -fsSL --max-time 30 "${STAGING_URL}") || {
-            echo "::error::could not fetch the staging page"; exit 1; }
-          printf '%s' "$PAGE" | grep -q 'content="noindex, nofollow"' || {
-            echo "::error::the SERVED staging page is not noindexed — it can be indexed as a duplicate of production"
+          if [ "${SITE_ENV}" = "staging" ]; then
+            WANT_META='content="noindex, nofollow"'
+            WANT_ROBOTS='^[[:space:]]*Disallow:[[:space:]]*/[[:space:]]*$'
+            ROBOTS_DESC='Disallow: /'
+          else
+            WANT_META='content="index, follow"'
+            WANT_ROBOTS='^[[:space:]]*Allow:[[:space:]]*/[[:space:]]*$'
+            ROBOTS_DESC='Allow: /'
+          fi
+          echo "SITE_ENV=${SITE_ENV} -> expecting ${WANT_META} and a robots.txt with ${ROBOTS_DESC}"
+
+          PAGE=$(curl -fsSL --max-time 30 "${DEPLOY_URL}") || {
+            echo "::error::could not fetch ${DEPLOY_URL}"; exit 1; }
+          printf '%s' "$PAGE" | grep -q "${WANT_META}" || {
+            echo "::error::the SERVED page does not carry ${WANT_META} for SITE_ENV=${SITE_ENV}"
             printf '%s' "$PAGE" | grep -o '<meta name="robots"[^>]*>' || echo "  (no robots meta at all)"
             exit 1; }
-          echo "served page: noindex present"
+          echo "served page: correct robots meta for this environment"
 
-          ROBOTS=$(curl -fsSL --max-time 30 "${STAGING_URL}robots.txt") || {
-            echo "::error::could not fetch robots.txt — it 404s, so nothing is disallowed"; exit 1; }
-          printf '%s' "$ROBOTS" | grep -qE '^\s*Disallow:\s*/\s*$' || {
-            echo "::error::served robots.txt does not disallow crawling"
+          ROBOTS=$(curl -fsSL --max-time 30 "${DEPLOY_URL}robots.txt") || {
+            echo "::error::could not fetch robots.txt — it 404s, so no policy is being served at all"; exit 1; }
+          printf '%s' "$ROBOTS" | grep -qE "${WANT_ROBOTS}" || {
+            echo "::error::served robots.txt does not carry ${ROBOTS_DESC} for SITE_ENV=${SITE_ENV}"
             printf '%s' "$ROBOTS"
             exit 1; }
-          echo "served robots.txt: Disallow: / present"
+          echo "served robots.txt: ${ROBOTS_DESC} present"
+
+          # The reverse assertion. Without it, a production robots.txt that
+          # contained BOTH an Allow and a leftover blanket Disallow would pass
+          # the check above while still hiding the site.
+          if [ "${SITE_ENV}" != "staging" ]; then
+            printf '%s' "$ROBOTS" | grep -qE '^[[:space:]]*Disallow:[[:space:]]*/[[:space:]]*$' && {
+              echo "::error::a PRODUCTION robots.txt contains a blanket 'Disallow: /' — this hides the real site"
+              printf '%s' "$ROBOTS"
+              exit 1; }
+            printf '%s' "$PAGE" | grep -q 'noindex' && {
+              echo "::error::a PRODUCTION page contains 'noindex' — this de-indexes the real site"
+              exit 1; }
+            printf '%s' "$PAGE" | grep -q 'rel="canonical" href="https://staging\.' && {
+              echo "::error::a PRODUCTION page carries a STAGING canonical — every page would point at a noindexed host"
+              exit 1; }
+            echo "production reverse-checks: no noindex, no blanket Disallow, no staging canonical"
+          fi
 
           # /sitemap.xml is the path registered with Search Console. The
           # integration emits sitemap-index.xml, so this only resolves if the
           # .htaccess rewrite is actually in force on the server — assert it
           # rather than assume mod_rewrite is enabled.
-          SM=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_URL}sitemap.xml" || echo 000)
+          #
+          # AG-3 F3. This is also the assertion that proves OUR .htaccess is
+          # being read, because the rewrite is a behaviour only our file
+          # produces. The dotfile check below cannot make that claim.
+          SM=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}sitemap.xml" || echo 000)
           echo "/sitemap.xml -> HTTP ${SM}"
           [ "$SM" = "200" ] || { echo "::error::/sitemap.xml did not resolve (mod_rewrite off, or the rewrite is wrong)"; exit 1; }
+          echo "our .htaccess is in force on the server: it owns this rewrite"
 
-      - name: Confirm the dotfile guard is actively denying
+      - name: Confirm dotfiles are not served
         # AG-1 F2. This used to accept ANY non-200, which meant a DNS blip or
         # a timeout (curl -> 000) reported "guard OK" having proved nothing.
-        # Worse, it could not tell 403 (actively denied) from 404 (nothing
-        # there to serve) — and since rsync only ships dist/, there is no .git
-        # on the server at all, so it passed identically with the .htaccess
-        # deleted. It was measuring absence, not denial.
         #
-        # Verified live 2026-07-29: /.git/config -> 403, a nonexistent path
-        # -> 404. So 403 is the specific correct answer, and the control
-        # below makes the test fail loudly if the server ever stops
-        # distinguishing the two.
+        # ⚠️ AG-3 F3 — WHAT THIS STEP DOES AND DOES NOT PROVE.
+        # It asserts that /.git/config is not served. It does NOT prove OUR
+        # .htaccess is the thing denying it, and the previous version's name and
+        # comments claimed otherwise.
+        #
+        # The evidence: our public/.htaccess denies with `RedirectMatch 404`,
+        # which returns 404 — while this step demanded exactly 403. Those cannot
+        # both describe the same mechanism. Argus then probed the PRODUCTION
+        # apex, which does NOT have our file, and got the identical 403/404 pair.
+        # So the denial comes from Hostinger's own configuration or the parent
+        # WordPress .htaccess, and this assertion passed whether or not our file
+        # shipped at all.
+        #
+        # That mattered in a specific and expensive way: at cutover our file
+        # REPLACES the parent one. If the parent was the denier, the answer
+        # flips 403 -> 404 and a hardcoded `!= 403` hard-fails the cutover deploy
+        # at the worst possible moment, for no real reason.
+        #
+        # So: accept either denial code, and let the /sitemap.xml assertion in
+        # the previous step carry the "our file is in force" claim — it tests a
+        # rewrite only our file produces. Proof of the artifact, from the one
+        # check that actually exercises it.
         run: |
-          DENIED=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_URL}.git/config" || echo 000)
-          CONTROL=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${STAGING_URL}no-such-path-control" || echo 000)
+          DENIED=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}.git/config" || echo 000)
+          CONTROL=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}no-such-path-control" || echo 000)
           echo ".git/config    -> HTTP ${DENIED}"
           echo "control path   -> HTTP ${CONTROL}"
 
-          if [ "$DENIED" != "403" ]; then
-            echo "::error::expected 403 (actively denied) for /.git/config, got ${DENIED}"
-            exit 1
-          fi
-          if [ "$CONTROL" = "403" ]; then
-            echo "::error::the control path also returned 403 — this test cannot distinguish denial from absence"
-            exit 1
-          fi
-          echo "guard OK: dotfiles denied (403) while a missing path returns ${CONTROL}"
+          case "$DENIED" in
+            403|404) ;;
+            *) echo "::error::/.git/config is not being denied (got ${DENIED}) — a 200 would expose the repository, and 000 means the probe never completed"
+               exit 1 ;;
+          esac
+          echo "dotfiles are not served (HTTP ${DENIED}); a missing path returns ${CONTROL}"

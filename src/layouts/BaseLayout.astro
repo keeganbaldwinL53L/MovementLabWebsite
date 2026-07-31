@@ -15,11 +15,27 @@ interface Props {
   description: string;
   /** Override the OG image path. Root-relative. */
   image?: string;
-  /** Visible "last updated" date. Defaults to the build date. */
-  updated?: Date;
+  /**
+   * Visible "last updated" date. REQUIRED, and deliberately has no default.
+   *
+   * AG-3 F5. This used to default to `new Date()`, which meant a static site
+   * rebuilt on every push re-stamped every untouched page as "updated today",
+   * forever. That is not a freshness signal, it is noise, and on a health site
+   * it is a small untruth on every page.
+   *
+   * privacy.astro had already worked this out and opted out by hand, with the
+   * right reasoning written down: a policy's "last updated" means the date the
+   * POLICY changed. That reasoning is not privacy-specific — it is just as true
+   * of a services page. So every page now states its date deliberately, and a
+   * page nobody has touched keeps its real one.
+   *
+   * A visible date is one of the few things the controlled evidence actually
+   * supports (reconciliation § 2), which is exactly why it has to be true.
+   */
+  updated: Date;
 }
 
-const { title, description, image = '/og-default.png', updated = new Date() } = Astro.props;
+const { title, description, image = '/og-default.png', updated } = Astro.props;
 
 // Canonical is SELF-referential, including on staging. Pointing staging's
 // canonical at production would be a lie about which document this is; the
@@ -87,6 +103,43 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         the two can never disagree about whether analytics are running. */}
     <Analytics />
 
+    {/* LN-2 F4. The design tokens, and the ONLY place a raw colour is written.
+        Global rather than scoped, because custom properties inherit: every
+        component's own scoped <style> reads these with var() instead of
+        repeating the literal.
+
+        The finding was the RECURRENCE, not the values — #5b6560 appeared five
+        times across four files, #e4e1da three times, and a hand-copied hex that
+        happens to be correct today is the argument FOR the token, not evidence
+        the risk is retired. Story 1-6 adds eight pages; without this, it adds
+        eight more chances to typo a colour that no check would catch.
+
+        --ml-ink and --ml-deep are two near-identical dark greens. Argus read
+        them as probably meant to be one value and is probably right, but
+        collapsing them is a design decision that belongs with Keegan's open
+        accent call (LN-2 F1), not a refactor. Kept distinct and named so the
+        question is visible rather than buried in two hex literals. */}
+    <style is:global>
+      :root {
+        --ml-paper: #fdfbf8; /* page background */
+        --ml-ink: #1b211f; /* body text */
+        --ml-muted: #5b6560; /* secondary text, labels */
+        --ml-rule: #e4e1da; /* hairlines and table borders */
+        --ml-shade: #f1efea; /* table header fill */
+        --ml-code: #e9e6df; /* inline code fill */
+        --ml-deep: #1f3330; /* button hover, focus outline */
+        --ml-accent: #ff3502; /* the booking call to action — LN-2 F1, Keegan's open call */
+
+        /* Channel forms, for the few places that need a fade to transparent.
+           A gradient fading to the CSS keyword `transparent` is a fade to
+           transparent BLACK, which greys the middle of the ramp. These exist so
+           the fade matches its own colour, and so the pair cannot drift apart
+           from the hex above by hand. */
+        --ml-paper-rgb: 253, 251, 248;
+        --ml-ink-rgb: 27, 33, 31;
+      }
+    </style>
+
     <style>
       body {
         text-wrap: pretty;
@@ -95,8 +148,8 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         margin: 0 auto;
         padding: 2rem 1.5rem 4rem;
         line-height: 1.6;
-        color: #1b211f;
-        background: #fdfbf8;
+        color: var(--ml-ink);
+        background: var(--ml-paper);
       }
       h1,
       h2,
@@ -104,16 +157,16 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         text-wrap: balance;
       }
       code {
-        background: #e9e6df;
+        background: var(--ml-code);
         padding: 0.15em 0.4em;
         border-radius: 3px;
       }
       .site-updated {
         margin-top: 3rem;
         padding-top: 1rem;
-        border-top: 1px solid #e4e1da;
+        border-top: 1px solid var(--ml-rule);
         font-size: 0.875rem;
-        color: #5b6560;
+        color: var(--ml-muted);
       }
     </style>
   </head>

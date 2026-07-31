@@ -10,11 +10,18 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 
 const MARKER = 'MLW-SPIKE-1';
 const DEPLOY_STAMP = 'deploy-stamp: 002';
+
+// AG-3 F5. Hand-set, because `updated` no longer defaults to the build date —
+// a page rebuilt by a push it had nothing to do with must not claim it changed.
+// Edit this when the page content actually changes. Story 1-6 replaces the page
+// and will set its own.
+const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 ---
 
 <BaseLayout
   title="Movement Lab — deploy chain spike"
   description="Staging placeholder for the Movement Lab website rebuild. Real content lands in story 1-6."
+  updated={LAST_CHANGED}
 >
   <h1>Movement Lab &mdash; deploy chain spike</h1>
   <p>

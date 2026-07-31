@@ -6,3 +6,13 @@ node_modules/
 # this line has to come out and dist/ becomes tracked. Do not remove it
 # without recording the reason in the 1-1 findings file.
 dist/
+
+# AG-3 F11. scripts/check-indexing-polarity.mjs builds the site twice into these
+# directories and cleans them at the end — which never happens if a build throws
+# or the run is interrupted. Without this, a failed local `npm run check:indexing`
+# leaves two complete site builds sitting untracked, one `git add -A` away from
+# being committed.
+dist-check-*/
+
+# The Praxis workbench's project marker. Tooling state, not project source.
+.praxis-anchor

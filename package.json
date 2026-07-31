@@ -9,7 +9,8 @@
     "preview": "astro preview",
     "check:indexing": "node scripts/check-indexing-polarity.mjs",
     "check:data": "node scripts/check-data.mjs",
-    "check:booking": "node scripts/check-booking-links.mjs"
+    "check:booking": "node scripts/check-booking-links.mjs",
+    "check:build": "node scripts/check-build.mjs"
   },
   "dependencies": {
     "@astrojs/sitemap": "^3.7.3",
