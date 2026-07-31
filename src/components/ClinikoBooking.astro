@@ -21,11 +21,52 @@ interface Props {
   /**
    * Reserved vertical space before the iframe reports its height (spec G-6).
    * An unsized embed is a main cause of layout shift.
+   *
+   * TWO VALUES, BECAUSE THE WIDGET IS TWICE AS TALL ON A PHONE. A single
+   * reservation cannot serve both: 700px over-reserved desktop by ~80px AND
+   * under-reserved mobile by ~450px at the same time.
    */
   minHeight?: number;
+  /** Reservation at >= 40rem, where the widget lays out much shorter. */
+  minHeightWide?: number;
 }
 
-const { slugs = [], title = 'Book an appointment', minHeight = 700 } = Astro.props;
+// ⚠️ THESE NUMBERS ARE MEASURED, AND THEY DO NOT GO STALE. READ WHY BEFORE
+// CHANGING THEM.
+//
+// Lens (SM-13) declined to hard-code a reservation on the reasonable grounds
+// that "the widget's height is a function of how many services are listed, so
+// any number written today goes stale the first time the service list changes."
+// I measured that function instead of guessing at it, driving the real widget
+// with 1..5 appointment types. It is NOT linear, and the non-linearity is the
+// whole answer:
+//
+//        types:      1     2     3     4     5
+//    relative :    568   802  1036  1141  1141
+//
+// The height PLATEAUS at four types — the service list starts scrolling inside
+// the widget rather than growing the frame. Keegan already lists five, so he is
+// past the plateau: adding a sixth service changes the height by zero. That is
+// what makes a fixed reservation safe here, and it is the opposite of what we
+// both assumed.
+//
+// ⚠️ MEASURE IN CONTEXT, NOT IN A HARNESS — I got this wrong first. My isolated
+// test page had no body padding, so the iframe was ~48px wider than it is on
+// /contact/, the widget laid out shorter, and every number came out 10-45px
+// low. Lens's figures, taken from the real page, are the correct ones and are
+// what these defaults use:
+//
+//      320px -> 1172    375px -> 1151    414px -> 1140    >=768px -> 665
+//
+// So: 1175 narrow (covers the 320px worst case) and 665 wide. Over-reserving by
+// a few px is deliberate — whitespace before load beats an upward jump.
+//
+// RE-MEASURE IF: the widget is scoped to FEWER than four types (below the
+// plateau the height really is a function of count), or Cliniko restyles the
+// booking flow. The measurement harness is one page with an iframe and a
+// message listener — see the SM-13 receipt.
+const { slugs = [], title = 'Book an appointment', minHeight = 1175, minHeightWide = 665 } =
+  Astro.props;
 
 // serviceBySlug throws on an unknown slug, so a typo fails the build rather
 // than silently widening the booking scope.
@@ -36,8 +77,12 @@ const src = buildBookingUrl({ appointmentTypeIds, embedded: true });
 const frameId = `cliniko-${crypto.randomUUID().slice(0, 8)}`;
 ---
 
-<section class="cliniko-booking" aria-label={title}>
-  <div class="cliniko-frame-wrap" style={`min-height:${minHeight}px`}>
+<section
+  class="cliniko-booking"
+  aria-label={title}
+  style={`--cliniko-min-h:${minHeight}px; --cliniko-min-h-wide:${minHeightWide}px`}
+>
+  <div class="cliniko-frame-wrap">
     <iframe
       id={frameId}
       src={src}
@@ -45,8 +90,7 @@ const frameId = `cliniko-${crypto.randomUUID().slice(0, 8)}`;
       loading="lazy"
       scrolling="auto"
       frameborder="0"
-      allow="payment"
-      style={`min-height:${minHeight}px`}></iframe>
+      allow="payment"></iframe>
   </div>
 
   <noscript>
@@ -90,13 +134,24 @@ const frameId = `cliniko-${crypto.randomUUID().slice(0, 8)}`;
     margin: 2rem 0;
   }
   /* Reserves the space up front so the page does not jump when the iframe
-     reports its real height (spec G-6). */
+     reports its real height (spec G-6).
+     The reservation is a MEDIA QUERY, not one number, because the widget is
+     roughly twice as tall below 40rem — see the measured table above. The
+     breakpoint matches the 768px column of that measurement. */
   .cliniko-frame-wrap {
     width: 100%;
+    min-height: var(--cliniko-min-h);
   }
   .cliniko-booking iframe {
     width: 100%;
     border: 0;
     display: block;
+    min-height: var(--cliniko-min-h);
+  }
+  @media (min-width: 40rem) {
+    .cliniko-frame-wrap,
+    .cliniko-booking iframe {
+      min-height: var(--cliniko-min-h-wide);
+    }
   }
 </style>
