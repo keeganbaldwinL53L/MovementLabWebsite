@@ -41,24 +41,35 @@ const classes = SERVICES.filter((s) => s.price === null);
     three are health fund rebatable if you have chiropractic cover as an extra.
   </p>
 
-  <div class="table-scroll" tabindex="0" role="region" aria-label="One-to-one appointment types and prices">
-    <table>
-      <thead>
-        <tr><th>Appointment</th><th>Length</th><th>Price</th></tr>
-      </thead>
-      <tbody>
-        {
-          oneToOne.map((s) => (
-            <tr>
-              <td>{s.label}</td>
-              <td>{s.durationMinutes} min</td>
-              <td>${s.price}</td>
-            </tr>
-          ))
-        }
-      </tbody>
-    </table>
-  </div>
+  {/* LN-3 F7 / SM-11 (3). STACKS TO CARDS BELOW 40rem, AND THE REASON IS THE
+      PRICE. As a scrolling 3-column table this hid the Price column entirely at
+      375px, and Length AND Price at 320px. Lens's scroll-shadow affordance
+      works and the columns were reachable, but a pricing table whose price is
+      off-screen on the most common phone width is the wrong SHAPE, not a
+      styling problem — the price is the single thing a visitor came to this
+      section for.
+
+      Same markup, two layouts. It stays a real <table> so the header
+      association and the reading order survive for screen readers; the narrow
+      layout just turns each row into a labelled block via data attributes,
+      which is why the labels come from the same strings as the <th>s and cannot
+      drift out of sync with them. */}
+  <table class="pricing">
+    <thead>
+      <tr><th>Appointment</th><th>Length</th><th>Price</th></tr>
+    </thead>
+    <tbody>
+      {
+        oneToOne.map((s) => (
+          <tr>
+            <td data-label="Appointment">{s.label}</td>
+            <td data-label="Length">{s.durationMinutes} min</td>
+            <td data-label="Price">${s.price}</td>
+          </tr>
+        ))
+      }
+    </tbody>
+  </table>
 
   <p>
     <a href="/services/chiropractic-treatment/">Full detail on what each appointment involves</a>.
@@ -111,42 +122,69 @@ const classes = SERVICES.filter((s) => s.price === null);
   .lead {
     font-size: 1.125rem;
   }
-  .page-img {
-    width: 100%;
-    height: auto;
-    border-radius: 6px;
-    margin: 1.5rem 0;
-  }
-  /* Wide content scrolls inside its own container so the page body never
-     scrolls horizontally on a phone (LN-2). */
-  .table-scroll {
-    overflow-x: auto;
-    margin: 1.5rem 0;
-    background:
-      linear-gradient(to right, var(--ml-paper) 40%, rgba(var(--ml-paper-rgb), 0)) left center / 2.5rem 100% no-repeat,
-      linear-gradient(to left, var(--ml-paper) 40%, rgba(var(--ml-paper-rgb), 0)) right center / 2.5rem 100% no-repeat,
-      radial-gradient(farthest-side at 0 50%, rgba(var(--ml-ink-rgb), 0.22), rgba(var(--ml-ink-rgb), 0)) left center / 0.9rem 100% no-repeat,
-      radial-gradient(farthest-side at 100% 50%, rgba(var(--ml-ink-rgb), 0.22), rgba(var(--ml-ink-rgb), 0)) right center / 0.9rem 100% no-repeat;
-    background-attachment: local, local, scroll, scroll;
-  }
-  .table-scroll:focus-visible {
-    outline: 2px solid var(--ml-deep);
-    outline-offset: 2px;
-  }
-  table {
+  /* SM-11 (3). The pricing table has TWO layouts and one markup.
+     The scroll container it used to live in is gone: it hid the Price column at
+     375px and Length+Price at 320px, and a price you have to scroll sideways to
+     find is a price most phone readers never see. */
+  .pricing {
     border-collapse: collapse;
     width: 100%;
-    min-width: 26rem;
+    margin: 1.5rem 0;
   }
-  th,
-  td {
+  .pricing th,
+  .pricing td {
     text-align: left;
     padding: 0.6rem 0.75rem;
     border-bottom: 1px solid var(--ml-rule);
     vertical-align: top;
   }
-  th {
+  .pricing th {
     background: var(--ml-shade);
+  }
+
+  /* NARROW: one card per appointment. Each cell carries its own label from the
+     data attribute, so the label text comes from the same source as the column
+     header and cannot drift away from it. */
+  @media (max-width: 39.999rem) {
+    .pricing thead {
+      /* Visually hidden, not display:none — the header cells stay in the
+         accessibility tree so the table still reads as a table. */
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .pricing tr {
+      display: block;
+      border: 1px solid var(--ml-rule);
+      border-radius: 6px;
+      padding: 0.35rem 0.15rem;
+      margin-bottom: 0.85rem;
+    }
+    .pricing td {
+      display: flex;
+      justify-content: space-between;
+      gap: 1rem;
+      border-bottom: 0;
+      padding: 0.3rem 0.75rem;
+    }
+    .pricing td::before {
+      content: attr(data-label);
+      color: var(--ml-muted);
+      flex: 0 0 auto;
+    }
+    /* The appointment name is the card's title, so it gets the row to itself
+       rather than being squeezed opposite its own label. */
+    .pricing td:first-child {
+      display: block;
+      font-weight: 600;
+      padding-bottom: 0.5rem;
+    }
+    .pricing td:first-child::before {
+      content: none;
+    }
   }
   .next-links {
     padding-left: 1.1rem;

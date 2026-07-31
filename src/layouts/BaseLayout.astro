@@ -115,11 +115,20 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         the risk is retired. Story 1-6 adds eight pages; without this, it adds
         eight more chances to typo a colour that no check would catch.
 
-        --ml-ink and --ml-deep are two near-identical dark greens. Argus read
-        them as probably meant to be one value and is probably right, but
-        collapsing them is a design decision that belongs with Keegan's open
-        accent call (LN-2 F1), not a refactor. Kept distinct and named so the
-        question is visible rather than buried in two hex literals. */}
+        ~~--ml-ink and --ml-deep are kept distinct pending Keegan's accent
+        call~~ — RESOLVED (SM-11 (4)): Lens measured them at 1.226:1 apart and
+        UD-21 closed without touching the accent, so they are now one value
+        under two names. See --ml-deep below.
+
+        ⚠️ EVERYTHING THAT MUST REACH PAGE CONTENT LIVES IN THIS `is:global`
+        BLOCK, NOT THE SCOPED ONE UNDERNEATH, and the distinction is not
+        cosmetic. Astro compiles a scoped rule to `.page-img[data-astro-cid-XXX]`
+        where XXX is THIS layout's id. Page content arrives through <slot> and
+        carries its OWN id, so a scoped rule here silently matches nothing in it.
+        I put the shared image classes and the link colour in the scoped block
+        first: the build was clean, the CSS was present, and 30 of 40
+        page/width combinations overflowed because not one image rule applied.
+        Only a browser found it. */}
     <style is:global>
       :root {
         --ml-paper: #fdfbf8; /* page background */
@@ -128,8 +137,28 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         --ml-rule: #e4e1da; /* hairlines and table borders */
         --ml-shade: #f1efea; /* table header fill */
         --ml-code: #e9e6df; /* inline code fill */
-        --ml-deep: #1f3330; /* button hover, focus outline */
+        /* LN-3 F9 / SM-11 (4). --ml-deep WAS #1f3330, a second dark green
+           1.226:1 from --ml-ink — per-channel delta of at most 18/255, which is
+           indistinguishable to the eye and, as Lens measured, they never appear
+           side by side anyway. Two names for one colour is a drift trap: the
+           next person to adjust one has no way to know the other exists.
+           Collapsed to ONE value while KEEPING BOTH NAMES, so the semantic hook
+           survives — if a genuinely distinct hover/focus colour is ever wanted,
+           it changes here and nothing else moves. Safe to do now that UD-21
+           closed without touching the accent. */
+        --ml-deep: var(--ml-ink); /* button hover, focus outline */
         --ml-accent: #ff3502; /* the booking call to action — LN-2 F1, Keegan's open call */
+
+        /* LN-3 F6 / SM-11 (1). THE ONE COLOUR ON THE SITE NOBODY HAD CHOSEN.
+           SM-5 F6 was reported closed on the grounds that "link colour is
+           inherited by the token layer". Footer links do inherit; BODY links
+           never had a colour at all, so every one on all 8 pages rendered as
+           browser-default #0000ee. It passed contrast, which is why it survived
+           review — this is coherence, not accessibility.
+           --ml-ink plus an underline is what the footer already does, and the
+           underline is what carries the affordance once the colour stops
+           shouting. */
+        --ml-link: var(--ml-ink);
 
         /* Channel forms, for the few places that need a fade to transparent.
            A gradient fading to the CSS keyword `transparent` is a fade to
@@ -138,6 +167,61 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
            from the hex above by hand. */
         --ml-paper-rgb: 253, 251, 248;
         --ml-ink-rgb: 27, 33, 31;
+      }
+
+      /* Lens LN-3. Story 1-10 added 8 images across 6 pages, each with its own
+         class and its own width rule, and there was no shared floor. The About
+         portrait capped at `max-width: 20rem` = 320px, which is WIDER than the
+         272px content column at a 320px viewport, so it pushed the whole page
+         sideways — the only horizontal overflow in 56 page/width combinations.
+         Fixing `.portrait` alone would leave the other seven one careless value
+         away from the same bug, and 1-10 is still adding images. This is the
+         floor that makes the class impossible. It only ever constrains an image
+         that would otherwise exceed its container, so nothing else moves. */
+      img {
+        max-width: 100%;
+        height: auto;
+      }
+
+      /* LN-3 F5 / SM-11 (2). ONE RULE, WHERE SIX NEAR-COPIES USED TO BE.
+         `.page-img` was written out byte-identically in four page files,
+         `.hero-img` was a fifth copy of the same four properties, and
+         `.portrait` was a sixth that differed in exactly one value — and the one
+         that differed is the one that broke the page, overflowing 320px by 24px.
+         That is the whole argument: six copies means five chances to be right
+         and one to be wrong, and story 1-10 is still adding images.
+
+         Note the global `img` floor above CANNOT rescue this on its own. A class
+         selector beats an element selector, so a bespoke `.portrait { max-width }`
+         overrode it — which is precisely how Lens's first attempt at the fix
+         failed. The floor and this shared class are doing different jobs. */
+      .page-img,
+      .hero-img,
+      .portrait {
+        width: 100%;
+        height: auto;
+        border-radius: 6px;
+        margin: 1.5rem 0;
+      }
+      /* The one genuine per-image override that survives: the portrait is a
+         person, not a scene, so it is capped. `min()` rather than a bare 20rem
+         because 20rem = 320px is WIDER than the content column at a 320px
+         viewport (Lens's F4). */
+      .portrait {
+        width: auto;
+        max-width: min(20rem, 100%);
+      }
+
+      /* SM-11 (1). Body links. Deliberately an ELEMENT selector so every
+         component's own class rule still wins on specificity — the nav, the
+         footer and the booking button all set their own colour and are
+         untouched by this. */
+      a {
+        color: var(--ml-link);
+      }
+      a:hover,
+      a:focus-visible {
+        text-decoration-thickness: 2px;
       }
     </style>
 
@@ -156,19 +240,6 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       h2,
       h3 {
         text-wrap: balance;
-      }
-      /* Lens LN-3. Story 1-10 added 8 images across 6 pages, each with its own
-         class and its own width rule, and there was no shared floor. The About
-         portrait capped at `max-width: 20rem` = 320px, which is WIDER than the
-         272px content column at a 320px viewport, so it pushed the whole page
-         sideways — the only horizontal overflow in 56 page/width combinations.
-         Fixing `.portrait` alone would leave the other seven one careless value
-         away from the same bug, and 1-10 is still adding images. This is the
-         floor that makes the class impossible. It only ever constrains an image
-         that would otherwise exceed its container, so nothing else moves. */
-      img {
-        max-width: 100%;
-        height: auto;
       }
       code {
         background: var(--ml-code);
