@@ -69,7 +69,7 @@
       "price": null,
       "bookable": true,
       "maxAttendees": 15,
-      "note": "⚠️ OPS PRECONDITION: had NO bookable sessions scheduled as of 2026-07-29, so a scoped link renders 'no appointments available this month'. Keegan must schedule sessions in Cliniko or this CTA lands on an empty state at launch."
+      "note": "~~OPS PRECONDITION: had NO bookable sessions scheduled as of 2026-07-29~~ — CORRECTED 2026-07-31 (Quinn, QN-1), and the correction is measured, not assumed: walking the real Cliniko datepicker month by month found 3 bookable days in August and 2 in September for this class (handstand 3 and 1). Keegan scheduled sessions after the original note was written. The probe carried a control — new-patient showed 29 and 11 — because an earlier run reported a FALSE zero by counting before the datepicker had rendered. THE DURABLE WARNING STANDS, and it is why the pages are built the way they are: class availability is Keegan-managed and CAN return to zero at any time, so no page advertises a class time without also sending the reader to the booking page to confirm the session. The bookable state is the source of truth, never the page. SEPARATE and not a defect: every booking entry point shows an empty calendar on the last day of a month once the working day is over. That is Cliniko's own behaviour and it recurs every month end."
     },
     {
       "slug": "handstand-class",
