@@ -430,41 +430,130 @@ jobs:
           [ "$SM" = "200" ] || { echo "::error::/sitemap.xml did not resolve (mod_rewrite off, or the rewrite is wrong)"; exit 1; }
           echo "our .htaccess is in force on the server: it owns this rewrite"
 
+      - name: Confirm the migration redirect map is live
+        # Story 1-7 + spec G-2. This lives IN the deploy workflow, on purpose.
+        # Vigil's words: a migration guard that fires on EVERY deploy is worth
+        # more than one that fires once on launch day. A standalone script is a
+        # script somebody has to remember, and the failure it catches is silent —
+        # a dead link costs a visitor and a ranking, and nothing errors.
+        #
+        # ENUMERATED HERE RATHER THAN DERIVED FROM .htaccess ON PURPOSE. If this
+        # check read the same file it is testing, it would pass for any map,
+        # including an empty one. The table below is an INDEPENDENT statement of
+        # what the URLs must do, so a rule deleted from .htaccess fails here.
+        #
+        # Each row: path|expected-status|expected-final-path (empty = no
+        # destination check). The KEEP rows are as load-bearing as the redirects:
+        # they are what catches a rule whose pattern is too greedy — the
+        # /group-classes rule swallowing /services/group-classes/ is the exact
+        # mistake the ^ anchors exist to prevent.
+        run: |
+          MAP='
+          /|200|
+          /about/|200|
+          /contact/|200|
+          /services/|200|
+          /services/chiropractic-treatment/|200|
+          /services/group-classes/|200|
+          /services/handstand/|200|
+          /privacy/|200|
+          /services/mobility-coaching/|301|/services/chiropractic-treatment/
+          /handstand-coaching/|301|/services/handstand/
+          /group-classes/|301|/services/group-classes/
+          /hello-world-2/|410|
+          '
+          FAILED=0
+          CHECKED=0
+          while IFS='|' read -r PATHNAME WANT_CODE WANT_DEST; do
+            [ -z "$PATHNAME" ] && continue
+            CHECKED=$((CHECKED + 1))
+            URL="${DEPLOY_URL%/}${PATHNAME}"
+
+            # -o /dev/null keeps the body out; no -L, because following the
+            # redirect would hide the very status code being asserted.
+            GOT_CODE=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "$URL" || echo 000)
+            GOT_DEST=$(curl -s -o /dev/null -w '%{redirect_url}' --max-time 20 "$URL" || echo '')
+
+            if [ "$GOT_CODE" != "$WANT_CODE" ]; then
+              echo "::error::${PATHNAME} returned ${GOT_CODE}, expected ${WANT_CODE}"
+              FAILED=$((FAILED + 1))
+              continue
+            fi
+
+            if [ -n "$WANT_DEST" ]; then
+              # Compare the PATH only. The host differs between staging and
+              # production, and the .htaccess targets are relative so that the
+              # same map is correct on both.
+              GOT_PATH=$(printf '%s' "$GOT_DEST" | sed -E 's#^https?://[^/]+##')
+              if [ "$GOT_PATH" != "$WANT_DEST" ]; then
+                echo "::error::${PATHNAME} redirects to ${GOT_PATH:-<nothing>}, expected ${WANT_DEST}"
+                FAILED=$((FAILED + 1))
+                continue
+              fi
+              echo "  OK  ${PATHNAME} -> ${GOT_CODE} -> ${WANT_DEST}"
+            else
+              echo "  OK  ${PATHNAME} -> ${GOT_CODE}"
+            fi
+          done <<< "$MAP"
+
+          echo "redirect map: ${CHECKED} URLs checked, ${FAILED} wrong"
+          [ "$FAILED" -eq 0 ] || {
+            echo "::error::the migration redirect map is not live — a missed URL is a dead link plus lost ranking"
+            exit 1; }
+
       - name: Confirm dotfiles are not served
         # AG-1 F2. This used to accept ANY non-200, which meant a DNS blip or
         # a timeout (curl -> 000) reported "guard OK" having proved nothing.
         #
-        # ⚠️ AG-3 F3 — WHAT THIS STEP DOES AND DOES NOT PROVE.
-        # It asserts that /.git/config is not served. It does NOT prove OUR
-        # .htaccess is the thing denying it, and the previous version's name and
-        # comments claimed otherwise.
+        # ⚠️ AG-3 F3, WITH A CORRECTION TO ITS PREMISE — measured, not reasoned.
         #
-        # The evidence: our public/.htaccess denies with `RedirectMatch 404`,
-        # which returns 404 — while this step demanded exactly 403. Those cannot
-        # both describe the same mechanism. Argus then probed the PRODUCTION
-        # apex, which does NOT have our file, and got the identical 403/404 pair.
-        # So the denial comes from Hostinger's own configuration or the parent
-        # WordPress .htaccess, and this assertion passed whether or not our file
-        # shipped at all.
+        # Argus's finding was that this step credited our .htaccess for a 403 it
+        # could not produce: our file denies with `RedirectMatch 404`, the step
+        # demanded exactly 403, and the production apex returns the same 403
+        # WITHOUT our file. Conclusion: the denial comes from Hostinger or the
+        # parent WordPress .htaccess, so the check never tested our artifact.
         #
-        # That mattered in a specific and expensive way: at cutover our file
-        # REPLACES the parent one. If the parent was the denier, the answer
-        # flips 403 -> 404 and a hardcoded `!= 403` hard-fails the cutover deploy
-        # at the worst possible moment, for no real reason.
+        # The conclusion (this step did not prove our file) was RIGHT. The
+        # premise was WRONG, and it matters. I served this exact dist/ under a
+        # real Apache 2.4 and isolated each directive:
         #
-        # So: accept either denial code, and let the /sitemap.xml assertion in
-        # the previous step carry the "our file is in force" claim — it tests a
-        # rewrite only our file produces. Proof of the artifact, from the one
-        # check that actually exercises it.
+        #   full .htaccess          /.git/config -> 403   /.htaccess -> 403
+        #   RedirectMatch only      /.git/config -> 404   /.htaccess -> 200
+        #   no .htaccess at all     /.git/config -> 404   /.htaccess -> 404
+        #
+        # So OUR file DOES produce 403 — via the `<FilesMatch "^\.">` block,
+        # which Argus's read did not account for, not via the RedirectMatch. Our
+        # file and the parent are therefore indistinguishable by status code on
+        # /.git/config, which is exactly why that probe cannot discriminate.
+        #
+        # THE BETTER PROBE, and the reason this step changed target: /.git is
+        # never rsynced, so probing it measures ABSENCE. /.htaccess IS on the
+        # server — it is our own artifact — so probing it measures DENIAL of a
+        # file that genuinely exists. The middle row above is the proof: without
+        # our FilesMatch block that URL serves 200 and leaks the file.
+        #
+        # Either denial code is accepted, because at cutover our file replaces
+        # the parent and a hardcoded 403 would hard-fail the deploy at the worst
+        # possible moment. The "our file is in force" claim is carried by the
+        # /sitemap.xml rewrite in the previous step, which only our file owns.
         run: |
-          DENIED=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}.git/config" || echo 000)
+          HTA=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}.htaccess" || echo 000)
+          GIT=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}.git/config" || echo 000)
           CONTROL=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}no-such-path-control" || echo 000)
-          echo ".git/config    -> HTTP ${DENIED}"
+          echo ".htaccess      -> HTTP ${HTA}   (our own file — this is the one that discriminates)"
+          echo ".git/config    -> HTTP ${GIT}"
           echo "control path   -> HTTP ${CONTROL}"
 
-          case "$DENIED" in
+          # The load-bearing assertion. 200 here means the dotfile guard is off
+          # and our server config is being served to anyone who asks.
+          case "$HTA" in
             403|404) ;;
-            *) echo "::error::/.git/config is not being denied (got ${DENIED}) — a 200 would expose the repository, and 000 means the probe never completed"
+            *) echo "::error::/.htaccess returned ${HTA} — our own server config is being served, or the probe failed"
                exit 1 ;;
           esac
-          echo "dotfiles are not served (HTTP ${DENIED}); a missing path returns ${CONTROL}"
+          case "$GIT" in
+            403|404) ;;
+            *) echo "::error::/.git/config is not being denied (got ${GIT})"
+               exit 1 ;;
+          esac
+          echo "dotfiles are not served: our .htaccess ${HTA}, .git/config ${GIT}, missing path ${CONTROL}"

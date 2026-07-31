@@ -8,6 +8,52 @@ RedirectMatch 404 /\.git
   Require all denied
 </FilesMatch>
 
+# ---------------------------------------------------------------------------
+# Story 1-7. The migration redirect map. THE COMPLETE MAP, NOT A PARTIAL ONE.
+# ---------------------------------------------------------------------------
+# Every URL in the current WordPress sitemap needs a decision here, because a
+# missed one is a dead link for a visitor AND lost ranking for a page that
+# earned it. Twelve URLs, and the eight not listed below are "keep" — they exist
+# as real pages after story 1-6 and need no rule.
+#
+# ⚠️ TARGETS ARE RELATIVE ON PURPOSE. Apache expands a relative Location against
+# the requesting host, so the SAME file is correct on staging and on production.
+# Writing https://keegansmovementlab.com/... here would send every staging
+# redirect to production, which is both wrong and the kind of thing that only
+# shows up after cutover.
+#
+# ⚠️ TRAILING SLASHES. astro.config sets trailingSlash:'always' and
+# build.format:'directory', matching how WordPress served these URLs, so the
+# targets below all end in a slash. Without that every one of these redirects
+# would land on a URL that immediately redirects again — a hop that still
+# "works" and quietly dilutes what the 301 was preserving.
+#
+# The `/?$` in each pattern accepts the URL with or without its trailing slash,
+# so an old link written either way still lands. `^` anchors matter: without it
+# the /group-classes rule would also catch /services/group-classes/, which is a
+# KEEP and must not redirect.
+
+# D4, the fold. Mobility coaching was absorbed into the Chiropractic & Movement
+# page rather than deleted, so this is a redirect to the content's new home and
+# not to a vaguely related page.
+RedirectMatch 301 ^/services/mobility-coaching/?$ /services/chiropractic-treatment/
+
+# D4, nesting normalisation. Handstand coaching was the only service living at
+# the root; it now sits under /services/ with the others.
+RedirectMatch 301 ^/handstand-coaching/?$ /services/handstand/
+
+# This one already exists on the live WordPress site and nobody had logged it.
+# It must keep existing: dropping a redirect that works today is a regression
+# introduced by the migration, and the most invisible kind.
+RedirectMatch 301 ^/group-classes/?$ /services/group-classes/
+
+# The default WordPress sample post. Still live, still in the sitemap, thin
+# default content on an indexed URL. 410 Gone rather than 301, deliberately:
+# 301 means "this moved here" and there is nowhere honest to send it, while 410
+# tells Google it is deliberately gone and gets it dropped from the index faster
+# than a 404 would.
+RedirectMatch gone ^/hello-world-2/?$
+
 # Story 1-2. @astrojs/sitemap emits sitemap-index.xml (plus sitemap-N.xml
 # shards) and gives no option to rename them. The SEO brief requires the
 # canonical path /sitemap.xml — that is the URL already registered with Search
