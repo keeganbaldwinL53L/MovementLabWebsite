@@ -71,7 +71,7 @@ const providers = [
 
     <p>
       Keegan Baldwin is a chiropractor registered with the Australian Health Practitioner
-      Regulation Agency (registration {business.ahpra}). As a health service provider, the
+      Regulation Agency (registration {business.ahpra}). As a health service provider, the{' '}
       <em>Privacy Act 1988</em> (Cth) and the Australian Privacy Principles apply to us regardless
       of the size of the business.
     </p>
@@ -139,7 +139,13 @@ const providers = [
       data overseas:
     </p>
 
-    <div class="table-scroll">
+    {/* Story 1-8 / Lens LN-2. tabindex + role + label are not decoration: the
+        "Where" column is 100% off-screen on a 375px phone, and it is the APP 8
+        overseas-disclosure column, so it is the part a reader most needs to
+        reach. Chromium already focuses an overflow container without tabindex,
+        Safari does not — the explicit tabindex is what makes keyboard reach
+        cross-browser rather than Chromium-only. */}
+    <div class="table-scroll" tabindex="0" role="region" aria-label="Service providers and where they hold data">
       <table>
         <thead>
           <tr><th>Provider</th><th>What it handles</th><th>Where</th></tr>
@@ -170,7 +176,7 @@ const providers = [
 
     <h2>Complaints</h2>
     <p>
-      If you think we have mishandled your personal information, email
+      If you think we have mishandled your personal information, email{' '}
       <a href={`mailto:${business.email}`}>{business.email}</a> with the details. We will look into
       it and reply in writing, normally within 30 days.
     </p>
@@ -200,6 +206,25 @@ const providers = [
   .table-scroll {
     overflow-x: auto;
     margin: 1.5rem 0;
+
+    /* Lens LN-2. Without this the table looked FINISHED at 375px: three
+       columns became a tidy two, the "Where" column was 100% hidden, and
+       nothing on screen said otherwise. The right-hand shadow is the only
+       thing telling a phone reader there is more. Pure CSS and
+       self-managing — `local` scrolls the mask with the content, so the
+       shadow fades out exactly when the last column arrives. */
+    background:
+      linear-gradient(to right, #fdfbf8 40%, rgba(253, 251, 248, 0)) left center / 2.5rem 100% no-repeat,
+      linear-gradient(to left, #fdfbf8 40%, rgba(253, 251, 248, 0)) right center / 2.5rem 100% no-repeat,
+      radial-gradient(farthest-side at 0 50%, rgba(27, 33, 31, 0.22), rgba(27, 33, 31, 0)) left center / 0.9rem 100% no-repeat,
+      radial-gradient(farthest-side at 100% 50%, rgba(27, 33, 31, 0.22), rgba(27, 33, 31, 0)) right center / 0.9rem 100% no-repeat;
+    background-attachment: local, local, scroll, scroll;
+  }
+  /* The region is focusable so it can be scrolled by keyboard; give that
+     focus somewhere visible to land. */
+  .table-scroll:focus-visible {
+    outline: 2px solid #1f3330;
+    outline-offset: 2px;
   }
   .policy table {
     border-collapse: collapse;
