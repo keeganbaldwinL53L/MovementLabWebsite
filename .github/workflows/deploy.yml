@@ -277,16 +277,32 @@ jobs:
           # build if all three fail. What it must NOT do is silently mask a
           # genuinely dead key — hence the per-attempt output and the final
           # error naming how many attempts were made.
-          # BUDGET WIDENED after run #19 failed THROUGH the first version of this
-          # retry (3 attempts, ~30s of backoff). Measured pattern across runs
-          # 12-19: fail, success, success, fail, success, fail — roughly half,
-          # and NOT explained by spacing, since #18 passed 148s after #17 failed
-          # while #19 failed 654s after #18 passed. So the outage windows are
-          # longer than 30s but shorter than the gaps between runs. 5 attempts
-          # with 15/30/60/120s backoff covers ~3.7 minutes, which is a much
-          # better match for a window that survived 30s.
+          # ⚠️ DELIBERATELY SHORT, AND I WIDENED IT ONCE BEFORE NARROWING IT BACK.
+          #
+          # I first read the failures as brief connection blips and went 1 -> 3 ->
+          # 5 attempts. Run #20 failed through all five, and its timing gave the
+          # real diagnosis without needing the log: step 13 ran 09:07:54 ->
+          # 09:13:19, exactly 325s, which is 5 x 20s ConnectTimeout + 225s of
+          # backoff to the second. So EVERY attempt consumed its FULL connect
+          # timeout.
+          #
+          # That is the signature of packets being DROPPED, not rejected. A
+          # refused connection or a rejected key returns in well under a second;
+          # only a firewall silently discarding SYNs makes you wait the whole
+          # timeout. Meanwhile HTTP to the same host answers 200, so the server
+          # is up — it is SSH specifically, and it is being blackholed.
+          #
+          # Which means MORE retries were probably making it WORSE. A fail2ban
+          # style rule counts failed attempts, so 5 blocked connections per run
+          # instead of 1 is exactly how you extend a ban you are already under.
+          # [INFERRED from the drop signature + the failure trend, NOT confirmed —
+          # confirming it needs the server-side auth log, which is Keegan's.]
+          #
+          # So: 2 attempts, 20s apart. Enough to ride out a genuine blip, few
+          # enough that a run does not hammer a host that is already refusing us.
+          # Do NOT widen this again without evidence that the cause is a blip.
           AUTH_OK=0
-          for ATTEMPT in 1 2 3 4 5; do
+          for ATTEMPT in 1 2; do
             if ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
                    -o StrictHostKeyChecking=yes \
                    -o UserKnownHostsFile=~/.ssh/known_hosts \
@@ -298,12 +314,13 @@ jobs:
             fi
             echo "attempt ${ATTEMPT} failed:"
             sed 's/^/    /' /tmp/ssherr
-            case "$ATTEMPT" in 1) sleep 15 ;; 2) sleep 30 ;; 3) sleep 60 ;; 4) sleep 120 ;; esac
+            [ "$ATTEMPT" -lt 2 ] && sleep 20
           done
 
           if [ "$AUTH_OK" != "1" ]; then
-            echo "::error::could not authenticate to the server after 5 attempts over ~3.7 minutes"
-            echo "  Five failures over ~3.7 minutes is NOT the intermittent pattern this retry exists for."
+            echo "::error::could not reach the server (2 attempts)"
+            echo "  If both attempts hit the FULL 20s timeout, the connection is being dropped by a firewall,
+          echo "  not refused and not rejected — check hPanel for an SSH block and see UD-27.""
             echo "  Check the secrets, and check hPanel for an SSH or host-key change."
             sed 's/^/  /' /tmp/ssherr
             exit 1
