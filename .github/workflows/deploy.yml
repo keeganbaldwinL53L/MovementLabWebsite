@@ -264,14 +264,39 @@ jobs:
           printf 'length: %s chars\n' "$(printf '%s' "${H_PATH}" | wc -c | tr -d ' ')"
 
           echo "--- reachability ---"
-          if ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
-                 -o StrictHostKeyChecking=yes \
-                 -o UserKnownHostsFile=~/.ssh/known_hosts \
-                 -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20 \
-                 "${H_USER}@${H_HOST}" 'echo AUTH_OK' 2>/tmp/ssherr; then
-            echo "authenticated successfully"
-          else
-            echo "::error::could not authenticate to the server"
+          # ⚠️ RETRIED, BECAUSE THIS FAILURE IS INTERMITTENT AND NOT OURS.
+          # Runs #14 and #17 both died here while #15 and #16 passed, on
+          # byte-identical secrets — roughly half of four consecutive runs. A
+          # wrong key or a missing known_hosts entry fails EVERY time; failing
+          # every other time is Hostinger's shared-host SSH refusing a connection
+          # under load. The three checks above already proved the secrets are
+          # well-formed, so by the time we get here the only thing left to fail
+          # is the connection itself, which is the textbook case for a retry.
+          #
+          # Bounded and loud: three attempts, backing off, and it still fails the
+          # build if all three fail. What it must NOT do is silently mask a
+          # genuinely dead key — hence the per-attempt output and the final
+          # error naming how many attempts were made.
+          AUTH_OK=0
+          for ATTEMPT in 1 2 3; do
+            if ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
+                   -o StrictHostKeyChecking=yes \
+                   -o UserKnownHostsFile=~/.ssh/known_hosts \
+                   -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20 \
+                   "${H_USER}@${H_HOST}" 'echo AUTH_OK' 2>/tmp/ssherr; then
+              echo "authenticated successfully (attempt ${ATTEMPT})"
+              AUTH_OK=1
+              break
+            fi
+            echo "attempt ${ATTEMPT} failed:"
+            sed 's/^/    /' /tmp/ssherr
+            [ "$ATTEMPT" -lt 3 ] && sleep $((ATTEMPT * 10))
+          done
+
+          if [ "$AUTH_OK" != "1" ]; then
+            echo "::error::could not authenticate to the server after 3 attempts"
+            echo "  Three failures in a row is NOT the intermittent pattern this retry exists for."
+            echo "  Check the secrets, and check hPanel for an SSH or host-key change."
             sed 's/^/  /' /tmp/ssherr
             exit 1
           fi
@@ -323,10 +348,30 @@ jobs:
       - name: Deploy
         # The trailing slash on dist/ is load-bearing: it copies the CONTENTS
         # of dist rather than the directory itself.
+        #
+        # Retried for the same reason as the reachability probe: the observed
+        # failure mode on this host is an intermittently refused SSH connection,
+        # and a transfer that drops halfway is the same class of problem.
+        #
+        # SAFE TO RETRY, and worth stating why rather than assuming it: rsync
+        # here is IDEMPOTENT. --checksum means it compares content rather than
+        # timestamps, and --delete converges the target on dist/ regardless of
+        # what a half-finished previous attempt left behind. Re-running cannot
+        # compound damage; it can only finish the job. The server-side guard has
+        # already passed by this point, so the target is known-correct.
         run: |
-          rsync -rlvz --delete --checksum \
-            -e "ssh -i ~/.ssh/deploy_key -p ${H_PORT} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o BatchMode=yes -o IdentitiesOnly=yes" \
-            dist/ "${H_USER}@${H_HOST}:${H_PATH}/"
+          for ATTEMPT in 1 2 3; do
+            if rsync -rlvz --delete --checksum \
+                 -e "ssh -i ~/.ssh/deploy_key -p ${H_PORT} -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20" \
+                 dist/ "${H_USER}@${H_HOST}:${H_PATH}/"; then
+              echo "deployed (attempt ${ATTEMPT})"
+              exit 0
+            fi
+            echo "rsync attempt ${ATTEMPT} failed"
+            [ "$ATTEMPT" -lt 3 ] && sleep $((ATTEMPT * 10))
+          done
+          echo "::error::rsync failed 3 times — this is not the intermittent pattern the retry exists for"
+          exit 1
 
       - name: Prove THIS commit actually went live
         # AG-1 F1. Asserts the build id served by the real public URL equals
