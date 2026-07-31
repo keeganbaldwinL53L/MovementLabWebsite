@@ -9,6 +9,12 @@
 // The old page's meta description carried "chiriopractor". That typo is fixed
 // here and is a correction, not a copy rewrite.
 //
+// ⚠️ THIS PAGE HAD THE CLASS TIME WRONG. It said "Sunday 11am" while
+// /services/group-classes/ said "Saturday 10am", both live at once. Keegan
+// confirmed SATURDAY (SM-9, 2026-07-31). The time is always paired with the
+// booking check because he cancels the class often — see group-classes.astro for
+// the full reasoning.
+//
 // AUTHORITY LIVES ON /about/, NOT HERE (Manny A1). The acrobatics-and-
 // handbalancing background is the credential behind the movement work and it is
 // told as a story on the About page. This page is the service: what it is, what
@@ -79,10 +85,14 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
   </p>
 
   <h2>Is there a class instead?</h2>
+  <p class="class-time">
+    <strong>Saturdays, 10&ndash;11am</strong> at Just Train Gym, Cromer, $20 for the hour. Numbers
+    are small and I do sometimes cancel, so check the booking page for this week&rsquo;s session
+    before you come.
+  </p>
   <p>
-    Yes. The weekly handstand class at Just Train Gym in Cromer is $20 for an hour and is designed
-    for complete beginners and intermediate students, taking you from never going upside down to your
-    first 10-second hold and beyond.
+    The class is designed for complete beginners and intermediate students, taking you from never
+    going upside down to your first 10-second hold and beyond.
   </p>
   <p>
     We focus on proper technique and time-tested drills that build the strength and control to
@@ -103,6 +113,12 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
 <style>
   .lead {
     font-size: 1.125rem;
+  }
+  /* SM-9. Time and caveat in one block — see group-classes.astro. */
+  .class-time {
+    border-left: 3px solid var(--ml-rule);
+    padding-left: 0.9rem;
+    margin: 1rem 0;
   }
   .page-img {
     width: 100%;

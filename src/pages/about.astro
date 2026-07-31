@@ -130,7 +130,15 @@ const PHYSICIAN = physician(SITE_URL);
     font-size: 1.125rem;
   }
   .portrait {
-    max-width: 20rem;
+    /* Lens LN-3. Was a bare `max-width: 20rem`. 20rem is 320px, but the content
+       column at a 320px viewport is only 272px, so the portrait pushed the page
+       24px sideways — the single horizontal overflow in 56 page/width
+       combinations. `min()` keeps the 20rem cap on wide screens and clamps to
+       the column on narrow ones. Note the global `img { max-width: 100% }` in
+       BaseLayout CANNOT rescue this: a class beats an element selector, so a
+       bespoke max-width always wins. The other five image rules use
+       `width: 100%` and were never at risk. */
+    max-width: min(20rem, 100%);
     height: auto;
     border-radius: 6px;
     margin: 1.5rem 0;

@@ -67,8 +67,20 @@ const frameId = `cliniko-${crypto.randomUUID().slice(0, 8)}`;
       // SCOPED, unlike Cliniko's own snippet: only react to messages from THIS
       // iframe. Without this, a second embed on the page resizes the first.
       if (!frame.contentWindow || e.source !== frame.contentWindow) return;
-      var h = parseInt(e.data, 10);
-      if (!isNaN(h) && h > 0) frame.style.height = h + 'px';
+
+      // Lens LN-4. Cliniko does NOT send a bare number. Captured off the live
+      // widget on staging, verbatim: "cliniko-bookings-resize:1151".
+      // `parseInt` on that returns NaN because the string starts with "c", so
+      // the height was never once set and the frame sat at its 700px
+      // reservation forever. At 375px the widget asks for 1151px, so 451px of
+      // the booking form was cut off — reachable only by scrolling INSIDE the
+      // frame, which almost nobody does on a phone. Desktop hid it: there the
+      // widget asks for 665px and fits under the reservation.
+      // Match Cliniko's actual protocol and take the number from it.
+      var m = /^cliniko-bookings-resize:(\d+)$/.exec(String(e.data));
+      if (!m) return;
+      var h = parseInt(m[1], 10);
+      if (h > 0) frame.style.height = h + 'px';
     });
   })();
 </script>

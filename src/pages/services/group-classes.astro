@@ -5,18 +5,37 @@
 // launch nav; someone may still book, so the page has to be correct and
 // complete, just not competing with the main service page for attention.
 //
-// ⚠️ THE CLASS TIMES ON THE OLD SITE DISAGREED WITH THEMSELVES.
-// /services/group-classes/ said the handstand class is "Saturday 10am"; the old
-// /handstand-coaching/ page said "Sunday 11am". Both were live at the same time.
-// I cannot resolve that from the capture, and publishing a wrong class time
-// sends someone to a gym on the wrong day, so this page names the days WITHOUT
-// inventing a resolution and points at Cliniko for the actual bookable session.
-// Flagged for Keegan — see the desk handoff.
+// ⚠️ THE CLASS TIME IS NAMED, AND IT IS ALWAYS PAIRED WITH THE BOOKING CHECK.
+// RESOLVED (SM-9, Keegan 2026-07-31): the handstand class is SATURDAY 10-11am.
+// The old site contradicted itself — /services/group-classes/ said "Saturday
+// 10am" and /handstand-coaching/ said "Sunday 11am", both live simultaneously.
+// Saturday was the correct one.
 //
-// ⚠️ OPS PRECONDITION carried from services.json: the Mobility & Flexibility
-// Group Class had NO bookable sessions scheduled in Cliniko as of 2026-07-29, so
-// its deep link renders "no appointments available this month". That is a Cliniko
-// data problem, not a build one, and it is Keegan's to schedule before launch.
+// 🔴 BUT NEVER PUBLISH THE TIME BARE. Keegan's own words: "its a low priority
+// and i cancel it a lot due to low numbers atm." A fixed advertised time on a
+// frequently-cancelled class recreates precisely the failure this project just
+// spent a day removing from his opening hours — someone reads a time, turns up,
+// and nothing is there. So the page names the time AND sends the reader to the
+// booking page to confirm the week's session. The BOOKABLE STATE is the source
+// of truth, not this page; same principle as hours coming from Cliniko rather
+// than being hand-typed. If the class is ever paused, drop the time and keep the
+// booking link — a one-line edit, not a redesign.
+//
+// The MOBILITY class weekday is still unconfirmed. The 2026-07-20 capture says
+// Wednesdays 6pm, but that is the site being replaced and nobody has confirmed
+// it since, so it keeps pointing at the booking page rather than asserting a day.
+//
+// ~~OPS PRECONDITION: the Mobility & Flexibility Group Class has NO bookable
+// sessions scheduled in Cliniko~~ — STALE, corrected here 2026-07-31 because
+// leaving it would contradict the class time this page now publishes. Quinn
+// measured the real datepicker month by month (QN-1): mobility has 3 bookable
+// days in August and 2 in September, handstand 3 and 1. Keegan has scheduled
+// sessions since the note was written.
+//
+// The underlying warning is still worth keeping in spirit: class availability is
+// Keegan-managed and CAN return to zero, which is exactly why every class time on
+// this page is paired with "check the booking page" rather than standing alone.
+// The same stale note still sits in src/data/services.json and is SM-12's to fix.
 import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCta from '../../components/BookCta.astro';
@@ -78,6 +97,10 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
   <BookCta slug="group-class" label="Reserve a spot in the mobility class" />
 
   <h2>What happens in the handstand class?</h2>
+  <p class="class-time">
+    <strong>Saturdays, 10&ndash;11am</strong> at Just Train Gym, Cromer. Numbers are small and I do
+    sometimes cancel, so check the booking page for this week&rsquo;s session before you come.
+  </p>
   <p>
     It takes you from never going upside down to your first 10-second hold and beyond. The class is
     designed for complete beginners and intermediate students, focusing on proper technique and
@@ -134,6 +157,14 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
 <style>
   .lead {
     font-size: 1.125rem;
+  }
+  /* SM-9. The time and the "check before you come" live in ONE block on
+     purpose. Splitting them would let a skim-reader take the time and miss the
+     caveat, which is the whole failure mode this framing exists to prevent. */
+  .class-time {
+    border-left: 3px solid var(--ml-rule);
+    padding-left: 0.9rem;
+    margin: 1rem 0;
   }
   .page-img {
     width: 100%;

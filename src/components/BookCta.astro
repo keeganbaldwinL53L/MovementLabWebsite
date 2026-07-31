@@ -52,7 +52,16 @@ const priceText = service.price === null ? null : `$${service.price}`;
     padding: 0.6rem 1.2rem;
     border-radius: 4px;
     text-decoration: none;
-    font-weight: 600;
+
+    /* Lens LN-3, closing UD-21. Keegan: "do the one that keeps my colours."
+       --ml-paper on --ml-accent is 3.53:1. WCAG AA asks 4.5:1 for normal text
+       but only 3:1 for LARGE text, and large means >=24px at any weight OR
+       >=18.66px at weight >=700. At 16px/600 this was normal text and failed;
+       at 19px/700 it is large text and passes, with the brand hex untouched.
+       DO NOT drop either value below these without re-checking the ratio —
+       they are load-bearing for conformance, not styling preference. */
+    font-size: 1.1875rem; /* 19px — clears the 18.66px large-text threshold */
+    font-weight: 700; /* 600 does NOT qualify; large text needs 700 */
   }
   .book-cta a:hover,
   .book-cta a:focus-visible {

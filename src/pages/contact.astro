@@ -83,16 +83,16 @@ const { address } = business;
     {address.addressLocality} {address.addressRegion} {address.postalCode}. Group classes are held
     separately at Just Train Gym in Cromer.
   </p>
-  {/* ⚠️ NO LINK HERE ON PURPOSE. The old page had a "visit the website" button,
-      but the capture recorded the button TEXT and not its href, and no project
-      artifact records the Restore Health Clinic URL. Guessing a domain for a
-      real third-party business is fabricating a fact that sends patients
-      somewhere I have not checked, so the sentence ships without the link and
-      the link goes in when Keegan supplies the address. */}
+  {/* SM-9. The URL was the blank I refused to guess, because a fabricated
+      domain sends real patients somewhere nobody checked. Keegan supplied it
+      2026-07-31 and I confirmed it before publishing: 200, and the page is
+      titled "Chiropractor Collaroy | Restore Health Clinic" and names both
+      Keegan and the Lantana Avenue address. Verified, not assumed. */}
   <p>
     Restore Health Clinic is a separate business with its own practitioners and its own privacy
     arrangements. Your clinical records are held there, in their practice management system, not by
-    this website.
+    this website.{' '}
+    <a href="https://restorehealthclinic.com.au/" rel="noopener">Visit Restore Health Clinic</a>.
   </p>
 
   <h2>Will I get a confirmation?</h2>

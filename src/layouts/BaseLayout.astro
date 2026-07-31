@@ -157,6 +157,19 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       h3 {
         text-wrap: balance;
       }
+      /* Lens LN-3. Story 1-10 added 8 images across 6 pages, each with its own
+         class and its own width rule, and there was no shared floor. The About
+         portrait capped at `max-width: 20rem` = 320px, which is WIDER than the
+         272px content column at a 320px viewport, so it pushed the whole page
+         sideways — the only horizontal overflow in 56 page/width combinations.
+         Fixing `.portrait` alone would leave the other seven one careless value
+         away from the same bug, and 1-10 is still adding images. This is the
+         floor that makes the class impossible. It only ever constrains an image
+         that would otherwise exceed its container, so nothing else moves. */
+      img {
+        max-width: 100%;
+        height: auto;
+      }
       code {
         background: var(--ml-code);
         padding: 0.15em 0.4em;
