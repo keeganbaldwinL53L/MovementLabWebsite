@@ -422,13 +422,32 @@ jobs:
           # .htaccess rewrite is actually in force on the server — assert it
           # rather than assume mod_rewrite is enabled.
           #
-          # AG-3 F3. This is also the assertion that proves OUR .htaccess is
-          # being read, because the rewrite is a behaviour only our file
-          # produces. The dotfile check below cannot make that claim.
+          # AG-3 F3 / AG-4 residual 3. THIS is the assertion that proves OUR
+          # .htaccess is being read, and it checks CONTENT rather than status,
+          # because status alone does not discriminate. Measured on both hosts:
+          #
+          #   production /sitemap.xml -> 200, but it is All in One SEO's
+          #     WordPress sitemap, carrying an XSL stylesheet and a plugin banner
+          #   staging    /sitemap.xml -> 200, a bare <sitemapindex> whose only
+          #     <loc> is sitemap-0.xml
+          #
+          # Only @astrojs/sitemap emits the second shape, and it is only
+          # reachable at /sitemap.xml because our RewriteRule maps it onto
+          # sitemap-index.xml. So asserting the SHAPE proves our file is in
+          # force; asserting 200 would have passed on a host running WordPress.
           SM=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}sitemap.xml" || echo 000)
           echo "/sitemap.xml -> HTTP ${SM}"
           [ "$SM" = "200" ] || { echo "::error::/sitemap.xml did not resolve (mod_rewrite off, or the rewrite is wrong)"; exit 1; }
-          echo "our .htaccess is in force on the server: it owns this rewrite"
+
+          SM_BODY=$(curl -fsSL --max-time 20 "${DEPLOY_URL}sitemap.xml" || echo '')
+          printf '%s' "$SM_BODY" | grep -q '<sitemapindex' || {
+            echo "::error::/sitemap.xml is not a sitemap index — something else is answering that path"
+            printf '%s' "$SM_BODY" | head -c 300; exit 1; }
+          printf '%s' "$SM_BODY" | grep -q 'sitemap-0\.xml' || {
+            echo "::error::/sitemap.xml does not point at sitemap-0.xml, so it is NOT the Astro sitemap"
+            echo "  our RewriteRule is not in force, or another sitemap is answering this path"
+            printf '%s' "$SM_BODY" | head -c 300; exit 1; }
+          echo "our .htaccess IS in force: /sitemap.xml serves the Astro sitemap index via our rewrite"
 
       - name: Confirm the migration redirect map is live
         # Story 1-7 + spec G-2. This lives IN the deploy workflow, on purpose.
@@ -526,16 +545,29 @@ jobs:
         # file and the parent are therefore indistinguishable by status code on
         # /.git/config, which is exactly why that probe cannot discriminate.
         #
-        # THE BETTER PROBE, and the reason this step changed target: /.git is
-        # never rsynced, so probing it measures ABSENCE. /.htaccess IS on the
-        # server — it is our own artifact — so probing it measures DENIAL of a
-        # file that genuinely exists. The middle row above is the proof: without
-        # our FilesMatch block that URL serves 200 and leaks the file.
+        # ⚠️ AG-4 RESIDUAL 3 — AND ARGUS IS RIGHT AGAIN, SO READ THIS BEFORE
+        # TRUSTING THE STEP NAME. I moved this probe from /.git/config to
+        # /.htaccess on the reasoning that /.git is never rsynced (so probing it
+        # measures ABSENCE) while /.htaccess is our own artifact on the server
+        # (so probing it measures DENIAL). The second half does not survive
+        # contact with the real hosts. Measured:
+        #
+        #   production apex   /.htaccess -> 403   and it carries NONE of our files
+        #   staging           /.htaccess -> 403
+        #
+        # Stock Apache denies .ht* at server level, so this probe measures the
+        # HOST's policy just as the /.git/config one did. It is defence in depth
+        # and worth keeping — a 200 here really would be a live leak — but it
+        # does NOT prove our file is in force, and no dotfile status code can.
+        #
+        # THE CLAIM "our .htaccess is in force" IS CARRIED ENTIRELY BY THE
+        # /sitemap.xml CONTENT ASSERTION IN THE PREVIOUS STEP, which checks for
+        # the Astro sitemap shape rather than a 200, because production answers
+        # that path 200 from WordPress.
         #
         # Either denial code is accepted, because at cutover our file replaces
         # the parent and a hardcoded 403 would hard-fail the deploy at the worst
-        # possible moment. The "our file is in force" claim is carried by the
-        # /sitemap.xml rewrite in the previous step, which only our file owns.
+        # possible moment.
         run: |
           HTA=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}.htaccess" || echo 000)
           GIT=$(curl -s -o /dev/null -w '%{http_code}' --max-time 20 "${DEPLOY_URL}.git/config" || echo 000)

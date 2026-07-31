@@ -72,6 +72,24 @@ const pass = (msg) => console.log(`  PASS  ${msg}`);
 
 console.log(`Gate: SITE_ENV=${SITE_ENV}, canonical origin ${SITE_URL}, dist=${DIST}\n`);
 
+// AG-4 residual 1 (MEDIUM). The cross-check used to run only `if (DEPLOY_URL)`,
+// print SKIP when it was absent, and pass. That is a silent opt-out on the one
+// assertion that closes F1 — and the whole premise of F1 is "what happens when
+// someone copies this workflow", where the cutover edit touches exactly the
+// lines that carry DEPLOY_URL through. Argus probed it: staging artifact, no
+// DEPLOY_URL, CI=true -> PASS. Every other check is self-consistent with
+// whichever SITE_ENV was chosen, so nothing else would have caught it.
+//
+// Locally, absent DEPLOY_URL still means "not a deploy" and skipping is right.
+// In CI it means the pass-through was dropped, and that is a hard failure.
+if (IN_CI && !DEPLOY_URL) {
+  fail(
+    'DEPLOY_URL is not set in CI. It is the second of the two declarations this gate ' +
+      'cross-checks, and without it the environment/destination assertion cannot run — ' +
+      'which is exactly how a copied cutover workflow re-opens the noindex-on-production trap.',
+  );
+}
+
 if (DEPLOY_URL) {
   let origin;
   try {
@@ -171,9 +189,20 @@ for (const file of pages) {
   }
 
   // -- structured data ------------------------------------------------------
-  const blocks = [...html.matchAll(/<script type="application\/ld\+json">([\s\S]*?)<\/script>/g)].map(
-    (m) => m[1],
-  );
+  // AG-4 residual 2 (LOW, but the worst kind of miss). This regex used to demand
+  // a BARE `<script type="application/ld+json">`. Any extra attribute made that
+  // block invisible to the scanner, and because it fails PARTIALLY — some blocks
+  // still match — `!blocks.length` never fires and nothing reports a problem.
+  // The AHPRA check is the one that rides on this, and a silent miss there is a
+  // criminal-liability question rather than a ranking one.
+  //
+  // Latent rather than live when Argus found it: all 15 blocks across the 8
+  // pages were visible, because Astro strips `slot` and `set:html` from the
+  // rendered tag. That is a property of the current Astro version, not a
+  // guarantee, which is precisely why it should not be load-bearing.
+  const blocks = [
+    ...html.matchAll(/<script[^>]*type="application\/ld\+json"[^>]*>([\s\S]*?)<\/script>/g),
+  ].map((m) => m[1]);
   if (!blocks.length) fail(at('no JSON-LD at all'));
 
   let biz;
@@ -192,12 +221,16 @@ for (const file of pages) {
     const walk = (v) => {
       if (Array.isArray(v)) return v.forEach(walk);
       if (v && typeof v === 'object') {
+        // Checked ONCE per object, not once per key. It used to sit inside the
+        // key loop, so a single banned node reported itself as many times as it
+        // had properties — and a critical check that triple-prints reads as
+        // unreliable exactly when it matters most.
+        if (v['@type'] === 'Review' || v['@type'] === 'AggregateRating') {
+          fail(at(`a ${v['@type']} node reached the page — AHPRA s133 forbids it on any surface`));
+        }
         for (const [k, child] of Object.entries(v)) {
           if (/^(review|aggregateRating|reviews|ratingValue)$/i.test(k)) {
             fail(at(`a "${k}" node reached the page — AHPRA s133 forbids it on any surface`));
-          }
-          if (v['@type'] === 'Review' || v['@type'] === 'AggregateRating') {
-            fail(at(`a ${v['@type']} node reached the page — AHPRA s133 forbids it on any surface`));
           }
           walk(child);
         }
