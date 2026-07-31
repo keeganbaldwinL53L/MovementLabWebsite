@@ -17,11 +17,14 @@
 // Group Class had NO bookable sessions scheduled in Cliniko as of 2026-07-29, so
 // its deep link renders "no appointments available this month". That is a Cliniko
 // data problem, not a build one, and it is Keegan's to schedule before launch.
+import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCta from '../../components/BookCta.astro';
 import { service } from '../../lib/schema.mjs';
 import { SITE_URL } from '../../lib/site-env.mjs';
 import business from '../../data/business.json' with { type: 'json' };
+import classBands from '../../assets/site/Group-Nordics-scaled.jpg';
+import classRoom from '../../assets/site/Keegan-demonstrating.jpeg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -46,6 +49,14 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
     Two weekly classes at Just Train Gym in Cromer, $20 each, one hour. Both are designed as a
     low-barrier way to sample the same methods I use one-to-one, and both welcome complete beginners.
   </p>
+
+  <Image
+    src={classBands}
+    alt="Four people kneeling on mats in a mirrored studio, leaning back and holding resistance bands overhead during a group mobility class"
+    widths={[480, 800]}
+    sizes="(max-width: 44rem) 100vw, 44rem"
+    class="page-img"
+  />
 
   <h2>What happens in the mobility and flexibility class?</h2>
   <p>
@@ -83,6 +94,14 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
     <a href="/services/handstand/">One-to-one handstand coaching</a> is on its own page.
   </p>
 
+  <Image
+    src={classRoom}
+    alt="A group class at Just Train Gym in Cromer, participants standing on mats while Keegan demonstrates a hinge with a weighted bag"
+    widths={[480, 800]}
+    sizes="(max-width: 44rem) 100vw, 44rem"
+    class="page-img"
+  />
+
   <h2>When and where do the classes run?</h2>
   <p>
     All group classes are held at Just Train Gym in Cromer. Current days and times are shown on the
@@ -115,6 +134,12 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
 <style>
   .lead {
     font-size: 1.125rem;
+  }
+  .page-img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 1.5rem 0;
   }
   .next-links {
     padding-left: 1.1rem;

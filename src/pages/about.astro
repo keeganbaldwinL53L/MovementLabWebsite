@@ -19,11 +19,13 @@
 // Two typos from the old site are fixed here and are NOT a copy rewrite:
 // "fucntional" -> "functional" on this page, and "chiriopractor" -> "chiropractor"
 // in the old handstand page's meta description.
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BookCta from '../components/BookCta.astro';
 import { physician } from '../lib/schema.mjs';
 import { SITE_URL } from '../lib/site-env.mjs';
 import business from '../data/business.json' with { type: 'json' };
+import portrait from '../assets/site/head-shot-smile-cropped.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -46,6 +48,14 @@ const PHYSICIAN = physician(SITE_URL);
     get out of pain and keep moving well for life, combining chiropractic care with a background in
     movement and mobility.
   </p>
+
+  <Image
+    src={portrait}
+    alt="Keegan Baldwin, chiropractor, smiling against a plain light background"
+    widths={[320, 640]}
+    sizes="(max-width: 44rem) 60vw, 20rem"
+    class="portrait"
+  />
 
   <h2>Why should you work with me?</h2>
   <p>
@@ -118,6 +128,12 @@ const PHYSICIAN = physician(SITE_URL);
 <style>
   .lead {
     font-size: 1.125rem;
+  }
+  .portrait {
+    max-width: 20rem;
+    height: auto;
+    border-radius: 6px;
+    margin: 1.5rem 0;
   }
   .next-links {
     padding-left: 1.1rem;

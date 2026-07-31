@@ -62,5 +62,12 @@ const priceText = service.price === null ? null : `$${service.price}`;
     margin-left: 0.75rem;
     color: var(--ml-muted);
     font-size: 0.9375rem;
+    /* Lens LN-3. At 375px — the most common phone width — the button plus this
+       span overflowed the line and the break landed INSIDE the phrase, leaving
+       "· $120" orphaned on its own line under "60 min". It is a price, so a
+       fragment reads as a mistake. Keeping it unbreakable makes the whole
+       phrase move to the next line together, which is what 320px already did.
+       Verified at 320 / 375 / 414 / 1280. */
+    white-space: nowrap;
   }
 </style>

@@ -65,9 +65,21 @@ const isCurrent = (href: string) => current === href;
     color: var(--ml-ink);
     padding: 0.6rem 1rem;
     z-index: 10;
+    border: 1px solid var(--ml-deep);
+    border-radius: 4px;
   }
+  /* Lens LN-3. On focus this returns to normal flow rather than overlaying.
+     As an overlay its background was the SAME colour as the page and its
+     bottom edge landed mid-glyph on "Keegans Movement Lab", so the first
+     thing a keyboard user ever saw was a chip that appeared to slice the
+     brand in half. Taking flow position pushes the header down instead, so
+     nothing is ever covered. Unfocused it stays parked off-screen exactly as
+     before, and no sighted mouse user sees any change. */
   .skip-link:focus {
-    left: 0;
+    position: static;
+    left: auto;
+    display: inline-block;
+    margin-bottom: 1rem;
   }
   .site-header {
     display: flex;

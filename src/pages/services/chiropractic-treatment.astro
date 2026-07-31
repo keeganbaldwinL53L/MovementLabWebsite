@@ -12,12 +12,15 @@
 // It is the most citation-shaped asset the site owns. Anyone MAY ADD a question;
 // nobody may reword an existing one. See the note above FAQ_ENTRIES for the one
 // merge decision this page had to make, and who owns it.
+import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCta from '../../components/BookCta.astro';
 import Faq from '../../components/Faq.astro';
 import { service } from '../../lib/schema.mjs';
 import { SITE_URL } from '../../lib/site-env.mjs';
 import business from '../../data/business.json' with { type: 'json' };
+import assessing from '../../assets/site/Keegan-Photos-31.jpg';
+import adjusting from '../../assets/site/Rib-adjust.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -115,6 +118,14 @@ const FAQ_ENTRIES = [
 
   <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
 
+  <Image
+    src={assessing}
+    alt="Keegan assessing a patient's hip and knee range of motion on a treatment table, anatomy charts on the wall behind"
+    widths={[480, 800]}
+    sizes="(max-width: 44rem) 100vw, 44rem"
+    class="page-img"
+  />
+
   <h2>What is chiropractic?</h2>
   <p>
     Chiropractic is a combination of two Greek words that translates as ‘Done By Hand’. Chiropractic
@@ -135,6 +146,14 @@ const FAQ_ENTRIES = [
     as a set of symptoms. I take the time to understand what’s going on, explain what I find, and
     work with you toward lasting results – not just short-term relief.
   </p>
+
+  <Image
+    src={adjusting}
+    alt="Keegan performing a hands-on thoracic adjustment on a patient lying face down"
+    widths={[480, 800]}
+    sizes="(max-width: 44rem) 100vw, 44rem"
+    class="page-img"
+  />
 
   <h2>Why am I different?</h2>
   <p>
@@ -259,6 +278,12 @@ const FAQ_ENTRIES = [
   .lead {
     font-size: 1.125rem;
     color: var(--ml-ink);
+  }
+  .page-img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 1.5rem 0;
   }
   h3 {
     margin-top: 2rem;

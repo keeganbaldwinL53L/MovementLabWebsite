@@ -18,9 +18,11 @@
 // person asks, and the first 40-60 words answer it outright before any context.
 // The retrieval unit is a section, not a page — a section that builds to its
 // answer mostly does not get extracted at all.
+import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BookCta from '../components/BookCta.astro';
 import business from '../data/business.json' with { type: 'json' };
+import heroSquat from '../assets/site/IMG_1496-scaled.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 ---
@@ -35,6 +37,19 @@ const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
   <h1>Movement-focused chiropractic on the Northern Beaches</h1>
 
   <p class="lead">Get out of pain, find why it happened, and build a body that keeps up.</p>
+
+  {/* Story 1-10. astro:assets emits explicit width/height and lazy-loads, which
+      is what stops the layout jumping as images arrive (G-5). The hero is the
+      one exception: it is above the fold, so eager + high priority beats lazy. */}
+  <Image
+    src={heroSquat}
+    alt="Keegan Baldwin holding a deep squat, heels flat on the floor, in a bright studio"
+    widths={[480, 800, 1200]}
+    sizes="(max-width: 44rem) 100vw, 44rem"
+    loading="eager"
+    fetchpriority="high"
+    class="hero-img"
+  />
 
   <BookCta slug="new-patient" label="Book an appointment" showDetail={true} />
 
@@ -107,6 +122,12 @@ const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
   }
   .lead {
     font-size: 1.125rem;
+  }
+  .hero-img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 1.5rem 0;
   }
   .next-links {
     padding-left: 1.1rem;

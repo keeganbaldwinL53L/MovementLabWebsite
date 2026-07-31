@@ -13,11 +13,13 @@
 // handbalancing background is the credential behind the movement work and it is
 // told as a story on the About page. This page is the service: what it is, what
 // it costs, how to get it.
+import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCta from '../../components/BookCta.astro';
 import { service } from '../../lib/schema.mjs';
 import { SITE_URL } from '../../lib/site-env.mjs';
 import business from '../../data/business.json' with { type: 'json' };
+import bridge from '../../assets/site/IMG_1667.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -39,6 +41,16 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
     skills. Strength, balance, mobility and body awareness all develop through this one skill, which
     is why I keep coaching it alongside the clinical work.
   </p>
+
+  {/* Described as what it IS — a bridge, not a handstand. Alt text that
+      oversells the photo is a small lie to the one reader who cannot see it. */}
+  <Image
+    src={bridge}
+    alt="Keegan in a bridge position, hands and feet on the floor and hips lifted, demonstrating shoulder and spine extension"
+    widths={[480, 800]}
+    sizes="(max-width: 44rem) 100vw, 44rem"
+    class="page-img"
+  />
 
   <h2>Who is handstand training for?</h2>
   <p>
@@ -91,6 +103,12 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
 <style>
   .lead {
     font-size: 1.125rem;
+  }
+  .page-img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 1.5rem 0;
   }
   .next-links {
     padding-left: 1.1rem;

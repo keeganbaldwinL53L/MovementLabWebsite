@@ -9,10 +9,12 @@
 // D1 — the Movement Plan Analysis at $160 is NEW to the website and must appear
 // in this summary as well as on the main service page. It is absent from the
 // current site entirely.
+import { Image } from 'astro:assets';
 import BaseLayout from '../../layouts/BaseLayout.astro';
 import BookCta from '../../components/BookCta.astro';
 import { SERVICES } from '../../lib/cliniko.mjs';
 import business from '../../data/business.json' with { type: 'json' };
+import pikeDrill from '../../assets/site/2-man-pike-scaled.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -64,6 +66,14 @@ const classes = SERVICES.filter((s) => s.price === null);
 
   <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
 
+  <Image
+    src={pikeDrill}
+    alt="Two people standing on aerobic steps in a mirrored studio, folding forward to lower weighted bags towards the floor in a pike stretch"
+    widths={[480, 800]}
+    sizes="(max-width: 44rem) 100vw, 44rem"
+    class="page-img"
+  />
+
   <h2>What about the group classes?</h2>
   <p>
     Two weekly classes at Just Train Gym in Cromer, $20 each, one hour, and both open to complete
@@ -100,6 +110,12 @@ const classes = SERVICES.filter((s) => s.price === null);
 <style>
   .lead {
     font-size: 1.125rem;
+  }
+  .page-img {
+    width: 100%;
+    height: auto;
+    border-radius: 6px;
+    margin: 1.5rem 0;
   }
   /* Wide content scrolls inside its own container so the page body never
      scrolls horizontally on a phone (LN-2). */

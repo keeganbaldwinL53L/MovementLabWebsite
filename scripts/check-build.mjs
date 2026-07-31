@@ -334,6 +334,47 @@ for (const file of pages) {
     }
   }
 
+  // -- images (story 1-10 / spec G-5) ----------------------------------------
+  // Two properties, both of which fail silently without a check.
+  //
+  // ALT: the old WordPress site technically had alt text on 46 of 57 images, and
+  // it was worthless — WordPress auto-fills the filename, so a screen reader
+  // announced "img 1570" and "VideoCapture_20250623-164557". That counts as
+  // present in an audit and describes nothing to the one person who needs it.
+  // So this asserts alt is non-empty AND not merely the filename.
+  //
+  // DIMENSIONS: an <img> without width/height is the single most common cause
+  // of layout shift on a rebuild — the page reflows as each image arrives.
+  // astro:assets emits both automatically, so a failure here means someone
+  // hand-wrote a raw <img> and bypassed it.
+  for (const m of body.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = m[0];
+    const alt = tag.match(/\salt="([^"]*)"/i)?.[1];
+    const src = tag.match(/\ssrc="([^"]+)"/i)?.[1] ?? '';
+    const file = src.split('/').pop()?.split('.')[0] ?? '';
+    const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
+
+    if (alt === undefined) {
+      fail(at(`an <img> has no alt attribute at all (${src})`));
+    } else if (!alt.trim()) {
+      // A deliberately empty alt is correct for a purely decorative image, but
+      // nothing on this site is decorative yet, so treat it as a miss and make
+      // whoever adds one say so explicitly.
+      fail(at(`an <img> has an empty alt (${src}) — if it is decorative, say so here in a comment`));
+    } else if (file && norm(alt) === norm(file)) {
+      fail(
+        at(
+          `the alt text for ${src} is just the filename ("${alt}") — that is what the old ` +
+            `WordPress site did, and it describes nothing to a screen reader`,
+        ),
+      );
+    }
+
+    if (!/\swidth="\d+"/i.test(tag) || !/\sheight="\d+"/i.test(tag)) {
+      fail(at(`an <img> is missing width/height (${src}) — unsized images cause layout shift`));
+    }
+  }
+
   // -- exactly one h1 (G-7) --------------------------------------------------
   const h1s = (html.match(/<h1[\s>]/gi) ?? []).length;
   if (h1s !== 1) fail(at(`${h1s} <h1> elements, expected exactly 1`));
