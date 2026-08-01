@@ -277,38 +277,39 @@ jobs:
           # build if all three fail. What it must NOT do is silently mask a
           # genuinely dead key — hence the per-attempt output and the final
           # error naming how many attempts were made.
-          # ⚠️ ROOT CAUSE FOUND 2026-08-01, AND IT WAS NEVER A BAN. READ THIS
-          # BEFORE TOUCHING THE RETRY OR THE SSH SECRETS.
+          # ⚠️ CAUSE STILL UNRESOLVED. TWO THEORIES TRIED AND BOTH FALSIFIED —
+          # read this before forming a third.
           #
-          # For a day this step failed roughly half the time on byte-identical
-          # secrets, always consuming the FULL connect timeout. I read that as a
-          # firewall dropping packets and guessed at a fail2ban-style block,
-          # widening the retry 1 -> 3 -> 5 attempts and then narrowing it again
-          # on the theory that the retries were deepening the ban.
+          # SYMPTOM, stable across 12 runs: this step fails roughly half the
+          # time, and every failing attempt consumes its FULL connect timeout.
+          # Byte-identical secrets, no correlation with spacing.
           #
-          # THAT THEORY WAS WRONG. The real cause is DNS round-robin. Hostinger
-          # resolves the account hostname to a ROTATING POOL of IPs, and only ONE
-          # machine in that pool runs SSH. Measured: the SSH IP from hPanel
-          # answers on 65002, while every IP the domain resolves to times out,
-          # and the pool returns different addresses on successive queries. So
-          # each deploy was rolling dice on which IP it got — which explains the
-          # ~50% rate, the full timeouts, the lack of any correlation with
-          # timing, and why a plain re-run so often fixed it.
+          # THEORY 1, a fail2ban-style block. Falsified: a re-run minutes later
+          # succeeds untouched, and a ban does not lift and re-apply on that
+          # cadence.
           #
-          # THE FIX IS THE SECRET, NOT THIS LOOP: SSH_HOST is now pinned to the
-          # literal SSH IP rather than a hostname, and SSH_KNOWN_HOSTS carries the
-          # matching [ip]:port entry. Both had to change together, because the
-          # host-entry lookup below keys on [host]:port.
+          # THEORY 2, DNS round-robin. It looked decisive — the account hostname
+          # resolves to a ROTATING POOL and only one machine in it answers SSH,
+          # which would explain the ~50% rate and the full timeouts exactly. So
+          # SSH_HOST was pinned to the literal IP and SSH_KNOWN_HOSTS updated to
+          # match. FALSIFIED BY RUN #24: with DNS removed from the path
+          # entirely, the same failure returned with the same signature.
           #
-          # ⚠️ IF DEPLOYS EVER FAIL 100% (rather than intermittently), the first
-          # thing to check is hPanel -> Advanced -> SSH Access: a pinned IP goes
-          # stale if Hostinger migrates the account. Intermittent failure means
-          # something else; total failure means the IP moved.
+          # WHAT IS ACTUALLY ESTABLISHED, and it is narrow:
+          #   - the pinned IP answers on 65002 reliably from a home connection
+          #     (8/8 consecutive probes)
+          #   - GitHub runners reach it only intermittently, and when they fail
+          #     they wait out the whole timeout
+          #   - HTTP to the same account is unaffected throughout
+          # That combination points at something between GitHub's egress and
+          # Hostinger dropping SYNs — filtering or rate limiting on the provider
+          # side is the remaining candidate, and it needs THEIR logs to confirm.
+          # See UD-27; it is a support question now, not a workflow one.
           #
-          # The 2-attempt retry stays as cheap insurance against a genuine blip.
-          # Do not widen it — with the IP pinned there is nothing for extra
-          # attempts to win, and the wide version was only ever treating a
-          # symptom of the DNS problem.
+          # DO NOT WIDEN THE RETRY. Five attempts over ~3.7 minutes was tried and
+          # failed; the outage outlasts any budget worth spending on a deploy.
+          # A re-run from the Actions UI is the cheap workaround while this
+          # stands.
           AUTH_OK=0
           for ATTEMPT in 1 2; do
             if ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
