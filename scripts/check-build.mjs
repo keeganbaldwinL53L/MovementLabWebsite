@@ -354,14 +354,30 @@ for (const file of pages) {
     const file = src.split('/').pop()?.split('.')[0] ?? '';
     const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
+    // LN-6 / story 1-15 — SAYING SO, exactly as the note below asked.
+    // The brand mark in the site header is the first genuinely decorative image
+    // on this site. It carries no information: the business name sits beside it
+    // as real text, so describing the mark would make a screen reader announce
+    // the name twice.
+    //
+    // The allowance is deliberately NARROW. An empty alt passes only when the
+    // tag ALSO carries aria-hidden="true". That pair is the unambiguous W3C
+    // marker for decorative, it cannot be reached by forgetting to write alt
+    // text, and it takes two intentional attributes to opt out of this check.
+    // A bare empty alt on its own still fails, which is what keeps the original
+    // tripwire intact for the 38 content images story 1-10 is still placing.
+    const decorative = /\saria-hidden="true"/i.test(tag);
+
     if (alt === undefined) {
       fail(at(`an <img> has no alt attribute at all (${src})`));
-    } else if (!alt.trim()) {
-      // A deliberately empty alt is correct for a purely decorative image, but
-      // nothing on this site is decorative yet, so treat it as a miss and make
-      // whoever adds one say so explicitly.
-      fail(at(`an <img> has an empty alt (${src}) — if it is decorative, say so here in a comment`));
-    } else if (file && norm(alt) === norm(file)) {
+    } else if (!alt.trim() && !decorative) {
+      fail(
+        at(
+          `an <img> has an empty alt (${src}) — if it is genuinely decorative, add ` +
+            `aria-hidden="true" alongside the empty alt; otherwise write real alt text`,
+        ),
+      );
+    } else if (alt.trim() && file && norm(alt) === norm(file)) {
       fail(
         at(
           `the alt text for ${src} is just the filename ("${alt}") — that is what the old ` +
