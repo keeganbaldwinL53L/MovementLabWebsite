@@ -130,13 +130,37 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         page/width combinations overflowed because not one image rule applied.
         Only a browser found it. */}
     <style is:global>
+      /* ═══ LN-6 / story 1-15. THE REAL BRAND PALETTE ═══
+         Every value below is Keegan's documented brand, not the site's previous
+         approximation of it. His words: "id prefer my main colours not the ones
+         currently used by my site - i think those were the closest i could get
+         manually when i hand made that site." So #ff3502 and the neutral
+         paper/ink theme were a hand-eyeballed stand-in; this is the real thing.
+
+         🔴 THE ONE RULE THAT GOVERNS ALL OF IT: ORANGE IS NEVER A TEXT COLOUR.
+         --ml-accent on paper measures 3.22:1. That clears the 3.0 bar for large
+         text and UI, and fails the 4.5 bar for body text. The brand spec's own
+         derived #D64100 measures 4.41 on THIS paper — still under 4.5 — so
+         there is no orange that works as body text on Keegan's warm ground.
+         Deep green carries every word at 12.40:1 (AAA, enormous headroom);
+         orange is fills, large headings, icons, focus rings and borders. That
+         is also exactly how the brand deck uses it.
+         Orange on sage is 2.11:1 — never put them together at all. */
       :root {
-        --ml-paper: #fdfbf8; /* page background */
-        --ml-ink: #1b211f; /* body text */
-        --ml-muted: #5b6560; /* secondary text, labels */
-        --ml-rule: #e4e1da; /* hairlines and table borders */
-        --ml-shade: #f1efea; /* table header fill */
-        --ml-code: #e9e6df; /* inline code fill */
+        --ml-paper: #fdfbf8; /* page ground — warm off-white, kept from before */
+        --ml-ink: #2A3529; /* deep green. Body text and headings. 12.40 on paper */
+        --ml-surface: #C7D1C1; /* sage. Calm section/card surface. ink on it = 8.12 */
+        /* DERIVED, not picked: ink blended 16% toward paper. The binding
+           constraint was sage, not paper — muted text can land on EITHER
+           ground, so it has to clear 4.5 on both. 7.51 on paper, 4.92 on sage.
+           The previous #5b6560 was a warm grey with no relationship to any
+           brand value; this one is the same hue family as the ink. */
+        --ml-muted: #4c554a; /* secondary text, labels */
+        /* Hairlines and fills re-tinted into the sage family so they read as
+           part of the palette rather than as leftover warm grey. */
+        --ml-rule: #dfe4da; /* hairlines and table borders */
+        --ml-shade: #ebede5; /* table header fill, soft bands */
+        --ml-code: #e5e8df; /* inline code fill */
         /* LN-3 F9 / SM-11 (4). --ml-deep WAS #1f3330, a second dark green
            1.226:1 from --ml-ink — per-channel delta of at most 18/255, which is
            indistinguishable to the eye and, as Lens measured, they never appear
@@ -147,7 +171,17 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
            it changes here and nothing else moves. Safe to do now that UD-21
            closed without touching the accent. */
         --ml-deep: var(--ml-ink); /* button hover, focus outline */
-        --ml-accent: #ff3502; /* the booking call to action — LN-2 F1, Keegan's open call */
+        /* THE brand orange. Was #ff3502 — Keegan's own manual approximation
+           from hand-building the WordPress site, never a brand value. This one
+           is [VERIFIED] across three independent brand slides.
+           ⚠️ UD-21 KNOCK-ON, AND IT SURVIVES: the booking button was settled as
+           "keep the colour, make the label 19px/700" at 3.53:1 on the old
+           orange. On the real #FF4D00 the same pair is 3.22:1 — still over the
+           3.0 large-text bar, so the fix holds. But headroom fell from 0.53 to
+           0.22, which makes 19px/700 a FLOOR, not a suggestion. Anything
+           smaller or lighter puts that label back under the 4.5 body-text rule
+           and it fails. There is a comment saying so on the button itself. */
+        --ml-accent: #FF4D00; /* fills, large headings, icons, focus, borders — NEVER text */
 
         /* LN-3 F6 / SM-11 (1). THE ONE COLOUR ON THE SITE NOBODY HAD CHOSEN.
            SM-5 F6 was reported closed on the grounds that "link colour is
@@ -166,7 +200,38 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
            the fade matches its own colour, and so the pair cannot drift apart
            from the hex above by hand. */
         --ml-paper-rgb: 253, 251, 248;
-        --ml-ink-rgb: 27, 33, 31;
+        --ml-ink-rgb: 42, 53, 41;
+
+        /* ═══ TYPE ═══
+           Outfit, self-hosted, variable, SIL OFL — free for commercial use and
+           self-hosting, no attribution required in the page (licence text ships
+           at /fonts/Outfit-OFL.txt regardless).
+
+           WHY IT IS A TOKEN AND NOT A HARDCODED FAMILY: Keegan's actual brand
+           face is CoFo Sans VF, and the file he was given is an Adobe Fonts
+           desktop-sync copy whose EULA does not cover web self-hosting. When he
+           takes either legitimate route — publishing it as an Adobe Fonts web
+           project on his domain, or buying a webfont licence from Contrast
+           Foundry — CoFo replaces Outfit by editing THIS LINE and nothing else.
+
+           Outfit was chosen on measured metrics (cap height 0.676 against
+           CoFo's 0.680, full 100–900 axis where Figtree starts at 300 and the
+           brand guidance is light/regular weights). Lens verified the letterforms
+           this session: see the LN-6 report for what matches and the one tell
+           that does not. */
+        --ml-font-brand: 'Outfit', system-ui, -apple-system, 'Segoe UI', sans-serif;
+      }
+
+      /* One file, the full 100–900 axis. `swap` so text is readable
+         immediately on a slow connection and reflows when the face lands —
+         the metric match is close enough (0.2% on the wordmark) that the
+         reflow is barely perceptible. */
+      @font-face {
+        font-family: 'Outfit';
+        src: url('/fonts/outfit-variable.woff2') format('woff2-variations');
+        font-weight: 100 900;
+        font-style: normal;
+        font-display: swap;
       }
 
       /* Lens LN-3. Story 1-10 added 8 images across 6 pages, each with its own
@@ -223,24 +288,148 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       a:focus-visible {
         text-decoration-thickness: 2px;
       }
+
+      /* ═══ LN-6 / story 1-15. THE BRAND TYPE SYSTEM ═══
+         GLOBAL, and that is load-bearing rather than lazy. Headings arrive
+         through <slot> carrying their OWN astro cid, so a scoped rule here
+         compiles to `h1[data-astro-cid-<layout>]` and matches nothing in page
+         content. `text-wrap: balance` was sitting in the scoped block below and
+         was therefore never reaching a single page heading — a latent no-op
+         nobody could see, which is the same shape as the image-rule bug.
+
+         The brand deck's own type register, applied:
+         - LIGHT AND REGULAR WEIGHTS, NEVER HEAVY. Headings run 300.
+         - Generous letter-spacing on display sizes; slides set headings open.
+         - SENTENCE CASE, never ALL CAPS, except the small tracked label style
+           the badge lockup uses. */
+      body,
+      button,
+      input,
+      select,
+      textarea {
+        font-family: var(--ml-font-brand);
+      }
+
+      h1,
+      h2,
+      h3,
+      h4 {
+        font-family: var(--ml-font-brand);
+        font-weight: 300;
+        letter-spacing: 0.005em;
+        text-wrap: balance;
+        color: var(--ml-ink);
+      }
+      h1 {
+        font-size: clamp(2rem, 1.55rem + 2.2vw, 3rem);
+        line-height: 1.12;
+        letter-spacing: -0.005em; /* display sizes need slightly less, not more */
+        margin: 0 0 0.6em;
+      }
+      h2 {
+        font-size: clamp(1.5rem, 1.3rem + 1vw, 1.95rem);
+        line-height: 1.2;
+        margin: 2.75rem 0 0.7rem;
+      }
+      h3 {
+        font-size: clamp(1.15rem, 1.08rem + 0.35vw, 1.3rem);
+        line-height: 1.3;
+        font-weight: 400; /* 300 goes too faint at this size */
+        margin: 1.9rem 0 0.5rem;
+      }
+
+      /* The brand's accent gesture: a short orange rule under section heads.
+         Orange as a BORDER, which is what it is licensed to do here — this is
+         the one place the accent appears on a text-bearing element without
+         ever being the text itself. */
+      main h2::after {
+        content: '';
+        display: block;
+        width: 2.25rem;
+        height: 3px;
+        margin-top: 0.6rem;
+        border-radius: 2px;
+        background: var(--ml-accent);
+      }
+
+      /* The tracked uppercase label from the badge lockup. Small, sparing. */
+      .brandline,
+      .eyebrow {
+        font-size: 0.8125rem;
+        font-weight: 500;
+        letter-spacing: 0.13em;
+        text-transform: uppercase;
+        color: var(--ml-muted);
+      }
+
+      /* ═══ SAGE SURFACE ═══
+         The third brand colour, and the only one that can break the page out of
+         a single uninterrupted 44rem column without any restructuring: a band
+         that bleeds to the full viewport width while its CONTENT stays on the
+         same measure as everything else.
+
+         `margin-inline: calc(50% - 50vw)` is what does it — the body is a
+         centred fixed-width column, so pulling each side out by the difference
+         between half the column and half the viewport reaches the edges exactly.
+         `padding-inline` puts the text back on the column. No wrapper divs, no
+         layout rewrite, works at every width, and collapses harmlessly when the
+         viewport is narrower than the column.
+
+         ink on sage is 8.12:1 and muted on sage is 4.92:1 — both cleared, which
+         is why --ml-muted was derived against sage rather than paper alone. */
+      .band {
+        background: var(--ml-surface);
+        margin-inline: calc(50% - 50vw);
+        padding: 2.25rem calc(50vw - 50% + 0.25rem);
+        margin-block: 2.75rem;
+      }
+      .band > :first-child {
+        margin-top: 0;
+      }
+      .band > :last-child {
+        margin-bottom: 0;
+      }
+      /* Inside a sage band the hairline needs to be darker than the band, not
+         lighter — the paper-tinted rule disappears against it. */
+      .band hr,
+      .band .hours-row {
+        border-color: var(--ml-muted);
+      }
+      /* The orange section rule CANNOT follow a heading into a sage band —
+         accent on surface is 2.11:1, the one pairing the brand contract rules
+         out outright. It is a 3px decorative bar so no WCAG criterion is
+         breached, but at 2.11 it reads as muddy rather than as an accent, which
+         is the practical reason the rule exists. Ink on sage is 8.12:1. */
+      .band h2::after {
+        background: var(--ml-ink);
+      }
+
+      /* Focus: orange ring. A border/outline is a licensed use of the accent,
+         and it is the one thing on the page that should interrupt. */
+      a:focus-visible,
+      button:focus-visible,
+      summary:focus-visible,
+      [tabindex]:focus-visible {
+        outline: 2px solid var(--ml-accent);
+        outline-offset: 2px;
+        border-radius: 2px;
+      }
     </style>
 
     <style>
       body {
         text-wrap: pretty;
-        font-family: system-ui, -apple-system, sans-serif;
+        /* font-family now comes from the global type block — --ml-font-brand. */
         max-width: 44rem;
         margin: 0 auto;
         padding: 2rem 1.5rem 4rem;
-        line-height: 1.6;
+        line-height: 1.65;
         color: var(--ml-ink);
         background: var(--ml-paper);
       }
-      h1,
-      h2,
-      h3 {
-        text-wrap: balance;
-      }
+      /* `h1,h2,h3 { text-wrap: balance }` USED TO LIVE HERE and never applied —
+         scoped, while every heading arrives through <slot> with its own cid.
+         It is in the global block now, along with the rest of the type system. */
       code {
         background: var(--ml-code);
         padding: 0.15em 0.4em;

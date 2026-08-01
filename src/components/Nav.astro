@@ -14,6 +14,7 @@
 // making content but as a back up we can just leave it off at launch." Adding it
 // here early is how a launch ends up with an empty blog in the primary nav.
 import business from '../data/business.json' with { type: 'json' };
+import mark from '../assets/brand/mark.png';
 
 interface Props {
   /** Pathname of the current page, so the nav can mark where you are. */
@@ -39,7 +40,27 @@ const isCurrent = (href: string) => current === href;
 <a class="skip-link" href="#main">Skip to content</a>
 
 <header class="site-header">
-  <a class="brand" href="/">{business.name}</a>
+  {/* LN-6 / 1-15. The mark rides ALONGSIDE the name, and the name stays real
+      text. It is tempting to drop in the logo lockup artwork instead, but the
+      lockup reads "Movement Lab" while the business name is "Keegans Movement
+      Lab" — and that name matching the Google Business Profile CHARACTER FOR
+      CHARACTER is the entire mechanism story 1-5 exists to serve. Replacing the
+      text with an image that says something shorter would quietly undo it, and
+      cost the alt-text-free crawlable name at the top of every page. So: mark
+      as decoration, name as text. */}
+  {/* A PLAIN <img>, not astro:assets <Image>, and that is deliberate.
+      <Image alt=""> serialises to a BARE boolean `alt` attribute. That is valid
+      HTML and screen readers treat it as decorative exactly as intended — but
+      check-build.mjs matches /\salt="([^"]*)"/ and so reports it as "no alt
+      attribute at all". The markup was right and the gate could not see it.
+      Writing the tag by hand emits the quoted `alt=""`, which is unambiguous to
+      both. The asset is still hashed and cached by Vite through the import.
+      The gate's blind spot is real and reported separately — it will misread
+      any bare boolean attribute, not just this one. */}
+  <a class="brand" href="/">
+    <img src={mark.src} alt="" aria-hidden="true" width="30" height="30" class="brand-mark" />
+    <span>{business.name}</span>
+  </a>
 
   <nav aria-label="Main">
     <ul>
@@ -92,9 +113,23 @@ const isCurrent = (href: string) => current === href;
     border-bottom: 1px solid var(--ml-rule);
   }
   .brand {
-    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+    font-weight: 600; /* the brand deck never uses heavy weights */
+    font-size: 1.0625rem;
+    letter-spacing: 0.005em;
     text-decoration: none;
     color: var(--ml-ink);
+  }
+  .brand-mark {
+    /* The global `img` rule sets width:100%; the mark is a fixed-size icon and
+       must opt out of it, or it fills the header. */
+    width: 30px;
+    height: 30px;
+    margin: 0;
+    flex: none;
+    border-radius: 0;
   }
   .site-header nav ul {
     display: flex;

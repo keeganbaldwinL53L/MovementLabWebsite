@@ -102,6 +102,26 @@ const fmt = (t) => {
   }
   .hours dl {
     margin: 0;
+    /* LN-6, closing UD-22. Keegan: "i prefer tighter atm."
+       The rows are `justify-content: space-between`, so without a cap they
+       stretch to the full column and on desktop a short row put `Friday` and
+       `8am–5pm` about 220px apart — the eye has to travel to pair a day with
+       its time, and mis-pairing this particular block is what sends someone to
+       a locked door. Capping the LIST rather than changing the layout keeps the
+       footer column its full width.
+       It helps most exactly where his hours are hardest: Tuesday and Thursday
+       each carry TWO time blocks around the 14:00–16:30 break, so they are the
+       longest rows and the uncapped version stretched them furthest.
+
+       ⚠️ `max-content`, NOT a fixed rem cap. I first proposed `max-width: 22rem`
+       in UD-22 and it turned out to be a NO-OP: the footer's hours column is
+       only ~336px at every desktop width, narrower than 22rem, so the cap never
+       engaged and the gap stayed at 225px. `max-content` sizes the list to its
+       own widest row — Tuesday, the two-block one — so it is self-tuning and
+       cannot go stale if the hours ever change. `max-width: 100%` keeps it
+       inside the column on a phone. */
+    width: max-content;
+    max-width: 100%;
   }
   .hours-row {
     display: flex;

@@ -62,6 +62,12 @@ const priceText = service.price === null ? null : `$${service.price}`;
        they are load-bearing for conformance, not styling preference. */
     font-size: 1.1875rem; /* 19px — clears the 18.66px large-text threshold */
     font-weight: 700; /* 600 does NOT qualify; large text needs 700 */
+
+    /* LN-6. On the REAL brand orange #FF4D00 this pair measures 3.22:1, down
+       from 3.53 on the old approximation. It still clears the 3.0 large-text
+       bar, so the UD-21 fix survives the palette change — but the headroom is
+       now 0.22, so 19px/700 is a FLOOR. Do not reduce either value. */
+    letter-spacing: 0.005em;
   }
   .book-cta a:hover,
   .book-cta a:focus-visible {
