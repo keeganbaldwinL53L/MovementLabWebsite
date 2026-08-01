@@ -277,30 +277,38 @@ jobs:
           # build if all three fail. What it must NOT do is silently mask a
           # genuinely dead key — hence the per-attempt output and the final
           # error naming how many attempts were made.
-          # ⚠️ DELIBERATELY SHORT, AND I WIDENED IT ONCE BEFORE NARROWING IT BACK.
+          # ⚠️ ROOT CAUSE FOUND 2026-08-01, AND IT WAS NEVER A BAN. READ THIS
+          # BEFORE TOUCHING THE RETRY OR THE SSH SECRETS.
           #
-          # I first read the failures as brief connection blips and went 1 -> 3 ->
-          # 5 attempts. Run #20 failed through all five, and its timing gave the
-          # real diagnosis without needing the log: step 13 ran 09:07:54 ->
-          # 09:13:19, exactly 325s, which is 5 x 20s ConnectTimeout + 225s of
-          # backoff to the second. So EVERY attempt consumed its FULL connect
-          # timeout.
+          # For a day this step failed roughly half the time on byte-identical
+          # secrets, always consuming the FULL connect timeout. I read that as a
+          # firewall dropping packets and guessed at a fail2ban-style block,
+          # widening the retry 1 -> 3 -> 5 attempts and then narrowing it again
+          # on the theory that the retries were deepening the ban.
           #
-          # That is the signature of packets being DROPPED, not rejected. A
-          # refused connection or a rejected key returns in well under a second;
-          # only a firewall silently discarding SYNs makes you wait the whole
-          # timeout. Meanwhile HTTP to the same host answers 200, so the server
-          # is up — it is SSH specifically, and it is being blackholed.
+          # THAT THEORY WAS WRONG. The real cause is DNS round-robin. Hostinger
+          # resolves the account hostname to a ROTATING POOL of IPs, and only ONE
+          # machine in that pool runs SSH. Measured: the SSH IP from hPanel
+          # answers on 65002, while every IP the domain resolves to times out,
+          # and the pool returns different addresses on successive queries. So
+          # each deploy was rolling dice on which IP it got — which explains the
+          # ~50% rate, the full timeouts, the lack of any correlation with
+          # timing, and why a plain re-run so often fixed it.
           #
-          # Which means MORE retries were probably making it WORSE. A fail2ban
-          # style rule counts failed attempts, so 5 blocked connections per run
-          # instead of 1 is exactly how you extend a ban you are already under.
-          # [INFERRED from the drop signature + the failure trend, NOT confirmed —
-          # confirming it needs the server-side auth log, which is Keegan's.]
+          # THE FIX IS THE SECRET, NOT THIS LOOP: SSH_HOST is now pinned to the
+          # literal SSH IP rather than a hostname, and SSH_KNOWN_HOSTS carries the
+          # matching [ip]:port entry. Both had to change together, because the
+          # host-entry lookup below keys on [host]:port.
           #
-          # So: 2 attempts, 20s apart. Enough to ride out a genuine blip, few
-          # enough that a run does not hammer a host that is already refusing us.
-          # Do NOT widen this again without evidence that the cause is a blip.
+          # ⚠️ IF DEPLOYS EVER FAIL 100% (rather than intermittently), the first
+          # thing to check is hPanel -> Advanced -> SSH Access: a pinned IP goes
+          # stale if Hostinger migrates the account. Intermittent failure means
+          # something else; total failure means the IP moved.
+          #
+          # The 2-attempt retry stays as cheap insurance against a genuine blip.
+          # Do not widen it — with the IP pinned there is nothing for extra
+          # attempts to win, and the wide version was only ever treating a
+          # symptom of the DNS problem.
           AUTH_OK=0
           for ATTEMPT in 1 2; do
             if ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
