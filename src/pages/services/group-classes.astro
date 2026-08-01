@@ -21,9 +21,12 @@
 // than being hand-typed. If the class is ever paused, drop the time and keep the
 // booking link — a one-line edit, not a redesign.
 //
-// The MOBILITY class weekday is still unconfirmed. The 2026-07-20 capture says
-// Wednesdays 6pm, but that is the site being replaced and nobody has confirmed
-// it since, so it keeps pointing at the booking page rather than asserting a day.
+// ✅ THE MOBILITY CLASS TIME IS NOW CONFIRMED TOO: Wednesday 6-7pm, from Keegan
+// on 2026-08-01. That CORROBORATES the 2026-07-20 capture rather than trusting
+// it — the capture said "Wednesdays 6pm" but it came from the site being
+// replaced, so it was held unpublished until a human confirmed it independently.
+// Both class times on this page are now published, and both are paired with the
+// booking check.
 //
 // ~~OPS PRECONDITION: the Mobility & Flexibility Group Class has NO bookable
 // sessions scheduled in Cliniko~~ — STALE, corrected here 2026-07-31 because
@@ -45,7 +48,8 @@ import business from '../../data/business.json' with { type: 'json' };
 import classBands from '../../assets/site/Group-Nordics-scaled.jpg';
 import classRoom from '../../assets/site/Keegan-demonstrating.jpeg';
 
-const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+// Bumped 2026-08-01: both class times added after Keegan confirmed them.
+const LAST_CHANGED = new Date('2026-08-01T00:00:00+10:00');
 
 // G-8 — Service with NO offers node. Cliniko has no billable item for the
 // classes, so compact() drops offers rather than publishing a price the booking
@@ -78,6 +82,20 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
   />
 
   <h2>What happens in the mobility and flexibility class?</h2>
+  {/* Keegan confirmed Wednesday 6-7pm on 2026-08-01, which corroborates the
+      2026-07-20 capture rather than relying on it.
+
+      ⚠️ NOTE THE WORDING IS NOT THE SAME AS THE HANDSTAND BLOCK BELOW, ON
+      PURPOSE. That one says "numbers are small and I do sometimes cancel",
+      which are Keegan's own words about the HANDSTAND class specifically. He
+      has said nothing of the kind about this one, and copying the caveat across
+      would put a discouraging claim in his mouth about a class he may well run
+      reliably. The booking-check pointer still applies to both, because
+      availability is Keegan-managed in Cliniko either way. */}
+  <p class="class-time">
+    <strong>Wednesdays, 6&ndash;7pm</strong> at Just Train Gym, Cromer. Check the booking page for
+    the next session.
+  </p>
   <p>
     A general warm-up, then 5 to 6 targeted drills covering the major muscle groups of the lower
     body. Each class is designed for all levels, with different levels of each exercise offered so
@@ -127,11 +145,12 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
 
   <h2>When and where do the classes run?</h2>
   <p>
-    All group classes are held at Just Train Gym in Cromer. Current days and times are shown on the
-    booking page for each class, which is the only place they are guaranteed to be right.
+    Mobility and flexibility runs Wednesdays 6&ndash;7pm, handstands Saturdays 10&ndash;11am, both at
+    Just Train Gym in Cromer. Classes are scheduled a few weeks at a time, so the booking page is the
+    place to confirm the next actual session.
   </p>
   <p>
-    <a href="/contact/">Open the booking page</a> to see the next available session.
+    <a href="/contact/">Open the booking page</a> to see what is currently available.
   </p>
 
   <h2>Do you run workshops instead?</h2>
