@@ -22,6 +22,9 @@ import business from '../../data/business.json' with { type: 'json' };
 import assessing from '../../assets/site/Keegan-Photos-31.jpg';
 import adjusting from '../../assets/site/Rib-adjust.jpg';
 import fold from '../../assets/site/IMG_1604-scaled.jpg';
+// Story 1-16 hero ground. Hands-on soft-tissue work, distinct from the three
+// pictures already used as real content further down this page.
+import heroSoftTissue from '../../assets/site/glute-massage-scaled.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -109,13 +112,28 @@ const FAQ_ENTRIES = [
     <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(node)} />
   ))}
 
-  <h1>Chiropractic &amp; Movement</h1>
-
-  <p class="lead">
-    Hands-on chiropractic care that settles the immediate problem, then addresses the movement
-    pattern underneath it. Most patients need fewer visits overall, because a 30-minute appointment
-    is long enough to treat the cause rather than just the site of the pain.
-  </p>
+  {/* Story 1-16. The inner-page hero. The photograph is blurred and dimmed
+      into a ground rather than shown as a picture, which is what makes the
+      orange headline legible over it — see the measured note on .hero in
+      BaseLayout. Decorative in that state, hence empty alt + aria-hidden. */}
+  <section class="hero hero--page">
+    <Image
+      src={heroSoftTissue}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <h1>Chiropractic &amp; Movement</h1>
+      <p class="lead">
+    Hands-on care that settles the immediate problem, then addresses the movement pattern
+    underneath it. Most patients need fewer visits overall.
+      </p>
+    </div>
+  </section>
 
   <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
 

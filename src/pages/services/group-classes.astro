@@ -47,6 +47,9 @@ import { SITE_URL } from '../../lib/site-env.mjs';
 import business from '../../data/business.json' with { type: 'json' };
 import classBands from '../../assets/site/Group-Nordics-scaled.jpg';
 import classRoom from '../../assets/site/Keegan-demonstrating.jpeg';
+// Story 1-16 hero ground. A class participant mid-drill, from the gym rather
+// than the studio — the setting the reader is being invited into.
+import heroClass from '../../assets/site/IMG_1641.jpg';
 
 // Bumped 2026-08-01: both class times added after Keegan confirmed them.
 const LAST_CHANGED = new Date('2026-08-01T00:00:00+10:00');
@@ -66,12 +69,28 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
 >
   <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(SERVICE_NODE)} />
 
-  <h1>Group classes</h1>
-
-  <p class="lead">
-    Two weekly classes at Just Train Gym in Cromer, $20 each, one hour. Both are designed as a
-    low-barrier way to sample the same methods I use one-to-one, and both welcome complete beginners.
-  </p>
+  {/* Story 1-16. The inner-page hero. The photograph is blurred and dimmed
+      into a ground rather than shown as a picture, which is what makes the
+      orange headline legible over it — see the measured note on .hero in
+      BaseLayout. Decorative in that state, hence empty alt + aria-hidden. */}
+  <section class="hero hero--page">
+    <Image
+      src={heroClass}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <h1>Group classes</h1>
+      <p class="lead">
+    Two weekly classes at Just Train Gym in Cromer, $20 each, one hour. A low-barrier way to
+    sample the same methods I use one-to-one, and both welcome complete beginners.
+      </p>
+    </div>
+  </section>
 
   <Image
     src={classBands}

@@ -15,6 +15,9 @@ import BookCta from '../../components/BookCta.astro';
 import { SERVICES } from '../../lib/cliniko.mjs';
 import business from '../../data/business.json' with { type: 'json' };
 import pikeDrill from '../../assets/site/2-man-pike-scaled.jpg';
+// Story 1-16 hero ground. An assessment shot — the thing every one-to-one
+// service on this page starts with.
+import heroAssess from '../../assets/site/Keegan-Photos-32.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -27,12 +30,28 @@ const classes = SERVICES.filter((s) => s.price === null);
   description="Chiropractic and movement services on Sydney's Northern Beaches. Initial consultation $120, follow-up $95, Movement Plan Analysis $160, and $20 weekly group classes in Cromer."
   updated={LAST_CHANGED}
 >
-  <h1>Services and pricing</h1>
-
-  <p class="lead">
-    Three one-to-one appointment types and two weekly group classes. Everything one-to-one happens at
-    {' '}{business.address.venue} in {business.address.addressLocality}.
-  </p>
+  {/* Story 1-16. The inner-page hero. The photograph is blurred and dimmed
+      into a ground rather than shown as a picture, which is what makes the
+      orange headline legible over it — see the measured note on .hero in
+      BaseLayout. Decorative in that state, hence empty alt + aria-hidden. */}
+  <section class="hero hero--page">
+    <Image
+      src={heroAssess}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <h1>Services and pricing</h1>
+      <p class="lead">
+    Three one-to-one appointment types and two weekly group classes. Everything one-to-one
+    happens at {business.address.venue} in {business.address.addressLocality}.
+      </p>
+    </div>
+  </section>
 
   <h2>What are the one-to-one appointments?</h2>
   <p>

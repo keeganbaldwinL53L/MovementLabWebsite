@@ -722,6 +722,25 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         outline-color: var(--ml-ink);
       }
 
+      /* ── the header ────────────────────────────────────────────────────
+         The target's header spans the page: brand hard left, nav hard right.
+         Ours sat on the 44rem reading measure, which put the logo at x=288 on
+         a 1280 screen and read as a document header rather than a site one.
+         Full width plus its own inline padding, so it lines up with nothing
+         else on purpose — exactly as the target does it. */
+      body > .site-header {
+        grid-column: full;
+        padding-inline: clamp(1.5rem, 3.5vw, 2.5rem);
+      }
+      /* The header's rule and 2.5rem bottom margin are right above a reading
+         column and wrong above a full-bleed hero — together they left a paper
+         strip between the two, which reads as a rendering fault rather than a
+         separation. The hero is its own edge. */
+      body:has(.hero) > .site-header {
+        margin-bottom: 0;
+        border-bottom-color: transparent;
+      }
+
       /* ── the hero ────────────────────────────────────────────────────────
          body carries `padding-block: 2rem 4rem`, which would leave a paper
          strip above a full-bleed hero. This MUST live in is:global: `.hero`
@@ -748,6 +767,18 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       }
       /* The photograph, blurred and dimmed into a ground. scale(1.06) hides
          the transparent edge blur() leaves behind. */
+      /* 🔴 THESE THREE VALUES ARE MEASURED, NOT CHOSEN. brightness() darkens the
+         PHOTOGRAPH, which is what pulls the bright pixels down; the scrim then
+         tints the whole thing to the brand green. Doing it with scrim alpha
+         alone needed ~0.92 and flattened the picture to a solid panel.
+
+         Measured on the PAINTED PIXELS behind the headline, not on a computed
+         background-color (there isn't one — the ground is a photograph):
+             blur 7px, no brightness, scrim 0.82  →  worst 2.29  FAIL
+             the values below                     →  see the comment on .hero
+         Re-measure with the pixel sampler if any of them move; the arithmetic
+         is not a substitute, because it was the arithmetic that said 0.82 would
+         be fine and the pixels that said it was not. */
       .hero > img {
         position: absolute;
         inset: 0;
@@ -755,7 +786,7 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: blur(7px) saturate(0.85);
+        filter: blur(7px) saturate(0.8) brightness(0.28);
         transform: scale(1.06);
       }
       .hero::after {
@@ -763,7 +794,21 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         position: absolute;
         inset: 0;
         z-index: -1;
-        background: rgba(42, 53, 41, 0.82);
+        background: rgba(42, 53, 41, 0.6);
+      }
+      /* Inner pages get the SAME hero, smaller — measured off the target,
+         which runs 479px tall with a 72px h1 on /about/ against 762px and
+         121px on the home page. The home page is the front door and is
+         allowed to shout; a service page is not. */
+      .hero--page {
+        min-height: clamp(13rem, 30vw, 26rem);
+        padding-block: clamp(2.25rem, 5vw, 3.5rem);
+      }
+      .hero--page h1 {
+        font-size: clamp(2.1rem, 5.4vw, 4.5rem);
+      }
+      .hero--page .lead {
+        max-width: 40rem;
       }
       .hero-inner {
         max-width: 60rem;
@@ -824,11 +869,19 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       }
 
       /* ── card grid ─────────────────────────────────────────────────────── */
+      /* TWO across, not auto-fit. auto-fit gave three at 1280 and the target
+         is unambiguously a 2x2 grid of ~548px cards — with four services, three
+         across also strands one card alone on the second row. */
       .card-grid {
         display: grid;
         gap: clamp(1rem, 2.5vw, 1.75rem);
-        grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+        grid-template-columns: 1fr;
         margin-top: clamp(1.75rem, 4vw, 2.75rem);
+      }
+      @media (min-width: 48rem) {
+        .card-grid {
+          grid-template-columns: repeat(2, 1fr);
+        }
       }
       .card {
         display: flex;
@@ -852,9 +905,33 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         flex: 1;
         padding: clamp(1.1rem, 2.4vw, 1.6rem);
       }
+      /* A card is a PAPER surface sitting on the field, so it does not inherit
+         the field's inverted text colours. Without this the orange
+         large-heading rule leaks onto white cards, where the target's card
+         titles are near-black — and orange on paper is 3.22, which only
+         survives at all because a 20px/700 heading counts as large text. Ink
+         is 12.40 and is what the design actually wants here. */
       .card-body h3 {
         margin: 0 0 0.6rem;
         font-size: 1.25rem;
+        color: var(--ml-ink);
+      }
+      .card-body,
+      .card-body p {
+        color: var(--ml-ink);
+      }
+      /* 🔴 CAUGHT BY THE SWEEP, AND IT WAS INVISIBLE: at (0,2,1) the field's
+         `.section--field a:not(.pill)` rule beat a plain `.card-body a` at
+         (0,1,1), so every card link inherited PAPER — paper on paper, measured
+         1:1 at all five widths on four links. Not "hard to read": not there.
+         Matched to (0,2,1) and placed after the field rule so it wins on order
+         rather than on a specificity arms race.
+
+         This is the same shape as the focus ring on sage: adding a new GROUND
+         silently re-colours everything that lands on the surfaces sitting on
+         it, including the things that look like they belong to the old ground. */
+      .card a:not(.pill) {
+        color: var(--ml-link);
       }
       .card-body h3::after {
         display: none;

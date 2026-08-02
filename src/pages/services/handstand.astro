@@ -34,6 +34,9 @@ import bridge from '../../assets/site/IMG_1667.jpg';
 // about the shoulder and spine range the skill needs, so it moves rather than
 // goes. Straight-line hold here; the straddle lives on /about/.
 import handstand from '../../assets/site/IMG_1551.jpg';
+// Story 1-16 hero ground. A tucked handstand, distinct from the straight-line
+// one used as real content below.
+import heroHandstand from '../../assets/site/IMG_1570-scaled.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -48,13 +51,28 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
 >
   <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(SERVICE_NODE)} />
 
-  <h1>Handstand coaching</h1>
-
-  <p class="lead">
-    Structured handstand training for complete beginners through to people refining more advanced
-    skills. Strength, balance, mobility and body awareness all develop through this one skill, which
-    is why I keep coaching it alongside the clinical work.
-  </p>
+  {/* Story 1-16. The inner-page hero. The photograph is blurred and dimmed
+      into a ground rather than shown as a picture, which is what makes the
+      orange headline legible over it — see the measured note on .hero in
+      BaseLayout. Decorative in that state, hence empty alt + aria-hidden. */}
+  <section class="hero hero--page">
+    <Image
+      src={heroHandstand}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <h1>Handstand coaching</h1>
+      <p class="lead">
+    Structured training for complete beginners through to people refining advanced skills.
+    Strength, balance, mobility and body awareness all develop through this one skill.
+      </p>
+    </div>
+  </section>
 
   <Image
     src={handstand}

@@ -31,6 +31,10 @@ import portrait from '../assets/site/head-shot-smile-cropped.jpg';
 // straight-line handstand on /services/handstand/, so the two pages do not run
 // the same photograph — this one is about the practice, that one is the service.
 import straddle from '../assets/site/IMG_1550.jpg';
+// Story 1-16 hero ground. Deliberately NOT the head-shot or the straddle —
+// both already appear on this page as real pictures, and a page whose hero is
+// a blurred copy of an image further down reads as a mistake.
+import heroLunge from '../assets/site/IMG_1537-scaled.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -46,13 +50,29 @@ const PHYSICIAN = physician(SITE_URL);
 >
   <script slot="head-jsonld" type="application/ld+json" set:html={JSON.stringify(PHYSICIAN)} />
 
-  <h1>About Keegan Baldwin</h1>
-
-  <p class="lead">
-    Keegan Baldwin is a movement-focused chiropractor on the Northern Beaches. He helps active people
-    get out of pain and keep moving well for life, combining chiropractic care with a background in
-    movement and mobility.
-  </p>
+  {/* Story 1-16. Same hero as every other page, at the inner-page size. The
+      photograph is blurred and dimmed into a ground rather than shown as a
+      picture, which is what makes the orange headline legible over it — see
+      the measured note on .hero in BaseLayout. It is decorative in that state,
+      hence empty alt plus aria-hidden. */}
+  <section class="hero hero--page">
+    <Image
+      src={heroLunge}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <h1>About Keegan Baldwin</h1>
+      <p class="lead">
+        A movement-focused chiropractor on the Northern Beaches, helping active people get out of
+        pain and keep moving well for life.
+      </p>
+    </div>
+  </section>
 
   <Image
     src={portrait}

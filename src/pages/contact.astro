@@ -30,6 +30,10 @@
 import BaseLayout from '../layouts/BaseLayout.astro';
 import ClinikoBooking from '../components/ClinikoBooking.astro';
 import business from '../data/business.json' with { type: 'json' };
+// Story 1-16 hero ground. A treatment photograph rather than a room shot:
+// the page is the booking page, so the ground should be the thing being booked.
+import heroTreatment from '../assets/site/prone-tx.jpg';
+import { Image } from 'astro:assets';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 const { address } = business;
@@ -40,12 +44,28 @@ const { address } = business;
   description="Book a chiropractic, movement or group class session with Keegan Baldwin at Restore Health Clinic, Wheeler Heights. Questions before booking? Call or email first."
   updated={LAST_CHANGED}
 >
-  <h1>Book an appointment</h1>
-
-  <p class="lead">
-    Pick a time below. Every appointment type here is one of mine, so whichever you choose you are
-    booking with me.
-  </p>
+  {/* Story 1-16. The inner-page hero. The photograph is blurred and dimmed
+      into a ground rather than shown as a picture, which is what makes the
+      orange headline legible over it — see the measured note on .hero in
+      BaseLayout. Decorative in that state, hence empty alt + aria-hidden. */}
+  <section class="hero hero--page">
+    <Image
+      src={heroTreatment}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <h1>Book an appointment</h1>
+      <p class="lead">
+    Pick a time below. Every appointment type here is one of mine, so whichever you choose
+    you are booking with me.
+      </p>
+    </div>
+  </section>
 
   {/* One embed, scoped by construction. slugs omitted = all five of Keegan's
       types and nobody else's. */}

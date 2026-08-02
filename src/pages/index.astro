@@ -1,5 +1,5 @@
 ---
-// Story 1-6. The home page. Replaces the story 1-2 deploy-chain placeholder.
+// Story 1-6, relaid out for story 1-16 (visual parity).
 //
 // ⚠️ THE CI TRIPWIRE IS GONE ON PURPOSE. The old placeholder carried a
 // MLW-SPIKE-1 marker that the deploy workflow asserted. That assertion was
@@ -10,29 +10,44 @@
 // COPY DIRECTION IS MANNY'S, AND DECISION 3 IS LOCKED (MN-48, confirmed by
 // Keegan 2026-07-31): the h1 carries the SERVICE and the brand tagline sits
 // above it as styled text. "Move Better, Live Longer" is a good brand line that
-// tells a search engine, and a stranger, nothing about what Keegan does. For a
-// business that needs to be found, a service-bearing h1 wins and the tagline
-// loses nothing by sitting just above.
+// tells a search engine, and a stranger, nothing about what Keegan does.
 //
 // Sections are ANSWER-FIRST (MN-48 decision 1): every h2 is a question a real
 // person asks, and the first 40-60 words answer it outright before any context.
-// The retrieval unit is a section, not a page — a section that builds to its
-// answer mostly does not get extracted at all.
+//
+// ─── 1-16: WHAT CHANGED HERE, AND WHAT DELIBERATELY DID NOT ───────────────
+// Keegan preferred the site he built himself: "most of that is probably in the
+// pictures, the formatting, the visuals." So the LAYOUT is now measured off the
+// live target at keegansmovementlab.com — full-bleed photographic hero, one very
+// large display heading, a dark green field behind the middle of the page, white
+// cards with a photo on top, pill buttons.
+//
+// THE WORDS ARE UNCHANGED and the decided content still stands: chiro-primary,
+// mobility coaching folded in, MPA at $160, the launch nav. He asked for the
+// LOOK back, not the outdated information. The palette does not revert either —
+// the old site's #ff3502 was his own hand-approximation and he chose the real
+// brand palette on 08-01. Layout from the old site, colour and type from the
+// brand.
+//
+// The four cards mirror the target's four-card grid and reuse THE SAME
+// PHOTOGRAPHS it uses for them, but the services are ours, not its: mobility
+// coaching is folded into chiropractic, so the second card is the Movement Plan
+// Analysis rather than a retired standalone service.
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BookCta from '../components/BookCta.astro';
 import business from '../data/business.json' with { type: 'json' };
-import heroSquat from '../assets/site/IMG_1496-scaled.jpg';
-// LN-6 / 1-15 editorial pass. THE FRONT DOOR SHOWED NO CHIROPRACTIC. The hero
-// is a deep squat, which reads as fitness, and the next image a visitor met was
-// on another page entirely — so the one section that answers "what is this?"
-// was 120 words of text with nothing to look at. Chosen for the patient's face
-// as much as the technique: she is upright, relaxed and clearly fine, which is
-// the reassurance a first-time visitor to a chiropractor is actually looking
-// for. The alternative shots are all of someone lying face down.
-import seatedAdjust from '../assets/site/Keegan-Photos-36.jpg';
 
-const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
+import heroSquat from '../assets/site/IMG_1496-scaled.jpg';
+// The four card photographs, matched to the ones the live site uses for its own
+// four-card grid so the page reads as the same page.
+import cardChiro from '../assets/site/Keegan-Photos-36.jpg';
+import cardMobility from '../assets/site/Seated-Shoulder-Rom-2-scaled.jpg';
+import cardClasses from '../assets/site/Keegan-demonstrating.jpeg';
+import cardHandstand from '../assets/site/IMG_1551.jpg';
+import splitAdjust from '../assets/site/Rib-adjust.jpg';
+
+const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
 ---
 
 <BaseLayout
@@ -40,55 +55,155 @@ const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
   description="Movement-focused chiropractic in Wheeler Heights on Sydney's Northern Beaches. Get out of pain, find out why it happened, and build a body that keeps up. 30-minute appointments with Keegan Baldwin."
   updated={LAST_CHANGED}
 >
-  <p class="brandline">{business.name} · Live Better, Longer</p>
+  {/* ── HERO ──────────────────────────────────────────────────────────────
+      The photograph is blurred and dimmed into a ground rather than shown as
+      a picture, which is what the target does (its hero asset is literally
+      named blur-pike-1.png). That is not only a style choice: orange display
+      text over a BRIGHT photograph measures between 1.02 and 2.05:1, and this
+      is a white-curtain studio. Against the dimmed ground it is 3.85:1, which
+      clears the 3.0 large-text bar. Do not lighten the scrim without
+      re-measuring the painted pixels behind the words. */}
+  <section class="hero">
+    <Image
+      src={heroSquat}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <p class="kicker">{business.name} · Live Better, Longer</p>
+      <h1>Move better, live longer</h1>
+      <p class="lead">
+        Movement-focused chiropractic on the Northern Beaches. Get out of pain, find why it
+        happened, and build a body that keeps up.
+      </p>
+      <BookCta slug="new-patient" label="Book an appointment" />
+    </div>
+  </section>
 
-  <h1>Movement-focused chiropractic on the Northern Beaches</h1>
+  {/* ── THE FIELD ─────────────────────────────────────────────────────────
+      The target runs one continuous dark-green-into-sage field behind the
+      middle of the page rather than alternating bands, with a centred intro
+      and the card grid sitting on it. */}
+  <section class="section section--wide section--field">
+    <div class="intro">
+      <p class="kicker">Movement health services</p>
+      <h2>What is movement-focused chiropractic?</h2>
+      <p>
+        It is chiropractic that treats how you move, not just where it hurts. I settle the acute
+        problem, find the movement pattern behind it, and give you a plan so it stops coming back.
+        Appointments are 30 minutes rather than 10, which is what makes that possible.
+      </p>
+      <BookCta slug="new-patient" label="Book an appointment here" />
+    </div>
 
-  <p class="lead">Get out of pain, find why it happened, and build a body that keeps up.</p>
+    <div class="card-grid">
+      <article class="card">
+        <Image
+          src={cardChiro}
+          alt="Keegan standing behind a seated patient with her arms folded across her chest, his arms wrapped around her shoulders to set up a seated upper-back adjustment"
+          widths={[400, 800]}
+          sizes="(max-width: 40rem) 100vw, 35vw"
+        />
+        <div class="card-body">
+          <h3>Chiropractic consultation &amp; treatment</h3>
+          <p>
+            If you have pain or stiffness, start here. Spinal and joint adjustments, hands-on muscle
+            release and massage, and rehab based on what your assessment actually showed rather than
+            a generic sheet. $120 for the first hour, $95 for a 30-minute follow-up.
+          </p>
+          <p><a href="/services/chiropractic-treatment/">More about chiropractic and movement</a></p>
+        </div>
+      </article>
 
-  {/* Story 1-10. astro:assets emits explicit width/height and lazy-loads, which
-      is what stops the layout jumping as images arrive (G-5). The hero is the
-      one exception: it is above the fold, so eager + high priority beats lazy. */}
-  <Image
-    src={heroSquat}
-    alt="Keegan Baldwin holding a deep squat, heels flat on the floor, in a bright studio"
-    widths={[480, 800, 1200]}
-    sizes="(max-width: 44rem) 100vw, 44rem"
-    loading="eager"
-    fetchpriority="high"
-    class="hero-img"
-  />
+      <article class="card">
+        <Image
+          src={cardMobility}
+          alt="Keegan testing a seated patient's shoulder range of motion, guiding the arm overhead while steadying the shoulder blade"
+          widths={[400, 800]}
+          sizes="(max-width: 40rem) 100vw, 35vw"
+        />
+        <div class="card-body">
+          <h3>Movement Plan Analysis</h3>
+          <p>
+            If you want more out of your body rather than relief from pain, this is the one. A full
+            mobility assessment that finds the weak links holding your range back, and a
+            personalised routine to address them. $160 for one hour.
+          </p>
+          <p><a href="/services/">Full services and pricing</a></p>
+        </div>
+      </article>
 
-  <BookCta slug="new-patient" label="Book an appointment" showDetail={true} />
+      <article class="card">
+        <Image
+          src={cardClasses}
+          alt="A group class in progress in a gym studio, participants working through a movement drill on mats while Keegan demonstrates"
+          widths={[400, 800]}
+          sizes="(max-width: 40rem) 100vw, 35vw"
+        />
+        <div class="card-body">
+          <h3>Weekly group classes</h3>
+          <p>
+            The lowest-commitment way in. Mobility and flexibility on Wednesdays, both open to
+            complete beginners, at Just Train Gym in Cromer. $20 for an hour.
+          </p>
+          <p><a href="/services/group-classes/">More about group classes</a></p>
+        </div>
+      </article>
 
-  <h2>What is movement-focused chiropractic?</h2>
-  <p>
-    It is chiropractic that treats how you move, not just where it hurts. I settle the acute problem,
-    find the movement pattern behind it, and give you a plan so it stops coming back. Appointments
-    are 30 minutes rather than 10, which is what makes that possible.
-  </p>
-  <p>
-    If your shoulder, hip or knee is part of the problem, we address it. I combine spinal and joint
-    adjustments with hands-on muscle release and massage, and I base your rehab on what your
-    assessment actually showed rather than a generic sheet. Most patients need fewer visits overall.{' '}
-    <a href="/services/chiropractic-treatment/">More about chiropractic and movement</a>.
-  </p>
+      <article class="card">
+        <Image
+          src={cardHandstand}
+          alt="Keegan holding a straight handstand in a mirrored studio, legs together and fully extended"
+          widths={[400, 800]}
+          sizes="(max-width: 40rem) 100vw, 35vw"
+        />
+        <div class="card-body">
+          <h3>Handstand coaching and classes</h3>
+          <p>
+            Handbalancing from the first kick-up to a freestanding hold, coached with the same
+            assessment-led approach. Saturday mornings, and worth checking the booking page for the
+            week's session.
+          </p>
+          <p><a href="/services/handstand/">More about handstand coaching</a></p>
+        </div>
+      </article>
+    </div>
+  </section>
 
-  <Image
-    src={seatedAdjust}
-    alt="Keegan standing behind a seated patient with her arms folded across her chest, his arms wrapped around her shoulders to set up a seated upper-back adjustment"
-    widths={[384, 768]}
-    sizes="(max-width: 44rem) 100vw, 24rem"
-    class="page-img tall"
-  />
+  {/* ── SPLIT ─────────────────────────────────────────────────────────────
+      The target's second half is a two-column image-and-text block on the
+      lighter end of the field. Same shape here, carrying the "who is this
+      for?" answer. */}
+  <section class="section section--wide section--sage">
+    <div class="split">
+      <Image
+        src={splitAdjust}
+        alt="Keegan performing a hands-on thoracic adjustment on a patient lying face down on a treatment table"
+        widths={[480, 960]}
+        sizes="(max-width: 40rem) 100vw, 45vw"
+      />
+      <div>
+        <h2>Who is this for?</h2>
+        <p>
+          Anyone in pain or stiffness who wants to know why, and anyone with no pain at all who
+          wants more out of their body. Those are the same problem seen at two stages. All ages,
+          demographics and levels of health and fitness are welcome.
+        </p>
+        <p>
+          If your shoulder, hip or knee is part of the problem, we address it. Most patients need
+          fewer visits overall.
+        </p>
+      </div>
+    </div>
+  </section>
 
-  <h2>Who is this for?</h2>
-  <p>
-    Anyone in pain or stiffness who wants to know why, and anyone with no pain at all who wants more
-    out of their body. Those are the same problem seen at two stages. All ages, demographics and
-    levels of health and fitness are welcome.
-  </p>
-
+  {/* ── THE PLAIN TAIL ────────────────────────────────────────────────────
+      Back on the reading measure. The practical answers a visitor scrolls for
+      do not want a decorative treatment. */}
   <h2>What does it cost?</h2>
   <p>
     An initial consultation is $120 for one hour. A follow-up is $95 for 30 minutes. A Movement Plan
@@ -105,21 +220,6 @@ const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
     and my phone number are at the bottom of every page on this site.
   </p>
 
-  {/* LN-6 / 1-15. The one sage band on the home page. Placed here on purpose:
-      it is the lowest-commitment offer on the page, so lifting it out of the
-      column is the moment the page stops being one undifferentiated read. One
-      band, not several — the brand deck is calm, and a page that alternates
-      bands reads as a template. */}
-  <section class="band">
-    <h2>Can I try something smaller first?</h2>
-    <p>
-      Yes. Weekly group classes at Just Train Gym in Cromer are $20 for an hour and are designed as a
-      low-commitment way to sample the same methods. There is a mobility and flexibility class and a
-      handstand class, both open to complete beginners.{' '}
-      <a href="/services/group-classes/">More about group classes</a>.
-    </p>
-  </section>
-
   <h2>Where to next?</h2>
   <ul class="next-links">
     <li><a href="/contact/">Book an appointment</a></li>
@@ -130,22 +230,6 @@ const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 </BaseLayout>
 
 <style>
-  /* The brand line Decision 3 moved off the h1. Styled as a mark, not as a
-     heading — it must not be an <h6> above the <h1>, which is exactly the
-     decorative-heading mistake G-7 exists to stop the rebuild reproducing. */
-  .brandline {
-    margin: 0 0 0.35rem;
-    font-size: 0.8125rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: var(--ml-muted);
-  }
-  h1 {
-    margin-top: 0;
-  }
-  .lead {
-    font-size: 1.125rem;
-  }
   .next-links {
     padding-left: 1.1rem;
   }
