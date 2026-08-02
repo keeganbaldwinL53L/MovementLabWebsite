@@ -39,8 +39,8 @@ make_wp() {
   mkdir -p "$root/wp-admin" "$root/wp-content/uploads" "$root/wp-includes"
   cat > "$root/wp-config.php" <<'CFG'
 <?php
-define( 'DB_NAME', 'u356448338_wp' );
-define( 'DB_USER', 'u356448338_wpuser' );
+define( 'DB_NAME', 'wp_fixture_db' );
+define( 'DB_USER', 'wp_fixture_user' );
 define( 'DB_PASSWORD', 'not-a-real-password' );
 define( 'DB_HOST', 'localhost' );
 CFG

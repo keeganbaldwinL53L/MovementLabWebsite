@@ -34,7 +34,7 @@
 #
 # Usage (real):
 #   H_HOST=... H_USER=... H_PORT=... H_KEY=~/.ssh/id_x \
-#   WP_ROOT=/home/u356448338/domains/keegansmovementlab.com/public_html \
+#   WP_ROOT=/home/<account>/domains/<domain>/public_html \
 #   DEST=~/mlw-backups ./scripts/backup-production.sh
 #
 # Usage (self-test, no host required — exercises every guard and the manifest
