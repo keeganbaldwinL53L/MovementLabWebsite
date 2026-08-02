@@ -786,15 +786,53 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: blur(7px) saturate(0.8) brightness(0.28);
+        filter: blur(6px) saturate(1) brightness(0.62);
         transform: scale(1.06);
       }
+      /* A VIGNETTE, not a flat wash — Keegan, 2026-08-03: "too murky. It almost
+         looks discoloured... a vignette may be nice to draw the eye in to the
+         middle."
+
+         Two separate faults were in that sentence and only one was brightness.
+         **"Discoloured" was the green.** A flat `rgba(42,53,41,…)` over
+         photographs of wooden floors and skin tints every warm tone sickly, so
+         lightening the same green would have produced a paler sickly picture.
+         The scrim is now near-neutral (a trace of green, nowhere near enough to
+         cast) and the photograph keeps its own colour: saturation back to ~1.
+
+         ⚠️ THE VIGNETTE WORKS AGAINST THE CONTRAST FLOOR AND MUST BE BUILT
+         AROUND IT. It lightens the CENTRE — which is exactly where the headline
+         sits and where the 3.0 large-text bar is measured. So the centre stop
+         is the load-bearing value and the edge stops are free.
+
+         Tuned by SWEEPING candidates and measuring the painted pixels behind
+         the headline on the worst pages, not by eye. The curve is steep, which
+         is why the first correction overshot into a 2.44 failure on all 14
+         measurements — "make it brighter" has a much smaller budget than it
+         looks:
+             brightness 0.52 / centre 0.66  →  3.95  (safe, but this IS the
+                                                      murk Keegan rejected)
+             brightness 0.58 / centre 0.64  →  3.56
+             brightness 0.62 / centre 0.62  →  3.30  ← SHIPPED
+             brightness 0.66 / centre 0.60  →  3.00  (no margin at all)
+             brightness 0.70 / centre 0.58  →  2.69  FAILS
+         The shipped pair is the brightest with real headroom, and the photo is
+         2.2x brighter than the 0.28 that drew the complaint.
+
+         Push extra darkness OUTWARD if it ever needs more; do NOT lift the
+         centre. Re-measure on EVERY page — each has a different hero
+         photograph, so each has a different painted ground. */
       .hero::after {
         content: '';
         position: absolute;
         inset: 0;
         z-index: -1;
-        background: rgba(42, 53, 41, 0.6);
+        background: radial-gradient(
+          ellipse 72% 66% at 50% 48%,
+          rgba(10, 14, 10, 0.62) 0%,
+          rgba(10, 14, 10, 0.69) 42%,
+          rgba(10, 14, 10, 0.93) 100%
+        );
       }
       /* Inner pages get the SAME hero, smaller — measured off the target,
          which runs 479px tall with a 72px h1 on /about/ against 762px and
