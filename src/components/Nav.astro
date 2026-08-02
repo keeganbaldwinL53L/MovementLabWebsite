@@ -116,6 +116,13 @@ const isCurrent = (href: string) => current === href;
     left: auto;
     display: inline-block;
     margin-bottom: 1rem;
+    /* ⚠️ LN-6 2026-08-02. body is a GRID now, so on focus this becomes a grid
+       item and `display: inline-block` is blockified — without this it would
+       stretch the full width of the reading measure and the chip would become a
+       704px bar. `justify-self: start` keeps it sized to its own text, which is
+       what the LN-3 fix above is describing. Inert in a non-grid parent, so it
+       costs nothing if this ever moves. */
+    justify-self: start;
   }
   .site-header {
     display: flex;

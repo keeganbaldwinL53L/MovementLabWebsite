@@ -411,25 +411,82 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         color: var(--ml-muted);
       }
 
-      /* ═══ SAGE SURFACE ═══
-         The third brand colour, and the only one that can break the page out of
-         a single uninterrupted 44rem column without any restructuring: a band
-         that bleeds to the full viewport width while its CONTENT stays on the
-         same measure as everything else.
+      /* ═══ THE FULL-BLEED GRID — ONE DEFINITION, FOUR USERS ═══
+         The page is a three-track grid: a flexible gutter, the reading measure,
+         another flexible gutter. Anything on `content` sits on the measure;
+         anything on `full` reaches both edges of the page. `body`, `main`,
+         `.band` and `.site-footer` all share THIS template and nothing else
+         defines one, so the bleed cannot drift between them.
 
-         `margin-inline: calc(50% - 50vw)` is what does it — the body is a
-         centred fixed-width column, so pulling each side out by the difference
-         between half the column and half the viewport reaches the edges exactly.
-         `padding-inline` puts the text back on the column. No wrapper divs, no
-         layout rewrite, works at every width, and collapses harmlessly when the
-         viewport is narrower than the column.
+         🔴 WHY THIS REPLACED `margin-inline: calc(50% - 50vw)` (2026-08-02).
+         The vw version was elegant, needed no wrapper, and was WRONG in a way
+         no amount of Chromium checking could show. **`vw` ignores the
+         scrollbar** — CSS Values 4 resolves viewport units as though scrollbars
+         do not exist. So with a CLASSIC scrollbar (the default on Windows, and
+         on any Mac set to 'always show scroll bars') `100vw` is ~15px wider
+         than the content area, and every band and the footer overhung it:
+         measured -7..1273 inside a 1265px area, i.e. horizontal scroll on every
+         page of the site.
+
+         It could not be reproduced locally: macOS defaults to overlay
+         scrollbars and headless Chromium force-hides them, so a 56-combination
+         sweep across seven widths reported 0 overflow and was structurally
+         incapable of seeing it. It was proven instead with a static repro of
+         these exact declarations inside a deliberately shortened container.
+
+         The grid has no such blind spot, because **percentage tracks resolve
+         against the container's content box, which already excludes the
+         scrollbar.** `min(measure, 100% - 2 gutters)` is therefore correct by
+         construction at every width, on every platform, with or without a
+         scrollbar — rather than correct-looking on the one configuration the
+         test machine happened to have. */
+      :root {
+        --ml-measure: 44rem; /* the reading column */
+        --ml-gutter: 1.5rem; /* minimum breathing room at narrow widths */
+      }
+      body,
+      main,
+      .band,
+      .site-footer {
+        display: grid;
+        grid-template-columns:
+          [full-start] 1fr
+          [content-start] min(
+            var(--ml-measure),
+            calc(100% - var(--ml-gutter) - var(--ml-gutter))
+          )
+          [content-end] 1fr
+          [full-end];
+      }
+      /* Default: everything sits on the measure. */
+      body > *,
+      main > *,
+      .band > *,
+      .site-footer > * {
+        grid-column: content;
+      }
+      /* The three that break out. `body > main` rather than a bare `main` on
+         purpose: `main` alone ties with `body > *` on specificity and would be
+         decided by source order, which is exactly the kind of fragility this
+         refactor exists to remove. */
+      body > main,
+      .band,
+      .site-footer {
+        grid-column: full;
+      }
+
+      /* ═══ SAGE SURFACE ═══
+         The third brand colour, and the one that breaks the page out of a
+         single uninterrupted column: a band that reaches both page edges while
+         its CONTENT stays on the same measure as everything else. It gets that
+         from the grid above — `grid-column: full` for the band, `content` for
+         its children — so there is no inline padding to keep in sync here.
 
          ink on sage is 8.12:1 and muted on sage is 4.92:1 — both cleared, which
          is why --ml-muted was derived against sage rather than paper alone. */
       .band {
         background: var(--ml-surface);
-        margin-inline: calc(50% - 50vw);
-        padding: 2.25rem calc(50vw - 50% + 0.25rem);
+        padding-block: 2.25rem;
         margin-block: 2.75rem;
       }
       .band > :first-child {
@@ -489,9 +546,21 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       body {
         text-wrap: pretty;
         /* font-family now comes from the global type block — --ml-font-brand. */
-        max-width: 44rem;
-        margin: 0 auto;
-        padding: 2rem 1.5rem 4rem;
+        /* ⚠️ `max-width: 44rem; margin: 0 auto; padding-inline: 1.5rem` USED TO
+           LIVE HERE and is now the grid's job — see THE FULL-BLEED GRID in the
+           global block. The measure and the gutter are the `--ml-measure` and
+           `--ml-gutter` tracks, so body is full width and only sets its
+           VERTICAL padding. Setting a max-width here again would re-break the
+           bleed, because the bands resolve their edges from this element.
+
+           `margin: 0` is REQUIRED, not tidiness: dropping `margin: 0 auto`
+           handed body back to the UA default of `margin: 8px`, and because the
+           bands bleed to the edges of THIS element they stopped 8px short on
+           both sides. Caught by measuring the band's box against the content
+           box (8..1257 inside 1265) — it is a small enough inset to look
+           deliberate in a screenshot. */
+        margin: 0;
+        padding-block: 2rem 4rem;
         line-height: 1.65;
         color: var(--ml-ink);
         background: var(--ml-paper);

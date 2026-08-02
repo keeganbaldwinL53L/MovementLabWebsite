@@ -31,6 +31,12 @@ const fmt = (t) => {
 ---
 
 <footer class="site-footer">
+  {/* The wrapper is load-bearing, not decoration. `.site-footer` is a
+      full-bleed grid item that carries the dark surface to both page edges;
+      this inner element is what sits back on the reading measure AND runs the
+      footer's own two-column layout. One element cannot do both, because the
+      bleed grid and the 1fr/1fr content grid are different templates. */}
+  <div class="footer-inner">
   <div class="nap">
     <p class="nap-name">{business.name}</p>
 
@@ -67,6 +73,7 @@ const fmt = (t) => {
     <span class="sep">·</span>
     <span>ABN {business.abn}</span>
   </p>
+  </div>
 </footer>
 
 <style>
@@ -84,12 +91,19 @@ const fmt = (t) => {
      deliberately NOT used below: it is derived for LIGHT grounds and would be
      near-invisible here, which is exactly the trap MLW-LRN-23 describes.
 
-     THE FULL-BLEED IS `.band`'s IDIOM, DELIBERATELY REUSED — see the long note
-     on `.band` in BaseLayout for why `margin-inline: calc(50% - 50vw)` reaches
-     the viewport edge from inside a centred column. If one of the two ever
-     changes, change both. The negative bottom margin cancels body's 4rem bottom
-     padding so the surface runs to the end of the document rather than floating
-     above a strip of paper.
+     ⚠️ THE BLEED IS NOT DEFINED HERE ANY MORE (2026-08-02). It used to be
+     `margin-inline: calc(50% - 50vw)`, copied from `.band`. That idiom is gone
+     from the whole project because `vw` ignores the scrollbar, so on any
+     platform with a classic scrollbar it overhung the content area by ~15px and
+     put horizontal scroll on every page. `.site-footer` now takes
+     `grid-column: full` from the ONE grid definition in BaseLayout — see THE
+     FULL-BLEED GRID there for the measurement and why local Chromium could not
+     see it. Nothing about the bleed is duplicated in this file, so the two
+     cannot drift apart.
+
+     The negative bottom margin stays: it cancels body's 4rem bottom padding so
+     the surface runs to the end of the document rather than floating above a
+     strip of paper.
 
      Scoped rather than global, and that IS safe here: the Astro scoping bug that
      bit three agents on this project applies to SLOTTED content carrying its own
@@ -97,17 +111,20 @@ const fmt = (t) => {
      the rules match. */
   .site-footer {
     margin-top: 4rem;
-    margin-inline: calc(50% - 50vw);
     margin-bottom: -4rem;
-    padding: 2.75rem calc(50vw - 50% + 0.25rem) 3rem;
+    padding-block: 2.75rem 3rem;
     background: var(--ml-ink);
     color: var(--ml-paper);
     font-size: 0.9375rem;
+  }
+  /* The footer's OWN layout, on the measure. Separate element from the bleed
+     for the reason given in the markup above. */
+  .footer-inner {
     display: grid;
     gap: 2rem;
   }
   @media (min-width: 40rem) {
-    .site-footer {
+    .footer-inner {
       grid-template-columns: 1fr 1fr;
     }
     .footer-legal {
