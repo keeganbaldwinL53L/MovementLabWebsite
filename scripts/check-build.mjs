@@ -497,9 +497,29 @@ for (const file of pages) {
     // trailingSlash: 'always', so an internal page reference resolves to that
     // directory's index.html. Accept either shape rather than assuming, so a
     // legitimate extensionless file is not reported as missing.
-    const asFile = join(DIST_ABS, path);
-    const asIndex = join(DIST_ABS, path, 'index.html');
-    if (!existsSync(asFile) && !existsSync(asIndex)) {
+    //
+    // ⚠️ AG-6 (Argus). THIS USED TO ASK `existsSync(asFile)` AND NOTHING MORE,
+    // and a DIRECTORY satisfies existsSync. So deleting `about/index.html`
+    // while leaving the empty `about/` directory passed the gate on a build
+    // whose primary nav link 404s — the resolution was satisfied by the folder
+    // rather than by the document inside it, which is not what a browser does.
+    // Removing the whole directory failed correctly, which is exactly why the
+    // gap was easy to miss: the obvious test passes.
+    //
+    // A path only counts if it resolves to a FILE. Argus was straight about the
+    // severity — he could not construct a realistic build that reaches this
+    // state, because Astro cleans dist, so it needs something unusual like a
+    // same-named folder in public/. Reproduced defect, no reproduced trigger.
+    // Fixed anyway: it is one predicate, and the message this gate prints
+    // ("it will 404") was untrue in exactly this case.
+    const isFile = (p) => {
+      try {
+        return statSync(p).isFile();
+      } catch {
+        return false; // absent, or a broken symlink — either way not a document
+      }
+    };
+    if (!isFile(join(DIST_ABS, path)) && !isFile(join(DIST_ABS, path, 'index.html'))) {
       fail(at(`${kind} points at ${path}, which does not exist in ${DIST} — it will 404`));
     }
   }
