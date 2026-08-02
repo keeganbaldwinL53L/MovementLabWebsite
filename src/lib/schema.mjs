@@ -79,7 +79,14 @@ function priceRange() {
 const SITE_ID = (siteUrl) => `${siteUrl}/#business`;
 
 /** Site-wide MedicalBusiness. Emitted on every page by BaseLayout. */
-export function medicalBusiness(siteUrl) {
+/**
+ * @param {string} siteUrl
+ * @param {{image?: string, logo?: string}} [assets] absolute URLs, passed in by
+ *   the layout. They are NOT imported here on purpose: this module is plain
+ *   .mjs so the data checks can import it outside an Astro build, and reaching
+ *   for `astro:assets` would make that impossible.
+ */
+export function medicalBusiness(siteUrl, assets = {}) {
   return compact({
     '@context': 'https://schema.org',
     '@type': 'MedicalBusiness',
@@ -88,6 +95,18 @@ export function medicalBusiness(siteUrl) {
     url: siteUrl,
     telephone: business.phoneE164,
     email: business.email,
+    // AG-5 F4. Both were simply ABSENT — not deliberately null like geo and
+    // sameAs below, which carry written reasons and are waiting on Keegan.
+    // G-8 never asked for them, so nothing flagged it.
+    //
+    // They matter for the same reason this whole node exists: Google rejected
+    // Keegan's profile edits because the website gave it nothing to corroborate
+    // them with, and `image`/`logo` are two of the fields it reads. `image`
+    // wants a real photograph of the business or practitioner; `logo` wants the
+    // mark. compact() still drops either if a caller omits it, so the data
+    // checks that import this module outside a build keep working unchanged.
+    image: assets.image,
+    logo: assets.logo,
     address: postalAddress(),
     // geo is null until a real lookup happens. compact() drops it rather than
     // shipping invented coordinates for a physical address people drive to.

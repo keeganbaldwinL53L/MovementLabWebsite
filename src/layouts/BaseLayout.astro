@@ -5,6 +5,10 @@
 // `noindex` here de-indexes production, which is worse than the duplicate it
 // would prevent (spec § 1.2). The polarity comes from src/lib/site-env.mjs and
 // is asserted in both directions by scripts/check-indexing-polarity.mjs.
+import { getImage } from 'astro:assets';
+
+import mark from '../assets/brand/mark.png';
+import ogCard from '../assets/brand/og-card.jpg';
 import { INDEXABLE, SITE_URL, GSC_TOKEN } from '../lib/site-env.mjs';
 import { medicalBusiness } from '../lib/schema.mjs';
 import Nav from '../components/Nav.astro';
@@ -36,13 +40,61 @@ interface Props {
   updated: Date;
 }
 
-const { title, description, image = '/og-default.png', updated } = Astro.props;
+const { title, description, image, updated } = Astro.props;
+
+// AG-5 F1. THE DEFAULT USED TO BE '/og-default.png' AND THAT FILE HAS NEVER
+// EXISTED — not in public/, not in dist/, not anywhere in the repo, and 404 on
+// the live server. So every page shipped a broken social card: every link
+// Keegan sends by WhatsApp, Messenger, LinkedIn or iMessage previewed with a
+// blank, and `twitter:card=summary_large_image` makes that the LOUD variant.
+//
+// It survived four green gates because nothing derived the required-asset set
+// from the markup — fixed in the same change, at check-build.mjs, which now
+// fails on any root-relative reference that is not present in dist.
+//
+// Why a photograph and not the logo (Argus's call, and it matches the AI-search
+// brief's finding that concrete human specifics outperform marks): a face is
+// what makes someone stop on a shared link.
+//
+// 1200x630 is the size every major platform documents for a large card, and
+// `src/assets/brand/og-card.jpg` IS that size already, so it ships as-is: no
+// transform, no format conversion (some link scrapers still do not read webp),
+// just Astro's content hash.
+//
+// ⚠️ IT IS A PRE-COMPOSED ASSET RATHER THAN A BUILD-TIME CROP, AND THAT IS THE
+// WHOLE POINT — I tried two automatic routes first and LOOKED at both outputs:
+//   fit:cover + position:attention  sharp's saliency crop, the obvious tool.
+//                                   Zoomed to the face and clipped the CHIN off
+//                                   at the bottom edge.
+//   fit:contain                     Astro treats width/height as a bounding box
+//                                   and does not pad, so it emitted 645x630 —
+//                                   near-square, which every platform would
+//                                   then centre-crop itself, clipping the chin
+//                                   again on their side instead of ours.
+// The head-shot is 1600x1562 and a 1.91:1 frame must discard 46% of its height,
+// so there is no automatic crop that is safe here. og-card.jpg is the photo
+// scaled to full height and centred on brand paper, composed once, looked at
+// once. NO GATE CAN SEE A BAD CROP, which is why this note exists rather than a
+// check.
+//
+// If the photograph changes, regenerate rather than hand-crop — the recipe is
+// in the AG-5 F1 commit message.
+
+// AG-5 F3. Three sizes off the one 512x512 source: 32 for the browser tab, 192
+// for an Android home-screen shortcut, 180 for iOS. `contain` on a transparent
+// background rather than `cover`, because the mark is a logo and cropping one
+// to fill a square is how a brand mark ends up with its edges shaved.
+const [icon32, icon192, iconApple] = await Promise.all(
+  [32, 192, 180].map((size) =>
+    getImage({ src: mark, width: size, height: size, fit: 'contain', format: 'png' }),
+  ),
+);
 
 // Canonical is SELF-referential, including on staging. Pointing staging's
 // canonical at production would be a lie about which document this is; the
 // noindex is what keeps staging out of the index.
 const canonical = new URL(Astro.url.pathname, SITE_URL).href;
-const ogImage = new URL(image, SITE_URL).href;
+const ogImage = new URL(image ?? ogCard.src, SITE_URL).href;
 
 // BOTH forms are pinned to Australia/Sydney, deliberately.
 //
@@ -78,6 +130,19 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
     {/* Search Console ownership. Must survive the migration. */}
     <meta name="google-site-verification" content={GSC_TOKEN} />
 
+    {/* AG-5 F3. There was NO favicon of any kind — zero icon links in any
+        served page, and /favicon.ico, /favicon.svg and /apple-touch-icon.png
+        all 404 on live, while the old WordPress site serves three sizes. A
+        browser with no icon falls back to a blank page-shape in the tab, which
+        is the one place a returning visitor looks to find you among twenty
+        tabs. The asset needed wiring, not sourcing: the 512x512 brand mark has
+        been in the repo since 1-15.
+        Generated rather than hand-exported so the sizes cannot drift from the
+        source, and png rather than ico because every browser in use reads it. */}
+    <link rel="icon" type="image/png" sizes="32x32" href={icon32.src} />
+    <link rel="icon" type="image/png" sizes="192x192" href={icon192.src} />
+    <link rel="apple-touch-icon" sizes="180x180" href={iconApple.src} />
+
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />
@@ -93,7 +158,12 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         AHPRA s133: no Review or AggregateRating node, ever. */}
     <script
       type="application/ld+json"
-      set:html={JSON.stringify(medicalBusiness(SITE_URL))}
+      set:html={JSON.stringify(
+        medicalBusiness(SITE_URL, {
+          image: ogImage,
+          logo: new URL(icon192.src, SITE_URL).href,
+        }),
+      )}
     />
     <slot name="head-jsonld" />
 
@@ -539,6 +609,306 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       .band summary:focus-visible,
       .band [tabindex]:focus-visible {
         outline-color: var(--ml-ink);
+      }
+
+      /* ═══════════════════════════════════════════════════════════════════
+         STORY 1-16 — VISUAL PARITY WITH THE EXISTING SITE
+         ═══════════════════════════════════════════════════════════════════
+         Keegan saw 1-15 on staging and said he preferred the site he built
+         himself: "most of that is probably in the pictures, the formatting,
+         the visuals." He is right, and it was a scoping gap rather than an
+         execution one — the brand spec supplies a PALETTE and a TYPEFACE and
+         never a layout, an image density or a visual rhythm.
+
+         So this block is the layout half, measured off the live target at
+         https://keegansmovementlab.com/ rather than invented:
+
+           hero      full-bleed photograph, ~760px at 1280 / ~360px at 375,
+                     one very large centred display heading
+           ground    a dark green field behind the content, easing to sage
+           cards     white cards floating on that field, photo on top at 3:2
+           buttons   fully-round pills, uppercase
+           rhythm    centred section intros, two-column content
+
+         ⚠️ LAYOUT AND RHYTHM COME FROM THE OLD SITE. COLOUR AND TYPE DO NOT.
+         The old site's #ff3502 is Keegan's own hand-approximation from
+         building it; he explicitly chose the real brand palette on 08-01. So
+         these sections are built from the EXISTING tokens only — this block
+         introduces no new colour values.
+
+         🔴 THE ONE PLACE THE TARGET CANNOT BE COPIED AS-IS. The old hero puts
+         orange display text directly over a photograph. Measured against a
+         scrim over pale pixels that pair lands between 1.02 and 2.05:1, so it
+         fails 1.4.3 outright wherever the photo is bright — and this hero
+         photo is a white-curtain studio, which is the bright case. The target
+         gets away with it because its hero asset is pre-blurred and dark (it
+         is literally named blur-pike-1.png). Same solution here, done
+         deliberately: blur and darken the photograph until the ground behind
+         the words is effectively solid ink, where orange measures 3.85:1 and
+         clears the 3.0 large-text bar. The scrim is not decoration, it is what
+         makes the headline legal, so do not lighten it without re-measuring
+         the PAINTED PIXELS behind the text. */
+
+      /* ── the wide track ────────────────────────────────────────────────
+         Card and split sections need more room than the 44rem reading
+         measure. They get it by re-declaring the SAME grid on themselves and
+         overriding --ml-measure locally, so the bleed idiom stays in one
+         shape and a section can never disagree with the page about where its
+         edges are. */
+      .section {
+        display: grid;
+        grid-template-columns:
+          [full-start] 1fr
+          [content-start] min(
+            var(--ml-measure),
+            calc(100% - var(--ml-gutter) - var(--ml-gutter))
+          )
+          [content-end] 1fr
+          [full-end];
+        grid-column: full;
+        padding-block: clamp(2.5rem, 6vw, 4.5rem);
+      }
+      .section > * {
+        grid-column: content;
+      }
+      .section--wide {
+        --ml-measure: 72rem;
+      }
+      .section--ink {
+        background: var(--ml-ink);
+        color: var(--ml-paper);
+      }
+      .section--sage {
+        background: var(--ml-surface);
+      }
+      /* The old site runs one continuous field behind the whole middle of the
+         page rather than alternating bands, and eases it from deep green into
+         sage. Reproduced as a gradient between the two EXISTING tokens. */
+      .section--field {
+        background: linear-gradient(180deg, var(--ml-ink) 0%, var(--ml-ink) 55%, var(--ml-surface) 100%);
+        color: var(--ml-paper);
+      }
+      .section > :first-child {
+        margin-top: 0;
+      }
+      .section > :last-child {
+        margin-bottom: 0;
+      }
+
+      /* On a dark ground the ink-derived neutrals invert. --ml-muted is
+         derived for LIGHT grounds and measures about 1.3 on ink, which is the
+         MLW-LRN-23 trap; sage carries secondary text at 8.12 instead. */
+      .section--ink,
+      .section--field {
+        --ml-muted: var(--ml-surface);
+      }
+      .section--ink h2,
+      .section--ink h3,
+      .section--field h2,
+      .section--field h3 {
+        color: var(--ml-accent); /* 3.85 on ink — large-heading use only */
+      }
+      .section--ink a:not(.pill),
+      .section--field a:not(.pill) {
+        color: var(--ml-paper);
+      }
+      /* Focus rings follow the same rule the bands already learned: the accent
+         is invisible on sage (2.11), and on ink the paper ring is 12.40. */
+      .section--ink :focus-visible,
+      .section--field :focus-visible {
+        outline-color: var(--ml-paper);
+      }
+      .section--sage :focus-visible {
+        outline-color: var(--ml-ink);
+      }
+
+      /* ── the hero ────────────────────────────────────────────────────────
+         body carries `padding-block: 2rem 4rem`, which would leave a paper
+         strip above a full-bleed hero. This MUST live in is:global: `.hero`
+         arrives through <slot> with the PAGE's astro cid, so a scoped
+         `body:has(.hero)` compiles with the LAYOUT's cid on both halves and
+         silently never matches — the same class of failure as the scoped
+         image rules that let 30 of 40 page/width combinations overflow, and
+         as `text-wrap: balance` being a no-op on every heading for a week. */
+      body:has(.hero) {
+        padding-block-start: 0;
+      }
+      .hero {
+        position: relative;
+        grid-column: full;
+        display: grid;
+        place-items: center;
+        min-height: clamp(22rem, 52vw, 47.5rem);
+        padding-block: clamp(3rem, 8vw, 6rem);
+        padding-inline: var(--ml-gutter);
+        overflow: hidden;
+        isolation: isolate;
+        text-align: center;
+        background: var(--ml-ink);
+      }
+      /* The photograph, blurred and dimmed into a ground. scale(1.06) hides
+         the transparent edge blur() leaves behind. */
+      .hero > img {
+        position: absolute;
+        inset: 0;
+        z-index: -2;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        filter: blur(7px) saturate(0.85);
+        transform: scale(1.06);
+      }
+      .hero::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        background: rgba(42, 53, 41, 0.82);
+      }
+      .hero-inner {
+        max-width: 60rem;
+      }
+      .hero .kicker {
+        color: var(--ml-surface); /* 8.12 on ink */
+      }
+      .hero h1 {
+        margin: 0.25rem 0 0;
+        color: var(--ml-accent);
+        font-size: clamp(2.75rem, 8.2vw, 7rem);
+        line-height: 0.98;
+        letter-spacing: -0.02em;
+        font-weight: 300;
+        text-wrap: balance;
+      }
+      .hero .lead {
+        margin: 1rem auto 0;
+        max-width: 34rem;
+        color: var(--ml-paper);
+        font-size: clamp(1rem, 2.2vw, 1.375rem);
+      }
+      .hero .book-cta {
+        margin-top: 1.75rem;
+      }
+
+      /* ── centred section intro ─────────────────────────────────────────── */
+      .kicker {
+        margin: 0;
+        font-size: 0.875rem;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--ml-muted);
+      }
+      .intro {
+        text-align: center;
+        max-width: 46rem;
+        margin-inline: auto;
+      }
+      .intro h2 {
+        font-size: clamp(1.85rem, 4.2vw, 3rem);
+        line-height: 1.1;
+        margin: 0.35rem 0 0;
+        text-wrap: balance;
+      }
+      /* The orange rule under a heading is a paper-ground device. It cannot
+         follow a heading onto ink or sage — 2.11 on sage is the one pairing
+         the brand contract rules out, and on ink it competes with the orange
+         heading itself. */
+      .intro h2::after,
+      .section--ink h2::after,
+      .section--field h2::after,
+      .section--sage h2::after {
+        display: none;
+      }
+      .intro p {
+        margin-top: 0.85rem;
+      }
+
+      /* ── card grid ─────────────────────────────────────────────────────── */
+      .card-grid {
+        display: grid;
+        gap: clamp(1rem, 2.5vw, 1.75rem);
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 19rem), 1fr));
+        margin-top: clamp(1.75rem, 4vw, 2.75rem);
+      }
+      .card {
+        display: flex;
+        flex-direction: column;
+        background: var(--ml-paper);
+        color: var(--ml-ink);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .card > img {
+        width: 100%;
+        aspect-ratio: 3 / 2;
+        object-fit: cover;
+        /* The card owns the crop, so the .tall width cap from 1-15 must not
+           also apply here — inside a card the frame is the constraint. */
+        max-width: none;
+      }
+      .card-body {
+        display: flex;
+        flex-direction: column;
+        flex: 1;
+        padding: clamp(1.1rem, 2.4vw, 1.6rem);
+      }
+      .card-body h3 {
+        margin: 0 0 0.6rem;
+        font-size: 1.25rem;
+      }
+      .card-body h3::after {
+        display: none;
+      }
+      .card-body p {
+        margin: 0 0 1rem;
+      }
+      .card-body > :last-child {
+        margin-top: auto;
+        margin-bottom: 0;
+      }
+      .card :focus-visible {
+        outline-color: var(--ml-ink);
+      }
+
+      /* ── two-column split ──────────────────────────────────────────────── */
+      .split {
+        display: grid;
+        gap: clamp(1.5rem, 4vw, 3rem);
+        align-items: center;
+        grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
+      }
+      .split img {
+        width: 100%;
+        max-width: none;
+        border-radius: 14px;
+        aspect-ratio: 3 / 2;
+        object-fit: cover;
+      }
+      .split h2 {
+        font-size: clamp(1.85rem, 4vw, 2.75rem);
+        line-height: 1.1;
+        margin-top: 0;
+        text-wrap: balance;
+      }
+
+      /* ── the pill ──────────────────────────────────────────────────────
+         The target's buttons are fully round and uppercase. Radius and case
+         are the only changes: the label stays 19px/700 because that is what
+         makes paper-on-orange (3.22) count as LARGE text and clear the 3.0
+         bar. Headroom is 0.22, so those two values are load-bearing for
+         conformance and not styling preference. See UD-21 / LN-6. */
+      .book-cta a,
+      .pill {
+        border-radius: 999px !important;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .hero .book-cta a,
+      .section--ink .book-cta a,
+      .section--field .book-cta a {
+        /* Orange on ink is 3.85, so the pill keeps its fill and needs no
+           outline to separate from the ground. */
+        box-shadow: none;
       }
     </style>
 

@@ -440,6 +440,69 @@ for (const file of pages) {
   for (const m of body.matchAll(JAMMED_CLOSE)) {
     fail(at(`an inline tag runs straight into the next word with no space: ...${context(body, m.index)}...`));
   }
+
+  // -- AG-5 F2: every root-relative thing this page REFERENCES must exist ----
+  //
+  // THE HOLE THIS CLOSES, and it is the reason F1 shipped through four green
+  // gates: nothing derived the required-asset set from the markup. `need()`
+  // below is a hand-written list of five site-level files, so a reference to a
+  // file that was never created — `/og-default.png`, live on every page and
+  // 404 on the real server — was invisible to every check. Argus proved it:
+  // delete a referenced .webp from dist, leave the HTML pointing at it, and the
+  // gate still printed "Build gate passed".
+  //
+  // A missing asset is the quietest class of defect on a static site. Nothing
+  // errors, the build is green, the page renders, and the only symptom is a
+  // hole where an image should be — or, for og:image, a symptom NOBODY sees
+  // from inside the site at all, because it only surfaces when someone pastes
+  // a link into WhatsApp.
+  //
+  // Scope is deliberately ROOT-RELATIVE ONLY. External URLs are somebody
+  // else's uptime and this gate must not fail because Cliniko is slow; hashes,
+  // mailto:, tel: and data: are not files.
+  const refs = new Map(); // path -> what referenced it (for the message)
+  const noteRef = (url, kind) => {
+    if (!url) return;
+    const u = url.trim();
+    if (!u.startsWith('/') || u.startsWith('//')) return; // external or protocol-relative
+    const clean = u.split('#')[0].split('?')[0];
+    if (clean && !refs.has(clean)) refs.set(clean, kind);
+  };
+
+  for (const m of html.matchAll(/<(?:img|script|source|iframe)\b[^>]*>/gi)) {
+    noteRef(attr(m[0], 'src'), 'src');
+    // srcset carries multiple candidates, each "url descriptor" — every one of
+    // them is a file the browser may choose, so every one has to exist.
+    const ss = attr(m[0], 'srcset');
+    if (ss) for (const cand of ss.split(',')) noteRef(cand.trim().split(/\s+/)[0], 'srcset');
+  }
+  for (const m of html.matchAll(/<link\b[^>]*>/gi)) noteRef(attr(m[0], 'href'), 'link href');
+  for (const m of html.matchAll(/<a\b[^>]*>/gi)) noteRef(attr(m[0], 'href'), 'link');
+  for (const m of html.matchAll(/<meta\b[^>]*>/gi)) {
+    const p = attr(m[0], 'property') ?? attr(m[0], 'name') ?? '';
+    if (/^(og:image|twitter:image)$/i.test(p)) {
+      // og:image is absolute in the markup (crawlers require it), so compare on
+      // the path and only when it is on our own origin.
+      const c = attr(m[0], 'content') ?? '';
+      try {
+        const url = new URL(c, SITE_URL);
+        if (url.origin === new URL(SITE_URL).origin) noteRef(url.pathname, p);
+      } catch {
+        /* not a URL — other checks own that */
+      }
+    }
+  }
+
+  for (const [path, kind] of refs) {
+    // trailingSlash: 'always', so an internal page reference resolves to that
+    // directory's index.html. Accept either shape rather than assuming, so a
+    // legitimate extensionless file is not reported as missing.
+    const asFile = join(DIST_ABS, path);
+    const asIndex = join(DIST_ABS, path, 'index.html');
+    if (!existsSync(asFile) && !existsSync(asIndex)) {
+      fail(at(`${kind} points at ${path}, which does not exist in ${DIST} — it will 404`));
+    }
+  }
 }
 
 // Deliberately not a PASS line: this reports COVERAGE (how many pages were
