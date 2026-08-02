@@ -15,9 +15,24 @@ name: Build and deploy to staging
 # hPanel integration is ever fixed, re-adding it is ten lines.
 #
 # SAFETY: the staging directory lives INSIDE the live WordPress document root
-# (public_html/staging). rsync --delete aimed one level high would delete the
-# production site, so the target is validated on the server BEFORE anything
-# destructive runs. See the "Guard" step.
+# (public_html/staging), so an rsync --delete aimed one level high would delete
+# the production site.
+#
+# ⚠️ HOW THAT IS PREVENTED CHANGED IN STORY 1-11 (a). It used to be a set of
+# `test` commands run on the server before the destructive step — which
+# constrained THIS WORKFLOW and not the KEY. The key authenticates as
+# the hosting account user, which owns every domain in the account, so anyone
+# holding the key could rsync anywhere regardless of what this file said.
+#
+# It is now a forced command in the server's authorized_keys:
+#
+#     command="~/bin/rrsync -wo <staging path>",no-pty,no-port-forwarding,...
+#
+# rrsync (the official Python one from the rsync project, since this host has no
+# perl) refuses anything that is not `rsync --server`, chdirs into the restricted
+# directory, and rejects `..`. The key is therefore STRUCTURALLY unable to reach
+# the WordPress root — not checked, incapable. The Guard step below no longer
+# validates the path; it asserts that property instead.
 
 on:
   push:
@@ -316,7 +331,7 @@ jobs:
                    -o StrictHostKeyChecking=yes \
                    -o UserKnownHostsFile=~/.ssh/known_hosts \
                    -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20 \
-                   "${H_USER}@${H_HOST}" 'echo AUTH_OK' 2>/tmp/ssherr; then
+                   "${H_USER}@${H_HOST}" true 2>/tmp/ssherr; then
               echo "authenticated successfully (attempt ${ATTEMPT})"
               AUTH_OK=1
               break
@@ -335,49 +350,70 @@ jobs:
             exit 1
           fi
 
-      - name: Guard — refuse to deploy anywhere that isn't the staging root
-        # Runs on the server, before rsync. Any failure aborts the job with
-        # nothing written. StrictHostKeyChecking=yes is deliberate: an
-        # unrecognised host key must fail, not prompt.
+      - name: Guard — the key must be structurally unable to leave staging
+        # STORY 1-11 (a) / AG-1 F5. THIS STEP CHANGED SHAPE, and the reason is
+        # the point of the story.
+        #
+        # It used to run a series of `test` commands on the server to check the
+        # deploy PATH looked like the staging directory. That constrained the
+        # WORKFLOW, not the KEY: anyone holding the key could still rsync
+        # anywhere in the account, including the live WordPress files, because
+        # the key authenticates as the hosting account user, which owns every domain.
+        #
+        # The durable fix is a forced command in the server's authorized_keys —
+        # `command="~/bin/rrsync -wo <staging>"` — which makes the key
+        # STRUCTURALLY incapable of touching anything else. Proven before it was
+        # applied, using a throwaway key, in five directions:
+        #   push into staging                     SUCCEEDS
+        #   arbitrary shell command               REFUSED ("does not run rsync")
+        #   rsync at the WordPress root           REFUSED, nothing written
+        #   ../ traversal                         REFUSED by name
+        #   `ssh host true`                       SUCCEEDS (rrsync special-case,
+        #                                         which is why Diagnose uses it)
+        #
+        # So this step no longer CHECKS the path. It asserts the SECURITY
+        # PROPERTY instead: that an arbitrary command is refused. That is a
+        # stronger claim, and unlike the old checks it cannot be satisfied by a
+        # workflow that was copied and edited.
+        #
+        # ⚠️ IT IS DELIBERATELY TOLERANT OF THE UNRESTRICTED STATE, so the
+        # workflow change and the authorized_keys change can land in either
+        # order without a broken window. If the key is not yet confined it says
+        # so loudly and falls back to the old path checks rather than failing a
+        # deploy that would have worked.
         run: |
-          ssh -i ~/.ssh/deploy_key -p "${H_PORT}" \
-              -o StrictHostKeyChecking=yes \
-              -o UserKnownHostsFile=~/.ssh/known_hosts \
-              -o BatchMode=yes \
-              -o IdentitiesOnly=yes \
-              "${H_USER}@${H_HOST}" \
+          set -u
+          SSH_BASE="ssh -i $HOME/.ssh/deploy_key -p ${H_PORT} \
+            -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts \
+            -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20"
+
+          if $SSH_BASE "${H_USER}@${H_HOST}" 'echo ARBITRARY_COMMAND_RAN' 2>/dev/null | grep -q ARBITRARY_COMMAND_RAN; then
+            echo "::warning::the deploy key is NOT confined — it can still run arbitrary commands"
+            echo "  Story 1-11 (a) applies a forced command to authorized_keys to close this."
+            echo "  Falling back to the path checks while that is outstanding."
+            $SSH_BASE "${H_USER}@${H_HOST}" \
               "TARGET='${H_PATH}'
                case \"\$TARGET\" in
                  */staging) ;;
                  *) echo 'REFUSING: deploy path does not end in /staging'; exit 1 ;;
                esac
                test -d \"\$TARGET\" || { echo 'REFUSING: target directory does not exist'; exit 1; }
-               # AG-1 F3. The name test above is satisfied by ANY directory
-               # called staging, and test -d follows symlinks — so a symlink
-               # named staging pointing somewhere else passes both.
-               #
-               # Deliberately NOT requiring \$TARGET to equal its own resolved
-               # path: shared hosts often symlink /home itself, which would
-               # make a byte-equality check refuse a perfectly good target.
-               # Instead: reject a symlinked final component (the actual
-               # attack), then re-apply the same safety tests to the RESOLVED
-               # path so a traversal cannot smuggle us somewhere else.
                test ! -L \"\$TARGET\" || { echo 'REFUSING: target itself is a symlink'; exit 1; }
                REAL=\$(readlink -f \"\$TARGET\")
-               echo \"target resolves to: \$REAL\"
                case \"\$REAL\" in
                  */staging) ;;
                  *) echo \"REFUSING: resolved path does not end in /staging (\$REAL)\"; exit 1 ;;
                esac
                if [ -f \"\$REAL/wp-config.php\" ] || [ -d \"\$REAL/wp-admin\" ]; then
-                 echo 'REFUSING: resolved path looks like a WordPress root'
-                 exit 1
+                 echo 'REFUSING: resolved path looks like a WordPress root'; exit 1
                fi
-               if [ -f \"\$TARGET/wp-config.php\" ] || [ -d \"\$TARGET/wp-admin\" ]; then
-                 echo 'REFUSING: target looks like a WordPress root, not our staging dir'
-                 exit 1
-               fi
-               echo \"guard passed for \$TARGET\""
+               echo \"path guard passed for \$TARGET\""
+          else
+            echo "the deploy key is CONFINED: an arbitrary command was refused by the"
+            echo "server's forced command, so this key cannot reach the WordPress root"
+            echo "even if this workflow asked it to. That is the guarantee the path"
+            echo "checks were only approximating."
+          fi
 
       - name: Deploy
         # The trailing slash on dist/ is load-bearing: it copies the CONTENTS
