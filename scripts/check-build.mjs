@@ -146,6 +146,43 @@ const prose = (html) =>
     .replace(/<!--[\s\S]*?-->/g, '');
 
 /**
+ * SM-14. Read one attribute's VALUE off a start tag.
+ *
+ * Every attribute read in this file used to be its own `/\sname="([^"]*)"/`, and
+ * that shape is a trap: HTML lets an attribute be written four ways, and a
+ * regex demanding `="..."` reads three of them as ABSENT.
+ *
+ *     alt="x"   alt='x'   alt=x   alt
+ *
+ * The last is a bare boolean, whose value is the empty string. It is not an
+ * edge case here — it is what astro:assets emits for `<Image alt="" />`, which
+ * is the correct, paved-road way to write a decorative image. Measured on this
+ * build: `<Image alt="" aria-hidden="true" />` serialises to `<img ... alt
+ * aria-hidden="true" ...>`, and the old regex reported that as "no alt
+ * attribute at all". The markup was right and the gate could not see it.
+ *
+ * Two consequences, and the second is why this is a real defect rather than a
+ * cosmetic one: the message named the wrong problem, AND the decorative
+ * allowance below was UNREACHABLE through <Image> — the only way past the gate
+ * was to hand-write a raw <img>, which bypasses astro:assets entirely. That is
+ * the exact thing the width/height check exists to keep people using, so the
+ * gate was pushing authors off the paved road to satisfy it. Story 1-10 places
+ * 38 more images through <Image>; this had to be fixed before that lands.
+ *
+ * Returns undefined ONLY when the attribute is genuinely not written, so a
+ * caller can still tell "absent" from "present but empty" — the distinction the
+ * alt check turns on. The `(?![-\w])` stops `altitude="3"` reading as a bare
+ * `alt`.
+ */
+const attr = (tag, name) => {
+  const m = tag.match(
+    new RegExp(`\\s${name}(?![-\\w])(?:\\s*=\\s*(?:"([^"]*)"|'([^']*)'|([^\\s"'\`=<>]+)))?`, 'i'),
+  );
+  if (!m) return undefined;
+  return m[1] ?? m[2] ?? m[3] ?? '';
+};
+
+/**
  * LN-2 F3. JSX drops the whitespace when a newline sits between a word and an
  * inline tag, so `the` + newline + `<em>` emits `the<em>` and renders as
  * "thePrivacy Act 1988". Live on staging when Lens found it.
@@ -349,8 +386,8 @@ for (const file of pages) {
   // hand-wrote a raw <img> and bypassed it.
   for (const m of body.matchAll(/<img\b[^>]*>/gi)) {
     const tag = m[0];
-    const alt = tag.match(/\salt="([^"]*)"/i)?.[1];
-    const src = tag.match(/\ssrc="([^"]+)"/i)?.[1] ?? '';
+    const alt = attr(tag, 'alt');
+    const src = attr(tag, 'src') ?? '';
     const file = src.split('/').pop()?.split('.')[0] ?? '';
     const norm = (s) => s.toLowerCase().replace(/[^a-z0-9]/g, '');
 
@@ -366,7 +403,7 @@ for (const file of pages) {
     // text, and it takes two intentional attributes to opt out of this check.
     // A bare empty alt on its own still fails, which is what keeps the original
     // tripwire intact for the 38 content images story 1-10 is still placing.
-    const decorative = /\saria-hidden="true"/i.test(tag);
+    const decorative = attr(tag, 'aria-hidden') === 'true';
 
     if (alt === undefined) {
       fail(at(`an <img> has no alt attribute at all (${src})`));
@@ -386,7 +423,8 @@ for (const file of pages) {
       );
     }
 
-    if (!/\swidth="\d+"/i.test(tag) || !/\sheight="\d+"/i.test(tag)) {
+    const sized = (name) => /^\d+$/.test(attr(tag, name) ?? '');
+    if (!sized('width') || !sized('height')) {
       fail(at(`an <img> is missing width/height (${src}) — unsized images cause layout shift`));
     }
   }

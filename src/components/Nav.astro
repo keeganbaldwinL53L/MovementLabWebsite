@@ -13,6 +13,7 @@
 // it joins the nav once there are posts worth showing. Keegan: "we can start
 // making content but as a back up we can just leave it off at launch." Adding it
 // here early is how a launch ends up with an empty blog in the primary nav.
+import { Image } from 'astro:assets';
 import business from '../data/business.json' with { type: 'json' };
 import mark from '../assets/brand/mark.png';
 
@@ -48,17 +49,31 @@ const isCurrent = (href: string) => current === href;
       text with an image that says something shorter would quietly undo it, and
       cost the alt-text-free crawlable name at the top of every page. So: mark
       as decoration, name as text. */}
-  {/* A PLAIN <img>, not astro:assets <Image>, and that is deliberate.
-      <Image alt=""> serialises to a BARE boolean `alt` attribute. That is valid
-      HTML and screen readers treat it as decorative exactly as intended — but
-      check-build.mjs matches /\salt="([^"]*)"/ and so reports it as "no alt
-      attribute at all". The markup was right and the gate could not see it.
-      Writing the tag by hand emits the quoted `alt=""`, which is unambiguous to
-      both. The asset is still hashed and cached by Vite through the import.
-      The gate's blind spot is real and reported separately — it will misread
-      any bare boolean attribute, not just this one. */}
+  {/* SM-14. This was a hand-written <img> for a while, working around the build
+      gate rather than the markup: <Image alt=""> serialises to a BARE boolean
+      `alt`, and check-build.mjs matched /\salt="([^"]*)"/, so it reported
+      correct markup as "no alt attribute at all". THE GATE IS FIXED — it now
+      reads an attribute in all four shapes HTML allows, so the paved road is
+      open again and the workaround is gone.
+
+      Worth keeping, because it is the reason to care: the hand-written version
+      shipped the raw 512x512 PNG, 27,681 bytes, to display at 30px, in the
+      header of all 8 pages. Through astro:assets the same mark is a 936-byte
+      webp — 30x smaller. A build gate that pushes authors off astro:assets
+      costs real bytes, which is why the blind spot was worth fixing rather
+      than working around. */}
   <a class="brand" href="/">
-    <img src={mark.src} alt="" aria-hidden="true" width="30" height="30" class="brand-mark" />
+    {/* eager, not astro's default lazy: this sits in the header of every page,
+        above the fold on all of them, and it is 936 bytes. */}
+    <Image
+      src={mark}
+      alt=""
+      aria-hidden="true"
+      loading="eager"
+      width={30}
+      height={30}
+      class="brand-mark"
+    />
     <span>{business.name}</span>
   </a>
 
@@ -123,8 +138,14 @@ const isCurrent = (href: string) => current === href;
     color: var(--ml-ink);
   }
   .brand-mark {
-    /* The global `img` rule sets width:100%; the mark is a fixed-size icon and
-       must opt out of it, or it fills the header. */
+    /* CORRECTED SM-14 — this used to say "the global `img` rule sets
+       width:100%, so the mark must opt out or it fills the header". It does
+       not: BaseLayout's global rule is `max-width: 100%; height: auto`, and
+       measured with this class hook deliberately broken the mark still rendered
+       30x30 off its width/height attributes alone. So these two lines are
+       belt-and-braces, not the thing holding the size. Keeping them anyway —
+       they cost nothing and they pin the size if an attribute ever goes
+       missing — but nobody should read them as load-bearing. */
     width: 30px;
     height: 30px;
     margin: 0;
