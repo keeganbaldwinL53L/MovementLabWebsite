@@ -62,7 +62,19 @@ else
   SSH_OPTS=(-i "$H_KEY" -p "$H_PORT" -o StrictHostKeyChecking=yes
             -o BatchMode=yes -o IdentitiesOnly=yes)
   RUN() { ssh "${SSH_OPTS[@]}" "${H_USER}@${H_HOST}" "$1"; }
-  PULL() { rsync -az --numeric-ids -e "ssh ${SSH_OPTS[*]}" \
+  # --partial matters here specifically: this host drops SSH connections
+  # intermittently (UD-27, unresolved), and the document root measured 1.3 GB
+  # across 18,612 files. Without it a drop at 90% restarts from zero; with it a
+  # re-run resumes.
+  #
+  # ⚠️ FLAGS ARE DELIBERATELY OLD-RSYNC-SAFE. macOS ships openrsync, which
+  # reports itself as "rsync version 2.6.9 compatible" and REJECTS --info=
+  # outright (tried it, the run died with a usage dump). This script's whole
+  # point is to run from a trusted local machine, and on this project that
+  # machine is a Mac. Anything newer than the 2.6.9 flag set has to be checked
+  # against `rsync --version` locally before it goes in here.
+  PULL() { rsync -az --numeric-ids --partial \
+             -e "ssh ${SSH_OPTS[*]}" \
              "${H_USER}@${H_HOST}:$1/" "$2/"; }
 fi
 
