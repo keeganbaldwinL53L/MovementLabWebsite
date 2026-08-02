@@ -77,8 +77,8 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
     src={classBands}
     alt="Four people kneeling on mats in a mirrored studio, leaning back and holding resistance bands overhead during a group mobility class"
     widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 44rem"
-    class="page-img"
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
   />
 
   <h2>What happens in the mobility and flexibility class?</h2>
@@ -143,15 +143,21 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
     class="page-img"
   />
 
-  <h2>When and where do the classes run?</h2>
-  <p>
-    Mobility and flexibility runs Wednesdays 6&ndash;7pm, handstands Saturdays 10&ndash;11am, both at
-    Just Train Gym in Cromer. Classes are scheduled a few weeks at a time, so the booking page is the
-    place to confirm the next actual session.
-  </p>
-  <p>
-    <a href="/contact/">Open the booking page</a> to see what is currently available.
-  </p>
+  {/* LN-6 / 1-15 section rhythm. The page's one band, on the block a reader
+      scrolling for a practical answer is actually hunting for: when, where, how
+      much. Lifting it out of the column is what stops it reading as the seventh
+      identical section down the page. */}
+  <section class="band">
+    <h2>When and where do the classes run?</h2>
+    <p>
+      Mobility and flexibility runs Wednesdays 6&ndash;7pm, handstands Saturdays 10&ndash;11am, both
+      at Just Train Gym in Cromer. Classes are scheduled a few weeks at a time, so the booking page
+      is the place to confirm the next actual session.
+    </p>
+    <p>
+      <a href="/contact/">Open the booking page</a> to see what is currently available.
+    </p>
+  </section>
 
   <h2>Do you run workshops instead?</h2>
   <p>

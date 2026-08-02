@@ -77,6 +77,11 @@ const { address } = business;
     <a href={`tel:${business.phoneE164}`}>{business.phone}</a>.
   </p>
 
+  {/* LN-6 / 1-15 section rhythm. The page's one band, on the where — the single
+      fact a patient re-opens this page to check, and the one that has to survive
+      being read at a traffic light. The Restore Health paragraph stays inside it
+      because "the address is a clinic that is not mine" is the same answer. */}
+  <section class="band">
   <h2>Where are the appointments?</h2>
   <p>
     All one-on-one in-person services are at {address.venue}, {address.streetAddress},{' '}
@@ -94,6 +99,7 @@ const { address } = business;
     this website.{' '}
     <a href="https://restorehealthclinic.com.au/" rel="noopener">Visit Restore Health Clinic</a>.
   </p>
+  </section>
 
   <h2>Will I get a confirmation?</h2>
   <p>

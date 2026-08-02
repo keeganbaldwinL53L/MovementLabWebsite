@@ -26,6 +26,11 @@ import { physician } from '../lib/schema.mjs';
 import { SITE_URL } from '../lib/site-env.mjs';
 import business from '../data/business.json' with { type: 'json' };
 import portrait from '../assets/site/head-shot-smile-cropped.jpg';
+// LN-6 / 1-15 editorial pass. The section below literally asks "why does the
+// handbalancing matter?" and had no picture of one. A straddle rather than the
+// straight-line handstand on /services/handstand/, so the two pages do not run
+// the same photograph — this one is about the practice, that one is the service.
+import straddle from '../assets/site/IMG_1550.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -101,19 +106,34 @@ const PHYSICIAN = physician(SITE_URL);
     me how those qualities depend on each other. That is the lens I bring to a patient who is stiff,
     sore, or stuck at a plateau.
   </p>
+  <Image
+    src={straddle}
+    alt="Keegan in a straddle handstand in a mirrored studio, weight on both hands with his legs split wide apart above him"
+    widths={[384, 768]}
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
+  />
+
   <p>
     I still coach it, and I organise handstand meetups around the Northern Beaches.{' '}
     <a href="/services/handstand/">Handstand coaching and classes</a> have their own page if that is
     what brought you here.
   </p>
 
-  <h2>Are you registered?</h2>
-  <p>
-    Yes. I am a chiropractor registered with the Australian Health Practitioner Regulation Agency,
-    registration {business.ahpra}. Chiropractors in Australia complete a minimum five-year university
-    degree covering anatomy, physiology, neurology, pathology, radiology and clinical practice, and
-    are regulated by AHPRA, the same body that oversees doctors, physiotherapists and nurses.
-  </p>
+  {/* LN-6 / 1-15 section rhythm. The page's one band. On a personal-history
+      page the block a stranger is actually checking is the registration, so
+      that is the one that gets lifted out of the column rather than sitting as
+      the fourth identical section. */}
+  <section class="band">
+    <h2>Are you registered?</h2>
+    <p>
+      Yes. I am a chiropractor registered with the Australian Health Practitioner Regulation Agency,
+      registration {business.ahpra}. Chiropractors in Australia complete a minimum five-year
+      university degree covering anatomy, physiology, neurology, pathology, radiology and clinical
+      practice, and are regulated by AHPRA, the same body that oversees doctors, physiotherapists
+      and nurses.
+    </p>
+  </section>
 
   <BookCta slug="new-patient" label="Book an appointment" showDetail={true} />
 

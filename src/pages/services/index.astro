@@ -81,22 +81,27 @@ const classes = SERVICES.filter((s) => s.price === null);
     src={pikeDrill}
     alt="Two people standing on aerobic steps in a mirrored studio, folding forward to lower weighted bags towards the floor in a pike stretch"
     widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 44rem"
-    class="page-img"
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
   />
 
-  <h2>What about the group classes?</h2>
-  <p>
-    Two weekly classes at Just Train Gym in Cromer, $20 each, one hour, and both open to complete
-    beginners. They are designed as a low-commitment way to sample the same methods.
-  </p>
-  <ul>
-    {classes.map((s) => <li>{s.label}</li>)}
-  </ul>
-  <p>
-    <a href="/services/group-classes/">Class times and what to bring</a>, or{' '}
-    <a href="/services/handstand/">handstand coaching and classes</a>.
-  </p>
+  {/* LN-6 / 1-15 section rhythm. Same placement rule as the home page: the band
+      marks the cheapest way in, which on a page led by a $120-$160 pricing table
+      is the $20 class. */}
+  <section class="band">
+    <h2>What about the group classes?</h2>
+    <p>
+      Two weekly classes at Just Train Gym in Cromer, $20 each, one hour, and both open to complete
+      beginners. They are designed as a low-commitment way to sample the same methods.
+    </p>
+    <ul>
+      {classes.map((s) => <li>{s.label}</li>)}
+    </ul>
+    <p>
+      <a href="/services/group-classes/">Class times and what to bring</a>, or{' '}
+      <a href="/services/handstand/">handstand coaching and classes</a>.
+    </p>
+  </section>
 
   <h2>Do you run workshops?</h2>
   <p>

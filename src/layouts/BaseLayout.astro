@@ -260,20 +260,69 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
          selector beats an element selector, so a bespoke `.portrait { max-width }`
          overrode it — which is precisely how Lens's first attempt at the fix
          failed. The floor and this shared class are doing different jobs. */
+      /* ⚠️ LN-6 / 1-15. A PORTRAIT PHOTOGRAPH NEEDS A CAP, AND IT HAS TO BE A
+         WIDTH CAP — CAPPING THE HEIGHT COSTS LAYOUT STABILITY.
+
+         THE DEFECT: `width: 100%` is only safe for a LANDSCAPE photograph. 34 of
+         the 46 captured images are 2:3 portrait, and a 2:3 portrait at 100% of a
+         44rem column paints 704x1056 — measured on a 1280x800 laptop, 1.32
+         SCREENS TALL for one photo. The worst already live was the pike drill on
+         /services/ at 704x1366 = 1.71 screens. Five of the six placed portraits
+         exceeded a full screen; every landscape one sat at 0.47-0.59 and was
+         never the problem. Placing the remaining 38 under the old rule would
+         have multiplied a measured defect by five, which is why this is fixed
+         BEFORE the editorial pass rather than after it.
+
+         ⚠️ WHY NOT `max-height`, WHICH IS THE OBVIOUS FIX: it works visually and
+         it MEASURABLY BREAKS G-5/G-6. A height cap only binds if the width is
+         free, and `width: auto` makes the used width fall out of whichever
+         srcset candidate the browser picked — which is not known until the bytes
+         land. Baseline CLS on /services/group-classes/ and /services/handstand/
+         at 375px was 0.0000; with `width:auto; max-height:min(72vh,620px)` they
+         went to 0.1601 and 0.1140, both past the 0.1 "good" threshold. Attributed
+         with layout-shift `sources`: the <h2> and <p> BELOW each image jumped
+         because the image box resized after decode. I checked this against a
+         build of HEAD rather than assuming I had caused it — I had.
+
+         THE FIX: cap the WIDTH instead. The aspect ratio is fixed, so a width cap
+         and a height cap are the same picture — but `width: 100%` resolves
+         against the CONTAINER immediately and the height follows from the
+         width/height attributes, so the box is exact before the image arrives.
+         `.tall` is a modifier, not a seventh copy of the rule: the LN-3 F5 lesson
+         was about six DUPLICATE rules, and "this photograph is portrait" is a
+         real distinction the author already knows at the call site.
+
+         NO `object-fit: cover` ANYWHERE HERE, on purpose: cropping is an
+         editorial decision and these are movement photographs where the whole
+         body is the content. A cover-crop takes the feet off a handstand. */
       .page-img,
       .hero-img,
       .portrait {
+        display: block;
         width: 100%;
         height: auto;
         border-radius: 6px;
-        margin: 1.5rem 0;
+        margin: 1.5rem auto;
+      }
+      /* 24rem = 384px, which puts a 2:3 portrait at 576px tall — 0.72 of an
+         800px laptop screen, the same result the height cap gave, without the
+         shift. On a phone the 327px column is already narrower than the cap, so
+         this does nothing there: portrait is the natural shape on a portrait
+         device, and the defect was only ever a desktop one. */
+      .page-img.tall,
+      .hero-img.tall {
+        max-width: 24rem;
       }
       /* The one genuine per-image override that survives: the portrait is a
-         person, not a scene, so it is capped. `min()` rather than a bare 20rem
-         because 20rem = 320px is WIDER than the content column at a 320px
-         viewport (Lens's F4). */
+         person, not a scene, so it is capped tighter than a scene photograph.
+         `min()` rather than a bare 20rem because 20rem = 320px is WIDER than the
+         content column at a 320px viewport (Lens's F4).
+         `width: 100%` rather than the `width: auto` this used to carry — auto was
+         costing 0.026 of measured CLS on /about/ at baseline, for the same
+         srcset reason as above. Fixed in passing since the mechanism is now
+         understood. */
       .portrait {
-        width: auto;
+        width: 100%;
         max-width: min(20rem, 100%);
       }
 
@@ -405,7 +454,10 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       }
 
       /* Focus: orange ring. A border/outline is a licensed use of the accent,
-         and it is the one thing on the page that should interrupt. */
+         and it is the one thing on the page that should interrupt.
+         Measured on the two grounds it can land on: 3.22:1 on paper and 3.85:1
+         on the ink footer, both clearing the 3.0 that WCAG 1.4.11 asks of a
+         non-text indicator. The third ground is handled directly below. */
       a:focus-visible,
       button:focus-visible,
       summary:focus-visible,
@@ -413,6 +465,23 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         outline: 2px solid var(--ml-accent);
         outline-offset: 2px;
         border-radius: 2px;
+      }
+      /* ⚠️ THE RING CANNOT STAY ORANGE INSIDE A BAND — 2.11:1 ON SAGE, WHICH
+         FAILS 1.4.11's 3.0 FOR A FOCUS INDICATOR.
+         This is the same 2.11 that already forced `.band h2::after` to ink a few
+         rules up; the heading rule was caught when the first band shipped and the
+         focus ring was not, because the home page's band happened to be the only
+         one and the defect only appears once you TAB INTO a band rather than look
+         at it. 1-15's section-rhythm pass took the site from one band to six, all
+         of them containing links, so a keyboard user would have met an
+         effectively invisible focus ring on most pages of the site.
+         Ink on sage is 8.12:1. Same fix, same reason, same value as the heading
+         rule — if the band surface ever changes, all three move together. */
+      .band a:focus-visible,
+      .band button:focus-visible,
+      .band summary:focus-visible,
+      .band [tabindex]:focus-visible {
+        outline-color: var(--ml-ink);
       }
     </style>
 

@@ -26,6 +26,14 @@ import { service } from '../../lib/schema.mjs';
 import { SITE_URL } from '../../lib/site-env.mjs';
 import business from '../../data/business.json' with { type: 'json' };
 import bridge from '../../assets/site/IMG_1667.jpg';
+// LN-6 / 1-15 editorial pass. The handstand page led with a photograph of a
+// BRIDGE. A previous pass noticed and wrote honest alt text for it, which was
+// the right instinct applied to the wrong end of the problem — accurate alt on
+// a mismatched lead still leaves a handstand page whose only picture is not a
+// handstand. The bridge is genuinely useful further down, where the copy is
+// about the shoulder and spine range the skill needs, so it moves rather than
+// goes. Straight-line hold here; the straddle lives on /about/.
+import handstand from '../../assets/site/IMG_1551.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -48,14 +56,14 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
     is why I keep coaching it alongside the clinical work.
   </p>
 
-  {/* Described as what it IS — a bridge, not a handstand. Alt text that
-      oversells the photo is a small lie to the one reader who cannot see it. */}
   <Image
-    src={bridge}
-    alt="Keegan in a bridge position, hands and feet on the floor and hips lifted, demonstrating shoulder and spine extension"
-    widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 44rem"
-    class="page-img"
+    src={handstand}
+    alt="Keegan holding a straight handstand in a mirrored studio, body stacked vertically over both hands with his legs together"
+    widths={[384, 768]}
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
+    loading="eager"
+    fetchpriority="high"
   />
 
   <h2>Who is handstand training for?</h2>
@@ -76,6 +84,18 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
     holding you back most, then we work through drills that address them with in-the-moment feedback.
     Whether you’re a complete beginner or have been working on handstands for a while, I can help.
   </p>
+  {/* Described as what it IS — a bridge, not a handstand. Alt text that
+      oversells the photo is a small lie to the one reader who cannot see it.
+      It earns its place HERE, against copy about the drills and the range the
+      skill demands, rather than as the lead on a page about handstands. */}
+  <Image
+    src={bridge}
+    alt="Keegan in a bridge position, hands and feet on the floor and hips lifted, demonstrating shoulder and spine extension"
+    widths={[384, 768]}
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
+  />
+
   <p>
     <strong>Location and how to book.</strong> The location is up to you. I can meet you at your
     home, outside, in a neutral location, or I can organise a studio space hire. Because that means
@@ -84,21 +104,37 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
     suits us both.
   </p>
 
-  <h2>Is there a class instead?</h2>
-  <p class="class-time">
-    <strong>Saturdays, 10&ndash;11am</strong> at Just Train Gym, Cromer, $20 for the hour. Numbers
-    are small and I do sometimes cancel, so check the booking page for this week&rsquo;s session
-    before you come.
-  </p>
-  <p>
-    The class is designed for complete beginners and intermediate students, taking you from never
-    going upside down to your first 10-second hold and beyond.
-  </p>
-  <p>
-    We focus on proper technique and time-tested drills that build the strength and control to
-    reliably stay upside down. The classes are community focused and designed to get you to a level
-    where you can join the handstand meetups I organise around the Northern Beaches.
-  </p>
+  {/* LN-6 / 1-15 section rhythm. ONE band per page, and it always marks the
+      same thing: the cheapest way in. Here that is the $20 class sitting under
+      a page about one-to-one coaching, which is exactly the home page's band
+      too. Consistent placement is what makes it read as a system rather than as
+      decoration — see the note on `.band` in BaseLayout. */}
+  <section class="band">
+    <h2>Is there a class instead?</h2>
+    <p class="class-time">
+      <strong>Saturdays, 10&ndash;11am</strong> at Just Train Gym, Cromer, $20 for the hour. Numbers
+      are small and I do sometimes cancel, so check the booking page for this week&rsquo;s session
+      before you come.
+    </p>
+    <p>
+      The class is designed for complete beginners and intermediate students, taking you from never
+      going upside down to your first 10-second hold and beyond.
+    </p>
+    <p>
+      We focus on proper technique and time-tested drills that build the strength and control to
+      reliably stay upside down. The classes are community focused and designed to get you to a
+      level where you can join the handstand meetups I organise around the Northern Beaches.
+    </p>
+  </section>
+
+  {/* ⚠️ THE BUTTON STAYS OUTSIDE THE BAND, DELIBERATELY. BookCta is an orange
+      fill, and orange on sage is 2.11:1 — the one pairing the brand contract
+      rules out outright. Inside a band it would also drag its hover (--ml-deep,
+      which IS the ink the band would need) and its orange focus ring onto sage,
+      so three separate values would each need re-deriving to keep one button in
+      a coloured box. On paper every one of them is already verified, including
+      the 19px/700 floor UD-21 turned on. A CTA immediately below its band reads
+      as belonging to it regardless. */}
   <BookCta slug="handstand-class" label="Reserve a spot in the handstand class" />
 
   <h2>Where to next?</h2>

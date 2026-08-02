@@ -70,12 +70,39 @@ const fmt = (t) => {
 </footer>
 
 <style>
+  /* ═══ LN-6 / 1-15. THE FOOTER IS THE PAGE'S TERMINAL, SO IT GETS A SURFACE ═══
+     Before this it was paper on paper with a hairline above it: legible, and
+     completely unbranded — eight pages that simply stopped. Deep green is the
+     brand's primary dark and it is the one move that gives every page a defined
+     end without adding a single element.
+
+     NO NEW COLOUR VALUES ARE INTRODUCED HERE, which is the tell that the palette
+     is right: on ink, paper carries the primary text at 12.40:1 and SAGE carries
+     the secondary at 8.12:1 — both already brand tokens, both computed at the
+     top of BaseLayout. Contrast is symmetric, so these are the same two ratios
+     the palette was signed off on, read the other way round. --ml-muted is
+     deliberately NOT used below: it is derived for LIGHT grounds and would be
+     near-invisible here, which is exactly the trap MLW-LRN-23 describes.
+
+     THE FULL-BLEED IS `.band`'s IDIOM, DELIBERATELY REUSED — see the long note
+     on `.band` in BaseLayout for why `margin-inline: calc(50% - 50vw)` reaches
+     the viewport edge from inside a centred column. If one of the two ever
+     changes, change both. The negative bottom margin cancels body's 4rem bottom
+     padding so the surface runs to the end of the document rather than floating
+     above a strip of paper.
+
+     Scoped rather than global, and that IS safe here: the Astro scoping bug that
+     bit three agents on this project applies to SLOTTED content carrying its own
+     cid. This markup is the component's own, so it carries this file's cid and
+     the rules match. */
   .site-footer {
     margin-top: 4rem;
-    padding-top: 2rem;
-    border-top: 1px solid var(--ml-rule);
+    margin-inline: calc(50% - 50vw);
+    margin-bottom: -4rem;
+    padding: 2.75rem calc(50vw - 50% + 0.25rem) 3rem;
+    background: var(--ml-ink);
+    color: var(--ml-paper);
     font-size: 0.9375rem;
-    color: var(--ml-ink);
     display: grid;
     gap: 2rem;
   }
@@ -129,8 +156,11 @@ const fmt = (t) => {
     gap: 1rem;
     padding: 0.15rem 0;
   }
+  /* Sage, not --ml-muted. The day name is the secondary half of the pair and
+     needs to sit back from the time without becoming hard to read — sage on ink
+     is 8.12:1. --ml-muted here would be roughly 1.3:1 and effectively invisible. */
   .hours-row dt {
-    color: var(--ml-muted);
+    color: var(--ml-surface);
   }
   .hours-row dd {
     margin: 0;
@@ -138,7 +168,7 @@ const fmt = (t) => {
   }
   .footer-legal {
     margin: 0;
-    color: var(--ml-muted);
+    color: var(--ml-surface);
   }
   .sep {
     margin: 0 0.5rem;

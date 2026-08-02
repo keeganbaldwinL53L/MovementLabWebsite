@@ -21,6 +21,7 @@ import { SITE_URL } from '../../lib/site-env.mjs';
 import business from '../../data/business.json' with { type: 'json' };
 import assessing from '../../assets/site/Keegan-Photos-31.jpg';
 import adjusting from '../../assets/site/Rib-adjust.jpg';
+import fold from '../../assets/site/IMG_1604-scaled.jpg';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 
@@ -122,8 +123,8 @@ const FAQ_ENTRIES = [
     src={assessing}
     alt="Keegan assessing a patient's hip and knee range of motion on a treatment table, anatomy charts on the wall behind"
     widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 44rem"
-    class="page-img"
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
   />
 
   <h2>What is chiropractic?</h2>
@@ -151,8 +152,8 @@ const FAQ_ENTRIES = [
     src={adjusting}
     alt="Keegan performing a hands-on thoracic adjustment on a patient lying face down"
     widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 44rem"
-    class="page-img"
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
   />
 
   <h2>Why am I different?</h2>
@@ -180,29 +181,58 @@ const FAQ_ENTRIES = [
   </p>
 
   {/* The fold. /services/mobility-coaching/ 301s here (story 1-7), so its
-      content lives on this page rather than being lost. */}
-  <h2>Why does mobility matter if I am not in pain?</h2>
-  <p>
-    Because restricted range of motion is what puts most people back in pain later. As a
-    chiropractor, I work with people every day whose pain, dysfunction or performance limitations
-    stem from restricted range of motion (and strength within their available range of motion).
-    Addressing this in the treatment room is one thing, but what my patients often need to stay out
-    of pain over the long term is a dedicated plan to build lasting and functional mobility.
-  </p>
-  <p>
-    Beginning with a thorough flexibility and mobility analysis, I’ll map out precisely where your
-    restrictions are and why, then build you a detailed, personalised program to systematically
-    address them. From there, regular check-ins keep your progress on track and your plan evolving as
-    you do.
-  </p>
-  <p>
-    This service is naturally integrated into the care of all my clients. If you come to me with no
-    pain or injuries, we focus on this side of care. If you are in pain or have an injury, we will
-    focus more on using regular chiropractic care to address it then naturally progress you to
-    functional mobility goals. Either way, you’re getting something that a generic yoga or pilates
-    class simply can’t offer – a plan specifically built for your body and your goals that meets you
-    at the right point in your movement health journey.
-  </p>
+      content lives on this page rather than being lost.
+
+      LN-6 / 1-15 section rhythm. The page's one band, and it lands here for a
+      reason rather than by elimination: this block IS the retired mobility
+      page, so giving it a surface says "this is the other service" — which is
+      the one thing a reader who arrived from the old URL needs to understand.
+
+      ⚠️ NOT the pricing block, which is what the placement rule would otherwise
+      pick as the practical answer. It carries three BookCta buttons, and orange
+      on sage is 2.11:1 — the pairing the brand contract rules out. Banding it
+      would have meant re-deriving the button fill, its hover and its focus ring
+      against a second ground, and it is the highest-stakes element on the site
+      (UD-21 settled it at a 19px/700 FLOOR with 0.22 of headroom). Not worth
+      spending that to tint a box. This page is also the longest on the site at
+      ~7 screens, so the rhythm work here is the mid-page image plus this band. */}
+  <section class="band">
+    <h2>Why does mobility matter if I am not in pain?</h2>
+    <p>
+      Because restricted range of motion is what puts most people back in pain later. As a
+      chiropractor, I work with people every day whose pain, dysfunction or performance limitations
+      stem from restricted range of motion (and strength within their available range of motion).
+      Addressing this in the treatment room is one thing, but what my patients often need to stay out
+      of pain over the long term is a dedicated plan to build lasting and functional mobility.
+    </p>
+    <p>
+      Beginning with a thorough flexibility and mobility analysis, I’ll map out precisely where your
+      restrictions are and why, then build you a detailed, personalised program to systematically
+      address them. From there, regular check-ins keep your progress on track and your plan evolving as
+      you do.
+    </p>
+    {/* LN-6 / 1-15 editorial pass. This section absorbed the whole of the retired
+        /services/mobility-coaching/ page (story 1-7) and had no picture of anyone
+        moving — two clinic photographs above it, then 600 words about mobility
+        illustrated by nothing. Landscape on purpose: two portraits already sit
+        above, and a third would make the page one column of tall plates. */}
+    <Image
+      src={fold}
+      alt="Keegan in a standing forward fold, knees straight and both palms flat on the floor beside his feet"
+      widths={[704, 1408]}
+      sizes="(max-width: 44rem) 100vw, 44rem"
+      class="page-img"
+    />
+
+    <p>
+      This service is naturally integrated into the care of all my clients. If you come to me with no
+      pain or injuries, we focus on this side of care. If you are in pain or have an injury, we will
+      focus more on using regular chiropractic care to address it then naturally progress you to
+      functional mobility goals. Either way, you’re getting something that a generic yoga or pilates
+      class simply can’t offer – a plan specifically built for your body and your goals that meets you
+      at the right point in your movement health journey.
+    </p>
+  </section>
 
   <h2>What will it cost, and what do I get?</h2>
 
