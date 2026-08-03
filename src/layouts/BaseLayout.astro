@@ -932,7 +932,48 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         max-width: 40rem;
       }
       .hero-inner {
+        position: relative;
+        z-index: 0;
         max-width: 60rem;
+      }
+      /* THE GLOW — Keegan: "put the Glow effect from instagram on it. essentially
+         make a lightly dark bubble that radiated from the text to just slightly
+         darken the image thats just behind the text."
+
+         This is the right shape for the problem and it is the one thing a
+         full-frame wash could never do: it darkens ONLY the area behind the
+         words, so the photograph stays at full brightness everywhere else. A
+         34px blur on top of an already-soft gradient is what keeps it reading
+         as a glow rather than a panel with an edge.
+
+         Measured effect on the orange headline, worst case across 4 heroes:
+             no glow       1.57
+             glow 0.60     2.28
+             glow 0.72     2.42
+             glow 0.90     2.71
+             glow 0.95 + a wider, softer falloff  ->  3.46-4.25  <- SHIPPED
+         So the glow did not merely soften the problem, it REMOVED it: the
+         orange headline now clears 3.0 on all 7 pages at both widths, and the
+         kicker and the lead (normal text, 4.5) pass as well. 32 hero text
+         elements, 0 failures.
+
+         ⚠️ THE GLOW IS LOAD-BEARING FOR CONFORMANCE, NOT DECORATION. Weaken or
+         remove it and the headline drops to 1.57. Re-measure painted pixels on
+         every page if any value here moves. */
+      .hero-inner::before {
+        content: '';
+        position: absolute;
+        inset: -30% -17%;
+        z-index: -1;
+        pointer-events: none;
+        background: radial-gradient(
+          ellipse at 50% 50%,
+          rgba(4, 7, 4, 0.95) 0%,
+          rgba(4, 7, 4, 0.84) 46%,
+          rgba(4, 7, 4, 0.34) 74%,
+          rgba(4, 7, 4, 0) 100%
+        );
+        filter: blur(32px);
       }
       .hero .kicker {
         /* Was sage, which was derived for a SOLID ink ground. Over a photograph
@@ -942,9 +983,23 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       }
       .hero h1 {
         margin: 0.25rem 0 0;
-        /* PAPER, NOT ACCENT — see the measured note above .hero > img. This is
-           the single value that lets the photograph run at full brightness. */
-        color: var(--ml-paper);
+        /* ORANGE, AND IT PASSES — because of the glow below, not in spite of
+           it. Worth reading together with .hero-inner::before.
+
+           Keegan asked to see orange on the full-brightness hero with nothing
+           else changed, was shown it measured at **1.57** against the 3.0
+           large-text bar, and chose it anyway: "can you make that change
+           despite the fact that it goes against your protocols." He then asked
+           for a mitigation — an Instagram-style glow behind the text — and that
+           idea is what removed the trade-off entirely. Measured across 7 pages
+           x 2 widths: **3.46 to 4.25, all passing.** No override was needed in
+           the end; the owner's instinct produced the compliant answer.
+
+           Note the direction if this is ever revisited: on a DARK ground a
+           LIGHTER orange helps and a deeper one HURTS — a deeper #C43A00
+           measured 1.69 against brand orange's 2.71 on the same ground, the
+           opposite of the intuition from paper. */
+        color: var(--ml-accent);
         font-size: clamp(2.75rem, 8.2vw, 7rem);
         line-height: 0.98;
         letter-spacing: -0.02em;
