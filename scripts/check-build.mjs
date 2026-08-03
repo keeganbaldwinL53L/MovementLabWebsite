@@ -433,6 +433,103 @@ for (const file of pages) {
   const h1s = (html.match(/<h1[\s>]/gi) ?? []).length;
   if (h1s !== 1) fail(at(`${h1s} <h1> elements, expected exactly 1`));
 
+  // -- FD-23 / LN-13: the HOME h1 carries the SERVICE, not the brand line -----
+  //
+  // MN-48 decision 3, confirmed by Keegan 2026-07-31. It regressed anyway and
+  // stayed wrong for ELEVEN commits, through four gates and two 40-combination
+  // sweeps. Two written controls were in place and both failed: story 1-16
+  // carried the carve-out in bold, and index.astro's own header has said "the
+  // h1 carries the SERVICE" since 1-6. The code contradicted its own
+  // documentation and nothing noticed.
+  //
+  // WHY NO EXISTING CHECK COULD SEE IT: every gate here and every Lens sweep
+  // tests STRUCTURE — one h1, contrast, no overflow, heading order. All of
+  // those were correct the whole time. The defect was CONTENT, and content is
+  // the layer none of them look at. A decision that lives only in prose is not
+  // a control; this is the smallest thing that makes it one.
+  //
+  // DELIBERATELY NARROW, per Foundry: the point is to catch a silent REVERT,
+  // not to freeze the copy. So it asserts the SHAPE of the decision, not the
+  // sentence — reword the h1 freely as long as it still names the service.
+  //
+  // Home only, and that is load-bearing: no other page's h1 contains the
+  // specialty ("About Keegan Baldwin", "Group classes"), so applying this
+  // site-wide would fail seven pages that are correct.
+  if (rel === 'index.html') {
+    const h1 = (html.match(/<h1[^>]*>([\s\S]*?)<\/h1>/i)?.[1] ?? '')
+      .replace(/<[^>]*>/g, '')
+      .replace(/&amp;/g, '&')
+      .trim();
+    const flat = (s) => s.toLowerCase().replace(/\s+/g, ' ').trim();
+
+    if (!h1) {
+      fail(at('the home page has no readable <h1> text'));
+    } else {
+      // POSITIVE — derived from the data layer, not written out here, so a
+      // change of specialty updates the check with the site (the AG-3 F1
+      // lesson: a literal in a gate quietly describes the wrong thing later).
+      if (!flat(h1).includes(flat(business.medicalSpecialty))) {
+        fail(
+          at(
+            `the home <h1> does not name the service — expected it to contain ` +
+              `"${business.medicalSpecialty}" (business.json medicalSpecialty), got "${h1}". ` +
+              `MN-48 decision 3: the h1 carries the SERVICE, the brand line sits above it ` +
+              `as styled text. If this fired after a rewrite, reword the h1 to keep the ` +
+              `service in it — do NOT relax this check.`,
+          ),
+        );
+      }
+      // NEGATIVE — a brand-line h1 is the exact regression. The business name
+      // in the h1 is that shape.
+      if (flat(h1).includes(flat(business.name))) {
+        fail(
+          at(
+            `the home <h1> contains the business name ("${business.name}") — that is the ` +
+              `brand-line shape MN-48 decision 3 rules out. The name belongs in the kicker above.`,
+          ),
+        );
+      }
+      // NEGATIVE — the tagline drifting back INTO the h1 (Foundry's second
+      // line). Sourced from the page rather than hardcoded: the tagline lives
+      // in the first kicker, after the separator. If it is not derivable the
+      // check says so out loud rather than skipping silently.
+      const kicker = html.match(/<p class="kicker"[^>]*>([\s\S]*?)<\/p>/i)?.[1]
+        ?.replace(/<[^>]*>/g, '')
+        .trim();
+      const tagline = kicker?.includes('·') ? kicker.split('·').pop().trim() : '';
+      if (!tagline) {
+        console.log(
+          '  ----  home tagline not derivable from the first kicker; the h1/tagline overlap check did not run',
+        );
+      } else {
+        // ⚠️ SUBSTRING MATCHING IS NOT ENOUGH HERE, and the mutation run is how
+        // I know. The locked tagline is "Live Better, Longer" but the brand
+        // line that actually regressed into the h1 was "Move Better, Live
+        // Longer" — different strings, same idea, so an exact-substring test
+        // passed the hybrid "Move Better, Live Longer — Chiropractic on the
+        // Northern Beaches". That variant satisfies the service check and still
+        // puts the tagline in the h1, which is what MN-48 rules out.
+        //
+        // So match on the tagline's DISTINCTIVE words instead (>=5 letters, so
+        // "live"/"move" drop out and "better"/"longer" remain), still derived
+        // from the kicker rather than written here. Requiring ALL of them keeps
+        // it narrow — a reword has to reproduce the whole idea to trip it.
+        const marks = flat(tagline)
+          .replace(/[^a-z\s]/g, ' ')
+          .split(/\s+/)
+          .filter((w) => w.length >= 5);
+        if (marks.length && marks.every((w) => flat(h1).includes(w))) {
+          fail(
+            at(
+              `the home <h1> reproduces the brand tagline ("${tagline}") — it belongs in the ` +
+                `kicker above the h1, not in it (MN-48 decision 3). Matched on: ${marks.join(' + ')}.`,
+            ),
+          );
+        }
+      }
+    }
+  }
+
   // -- LN-2 F3, the text run -------------------------------------------------
   for (const m of body.matchAll(JAMMED_OPEN)) {
     fail(at(`a word runs straight into an inline tag with no space: ...${context(body, m.index)}...`));
