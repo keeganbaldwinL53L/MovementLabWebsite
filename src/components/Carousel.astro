@@ -1,0 +1,174 @@
+---
+// Story 1-16. The image carousel, matching the two the target site runs — one
+// after the service cards and one near the foot.
+//
+// ⚠️ DELIBERATELY NOT A COPY OF THE TARGET'S BEHAVIOUR, AND THIS IS THE ONE
+// PLACE I DEPARTED FROM PARITY ON PURPOSE.
+//
+// 1. NO AUTOPLAY. The target's carousels auto-advance (Elementor/Swiper with
+//    autoplay on). Content that moves automatically for more than five seconds
+//    has to be pausable under WCAG 2.2.2, and an unpausable auto-carousel on a
+//    health business's front page is a real barrier for anyone who reads
+//    slowly, uses a screen magnifier, or has a vestibular condition. Nothing
+//    about "recreate the look" requires importing that. A static row that the
+//    reader drives themselves looks the same in a screenshot and behaves
+//    better.
+// 2. NO CAROUSEL LIBRARY. The core is CSS scroll-snap on a native scroll
+//    container, so it swipes on a phone, trackpad-scrolls on a laptop and works
+//    with zero JavaScript. The arrows are progressive enhancement: they ship
+//    hidden and a ~15-line inline script reveals them, so a no-JS reader gets a
+//    plain swipeable strip rather than a dead row with broken buttons.
+// 3. THE TRACK IS FOCUSABLE ON PURPOSE. LN-2 measured this: Chromium
+//    auto-focuses a scrollable overflow container, and Safari does NOT. Without
+//    an explicit tabindex a keyboard user on Safari cannot reach the images at
+//    all. The aria-label is what makes that stop announce as something.
+import { Image } from 'astro:assets';
+
+interface Slide {
+  src: ImageMetadata;
+  alt: string;
+}
+
+interface Props {
+  /** Names the scroll region for assistive tech. Required — an unnamed stop is worse than none. */
+  label: string;
+  slides: Slide[];
+}
+
+const { label, slides } = Astro.props;
+---
+
+<div class="carousel">
+  <button class="carousel-btn carousel-btn--prev" type="button" data-carousel-prev aria-label={`Scroll ${label} left`} hidden>
+    <span aria-hidden="true">&lsaquo;</span>
+  </button>
+
+  <ul class="carousel-track" tabindex="0" role="group" aria-label={label} data-carousel-track>
+    {
+      slides.map((s) => (
+        <li>
+          <Image src={s.src} alt={s.alt} widths={[360, 720]} sizes="(max-width: 40rem) 78vw, 30vw" />
+        </li>
+      ))
+    }
+  </ul>
+
+  <button class="carousel-btn carousel-btn--next" type="button" data-carousel-next aria-label={`Scroll ${label} right`} hidden>
+    <span aria-hidden="true">&rsaquo;</span>
+  </button>
+</div>
+
+<script>
+  // Progressive enhancement only. The strip already scrolls and snaps without
+  // this; all the script adds is the two arrows, which is why they ship hidden.
+  document.querySelectorAll<HTMLElement>('.carousel').forEach((root) => {
+    const track = root.querySelector<HTMLElement>('[data-carousel-track]');
+    const prev = root.querySelector<HTMLButtonElement>('[data-carousel-prev]');
+    const next = root.querySelector<HTMLButtonElement>('[data-carousel-next]');
+    if (!track || !prev || !next) return;
+
+    // Respect a reduced-motion preference: jump rather than animate.
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+    const page = () => Math.max(track.clientWidth * 0.8, 200);
+    const go = (dir: number) =>
+      track.scrollBy({ left: dir * page(), behavior: reduced ? 'auto' : 'smooth' });
+
+    const sync = () => {
+      const max = track.scrollWidth - track.clientWidth - 2;
+      prev.disabled = track.scrollLeft <= 2;
+      next.disabled = track.scrollLeft >= max;
+    };
+
+    prev.addEventListener('click', () => go(-1));
+    next.addEventListener('click', () => go(1));
+    track.addEventListener('scroll', sync, { passive: true });
+    window.addEventListener('resize', sync);
+
+    prev.hidden = false;
+    next.hidden = false;
+    sync();
+  });
+</script>
+
+<style>
+  .carousel {
+    position: relative;
+    margin-top: clamp(1.5rem, 3.5vw, 2.5rem);
+  }
+  .carousel-track {
+    display: grid;
+    grid-auto-flow: column;
+    /* ~1.15 slides visible on a phone so the cut edge advertises that there is
+       more — the LN-2 lesson from the privacy table, where a scroll container
+       that ended cleanly on a word boundary read as a finished two-column
+       table and hid a whole column with zero affordance. */
+    grid-auto-columns: 78%;
+    gap: clamp(0.6rem, 1.6vw, 1rem);
+    margin: 0;
+    padding: 0 0 0.5rem;
+    list-style: none;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    scroll-snap-type: x mandatory;
+    scrollbar-width: thin;
+  }
+  @media (min-width: 48rem) {
+    .carousel-track {
+      grid-auto-columns: calc((100% - 2 * 1rem) / 3);
+    }
+  }
+  .carousel-track > li {
+    scroll-snap-align: start;
+  }
+  .carousel-track img {
+    display: block;
+    width: 100%;
+    max-width: none;
+    aspect-ratio: 3 / 2;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+  .carousel-track:focus-visible {
+    outline: 2px solid var(--ml-ink);
+    outline-offset: 3px;
+  }
+
+  .carousel-btn {
+    position: absolute;
+    top: calc(50% - 1.5rem);
+    z-index: 2;
+    display: grid;
+    place-items: center;
+    width: 2.75rem; /* 44px — the WCAG 2.5.8 target floor, not a coincidence */
+    height: 2.75rem;
+    padding: 0;
+    font-size: 1.5rem;
+    line-height: 1;
+    color: var(--ml-paper);
+    background: var(--ml-ink);
+    border: 0;
+    border-radius: 999px;
+    cursor: pointer;
+  }
+  .carousel-btn--prev {
+    left: -0.5rem;
+  }
+  .carousel-btn--next {
+    right: -0.5rem;
+  }
+  .carousel-btn:disabled {
+    opacity: 0.28;
+    cursor: default;
+  }
+  .carousel-btn:focus-visible {
+    outline: 2px solid var(--ml-paper);
+    outline-offset: 2px;
+  }
+  /* On a phone the arrows would sit on top of the pictures in a 78%-wide
+     strip, and the gesture there is a swipe anyway. */
+  @media (max-width: 47.99rem) {
+    .carousel-btn {
+      display: none;
+    }
+  }
+</style>

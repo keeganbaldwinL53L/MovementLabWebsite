@@ -143,6 +143,29 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
     <link rel="icon" type="image/png" sizes="192x192" href={icon192.src} />
     <link rel="apple-touch-icon" sizes="180x180" href={iconApple.src} />
 
+    {/* Story 1-16. PRELOAD THE BRAND FACE, AND IT IS A LAYOUT FIX RATHER THAN A
+        SPEED ONE. Outfit is declared with `font-display: swap`, so a late
+        arrival re-renders text that has already painted. That was invisible
+        while the font won its race, and stopped being invisible the moment the
+        home page gained two carousels: the extra images pushed the font past
+        first paint, `.hero-inner` grew 349px -> 452px as the 121px display
+        heading reflowed, and CLS at 1280 went 0.0001 -> 0.0628.
+
+        Attributed with layout-shift `sources` rather than guessed — the
+        carousels were the obvious suspect and were not the cause, they only
+        changed what the font was competing with. The file is 32KB and already
+        on the critical path, so fetching it early costs nothing and removes the
+        swap entirely. `crossorigin` is REQUIRED even same-origin: fonts are
+        fetched in CORS mode, and without it the browser downloads the file
+        twice and the preload does nothing. */}
+    <link
+      rel="preload"
+      href="/fonts/outfit-variable.woff2"
+      as="font"
+      type="font/woff2"
+      crossorigin
+    />
+
     <meta property="og:type" content="website" />
     <meta property="og:title" content={title} />
     <meta property="og:description" content={description} />

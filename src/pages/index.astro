@@ -38,7 +38,63 @@ import BaseLayout from '../layouts/BaseLayout.astro';
 import BookCta from '../components/BookCta.astro';
 import business from '../data/business.json' with { type: 'json' };
 
+import Carousel from '../components/Carousel.astro';
+
 import heroSquat from '../assets/site/IMG_1496-scaled.jpg';
+
+// ─── CAROUSEL IMAGES, AND WHY THESE ONES ──────────────────────────────────
+// The target runs two carousels here, one after the service cards and one near
+// the foot. These are drawn from the 27 images 1-15's editorial pass left
+// deliberately unplaced — a gallery is the one context where "more pictures of
+// the work" is the point rather than padding.
+//
+// ⚠️ THE SELECTION IS CONSTRAINED BY AN OPEN QUESTION, ON PURPOSE. UD-29 (Argus,
+// 2026-08-02) asks whether the people whose faces show clearly on this site
+// agreed to be on it, and whether the woman on the home page is actually a
+// patient. That is unanswered. Adding twenty more identifiable faces would
+// multiply an unresolved consent question on a health business's front page, so
+// every image below is either Keegan himself or a treatment shot where the
+// patient is not identifiable (face down, or only a limb in frame).
+// There are better clinical photographs available and they are NOT used yet.
+// Revisit once UD-29 is answered.
+import mov1 from '../assets/site/IMG_1528.jpg';
+import mov2 from '../assets/site/IMG_1537-scaled.jpg';
+import mov3 from '../assets/site/IMG_1542.jpg';
+import mov4 from '../assets/site/IMG_1550-scaled.jpg';
+import mov5 from '../assets/site/IMG_1570-scaled.jpg';
+import mov6 from '../assets/site/IMG_1604.jpg';
+import mov7 from '../assets/site/IMG_1607.jpg';
+import mov8 from '../assets/site/2-man-pike-scaled.jpg';
+
+import clin1 from '../assets/site/prone-tx.jpg';
+import clin2 from '../assets/site/prone-palpation-3-scaled.jpg';
+import clin3 from '../assets/site/glute-massage-scaled.jpg';
+import clin4 from '../assets/site/Feet-test.jpg';
+import clin5 from '../assets/site/Supine-knee-test-2-scaled.jpg';
+import clin6 from '../assets/site/Keegan-Photos-32.jpg';
+
+// Alt text written after looking at each photograph at real size, not from the
+// filename — alt written from a thumbnail is confidently wrong alt, and alt is
+// a public accessibility surface (MLW-LRN-29).
+const MOVEMENT = [
+  { src: mov1, alt: 'Keegan in a seated straddle fold, chest lowered to the floor between his legs' },
+  { src: mov2, alt: 'Keegan in a deep low lunge, back knee down and chest upright, in a mirrored studio' },
+  { src: mov3, alt: 'Keegan lying on his back in a supine spinal twist, one knee crossed over the body' },
+  { src: mov4, alt: 'Keegan in a straddle handstand, legs split wide above him' },
+  { src: mov5, alt: 'Keegan in a tucked handstand, knees drawn in over his shoulders' },
+  { src: mov6, alt: 'Keegan in a standing forward fold, legs straight and hands flat on the floor' },
+  { src: mov7, alt: 'Keegan folding forward over straight legs, head close to his shins' },
+  { src: mov8, alt: 'Two people side by side in a seated pike fold, reaching along their legs' },
+];
+
+const CLINIC = [
+  { src: clin1, alt: 'Keegan treating a patient lying face down on a treatment table, hands on the mid-back' },
+  { src: clin2, alt: 'Keegan palpating along the spine of a patient lying face down' },
+  { src: clin3, alt: 'Keegan applying hands-on soft-tissue work to a patient’s hip, patient lying face down' },
+  { src: clin4, alt: 'Close view of Keegan holding and testing the movement of a patient’s foot and ankle' },
+  { src: clin5, alt: 'Keegan testing the range of a patient’s bent knee, only the leg in frame' },
+  { src: clin6, alt: 'Keegan supporting a patient’s lower leg while assessing how the joint moves' },
+];
 // The four card photographs, matched to the ones the live site uses for its own
 // four-card grid so the page reads as the same page.
 import cardChiro from '../assets/site/Keegan-Photos-36.jpg';
@@ -174,6 +230,24 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
     </div>
   </section>
 
+  {/* ── CAROUSEL 1 ────────────────────────────────────────────────────────
+      The target puts an image carousel directly after its service cards, on
+      the same field. Same position here. No autoplay — see Carousel.astro. */}
+  <section class="section section--wide section--sage">
+    <div class="intro">
+      <p class="kicker">What the work looks like</p>
+      <h2>What does three months of mobility look like?</h2>
+      <p>
+        Range you can actually use, in positions you could not hold before. These are the shapes the
+        training builds toward, and every one of them is trainable from wherever you start now.
+      </p>
+    </div>
+    <Carousel label="Movement and mobility photographs" slides={MOVEMENT} />
+    <div class="intro">
+      <BookCta slug="movement-plan-analysis" label="Book a movement plan analysis" />
+    </div>
+  </section>
+
   {/* ── SPLIT ─────────────────────────────────────────────────────────────
       The target's second half is a two-column image-and-text block on the
       lighter end of the field. Same shape here, carrying the "who is this
@@ -198,6 +272,24 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
           fewer visits overall.
         </p>
       </div>
+    </div>
+  </section>
+
+  {/* ── CAROUSEL 2 ────────────────────────────────────────────────────────
+      The target's second carousel sits near the foot of the page. Same here,
+      on ink so the two do not read as one repeated block. */}
+  <section class="section section--wide section--field">
+    <div class="intro">
+      <p class="kicker">In the clinic</p>
+      <h2>What does treatment actually involve?</h2>
+      <p>
+        Hands-on assessment and treatment, then something specific to do between visits. Thirty
+        minutes is what makes that possible rather than a ten-minute adjust-and-go.
+      </p>
+    </div>
+    <Carousel label="Photographs of treatment in the clinic" slides={CLINIC} />
+    <div class="intro">
+      <BookCta slug="new-patient" label="Book an appointment here" />
     </div>
   </section>
 
