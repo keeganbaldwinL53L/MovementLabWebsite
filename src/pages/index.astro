@@ -154,47 +154,38 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
       <h1>Movement-focused chiropractic on the Northern Beaches</h1>
       <p class="lead">Get out of pain, find why it happened, and build a body that keeps up.</p>
       <BookCta slug="new-patient" label="Book an appointment" />
-
-      {/* Story 1-18 — Star's proof strip (ST-55), placed by me. Copy is hers and
-          Keegan-approved; the words are verbatim from her Variant B.
-
-          WHY VARIANT B AND NOT A. Her rule was "A (four-cell row) if there's
-          WIDTH above the fold, B if space is tight". Width was never the
-          constraint — HEIGHT was. Measured on live staging, the room left
-          between the booking button and the fold is 46px at 1280x800 and 90px
-          at 1440x900. A four-cell row needs roughly 80px and would push itself,
-          and the button, below the fold on a laptop — which defeats the one
-          thing the strip is for. A single line fits.
-
-          A SECOND REASON B IS RIGHT, which is not in her doc: Variant A reads
-          "his own movement assessment", third person, on a site written
-          throughout in first person ("I settle the acute problem"). B carries no
-          pronoun at all, so it sidesteps a voice mismatch rather than importing
-          one. Flagged to Star either way — the words are her lane, not mine.
-
-          🔴 THE AHPRA NUMBER COMES FROM business.json, NEVER TYPED HERE. It is
-          Keegan's personal registration; check-data.mjs asserts the single
-          source, and a second hand-typed copy is exactly how one of them ends up
-          wrong on a public page.
-          🔴 s133: no testimonials, ratings or review counts anywhere near this.
-          The whole strip is designed around that — a degree, a registration
-          number and a named method are verifiable facts, not comparisons. */}
-      {/* ⚠️ THE {' '} ARE LOAD-BEARING, NOT FORMATTING. A newline between a word
-          and an inline tag is dropped, so without them this paints as
-          "Macquarie University·creator of" — the same jammed text run that once
-          served "thePrivacy Act 1988" live (MLW-LRN-7). The build gate caught
-          exactly that here, on my own markup, which is the gate doing the job it
-          was added for. Do not tidy these away. */}
-      <p class="proof-strip">
-        <strong>Master &amp; Bachelor of Chiropractic Science</strong>, Macquarie University{' '}
-        <span class="sep" aria-hidden="true">·</span>{' '}
-        <strong>AHPRA-registered</strong> ({business.ahpra}){' '}
-        <span class="sep" aria-hidden="true">·</span>{' '}
-        creator of <strong>the 10-Point Movement Screen</strong>{' '}
-        <span class="sep" aria-hidden="true">·</span>{' '}
-        get your objective <strong>Movement Score</strong>
-      </p>
     </div>
+  </section>
+
+
+  {/* Story 1-18 proof strip — MOVED OUT OF THE HERO, Keegan 2026-08-03: "the
+      whole thing is too busy... i think all the info is probably fine but I
+      dont think the chiropractic number is necessary there."
+
+      The hero had gone from four elements to five in one day, with the h1
+      tripling in height at the same time. The information is worth keeping and
+      the hero is not the only place it can live, so it sits on its own quiet
+      band directly beneath — still the first thing under the fold-line, still
+      before any sales copy.
+
+      TWO THINGS IMPROVE BY MOVING IT. It is no longer small text fighting a
+      photographic ground (ink on paper is 12.40 against the 4.5 it needed over
+      the photo), and the hero returns to the four-element shape he approved.
+
+      THE AHPRA NUMBER IS DROPPED HERE ON HIS CALL, and nothing verifiable is
+      lost: it still renders on /about/ AND in that page's Physician schema as
+      an `identifier`, which is what a machine actually reads. "AHPRA-registered"
+      remains as the claim; the number remains where someone can check it. */}
+  <section class="section section--proof">
+    <p class="proof-strip">
+      <strong>Master &amp; Bachelor of Chiropractic Science</strong>, Macquarie University{' '}
+      <span class="sep" aria-hidden="true">·</span>{' '}
+      <strong>AHPRA-registered chiropractor</strong>{' '}
+      <span class="sep" aria-hidden="true">·</span>{' '}
+      creator of <strong>the 10-Point Movement Screen</strong>{' '}
+      <span class="sep" aria-hidden="true">·</span>{' '}
+      get your objective <strong>Movement Score</strong>
+    </p>
   </section>
 
   {/* ── THE FIELD ─────────────────────────────────────────────────────────

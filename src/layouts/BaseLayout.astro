@@ -1017,7 +1017,12 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
            a deeper one hurts (#C43A00 measured 1.69 vs brand orange's 2.71 on
            the same pixels). */
         color: var(--ml-accent);
-        font-size: clamp(2.75rem, 8.2vw, 7rem);
+        /* Calmed from clamp(2.75rem, 8.2vw, 7rem) — Keegan: "the hero text is
+           too long". THE WORDS ARE NOT THE LEVER: the service h1 is locked by
+           MN-48 and shortening it is precisely what LN-13 was raised to undo.
+           Size is the lever. At 7rem the locked line set in THREE lines and
+           309px of hero; smaller sets the same words in two. */
+        font-size: clamp(2.25rem, 5.4vw, 4.5rem);
         line-height: 0.98;
         letter-spacing: -0.02em;
         font-weight: 300;
@@ -1033,33 +1038,36 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         margin-top: 1.75rem;
       }
 
-      /* Story 1-18 proof strip. Deliberately QUIET: it is credibility, not a
-         headline, and understatement suits the brand. It sits in the hero over
-         a photograph, so it is small text held to 4.5 — measured on painted
-         pixels alongside the kicker and the lead, never assumed from the
-         computed background (there isn't one over an image). */
-      .hero .proof-strip {
-        margin: 1.5rem auto 0;
-        max-width: 48rem;
-        color: var(--ml-paper);
+      /* Story 1-18 proof strip, on its own quiet paper band under the hero.
+         Ink on paper is 12.40, so unlike the hero version this is nowhere near
+         a contrast constraint — moving it off the photograph removed the whole
+         problem rather than mitigating it. Deliberately understated: it is
+         credibility, not a headline. */
+      .section--proof {
+        padding-block: clamp(1.1rem, 2.2vw, 1.6rem);
+        border-bottom: 1px solid var(--ml-rule);
+      }
+      .proof-strip {
+        margin: 0;
+        text-align: center;
+        color: var(--ml-muted);
         font-size: 0.8125rem;
         line-height: 1.7;
         letter-spacing: 0.01em;
       }
-      .hero .proof-strip strong {
+      .proof-strip strong {
         font-weight: 600;
+        color: var(--ml-ink);
       }
-      .hero .proof-strip .sep {
-        /* Sage rather than paper so the separators recede behind the tokens.
-           8.12 on ink, and it is decorative + aria-hidden either way. */
-        color: var(--ml-surface);
-        margin: 0 0.15rem;
-      }
-      @media (max-width: 47.99rem) {
-        .hero .proof-strip {
-          margin-top: 1.25rem;
-          font-size: 0.78125rem;
-        }
+      /* ⚠️ NOT ORANGE. I reached for the accent here and the sweep caught it:
+         orange on paper is 3.22 against the 4.5 this 13px glyph needs. That is
+         the project's oldest brand rule — "orange is never a text colour" —
+         which I wrote into this codebase and then broke on a separator, because
+         a decorative dot did not feel like text. It renders as text, so it is
+         judged as text. Muted is 7.51 and recedes properly anyway. */
+      .proof-strip .sep {
+        color: var(--ml-muted);
+        margin: 0 0.35rem;
       }
 
       /* ── centred section intro ─────────────────────────────────────────── */
