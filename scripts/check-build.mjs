@@ -35,6 +35,13 @@ import { fileURLToPath } from 'node:url';
 
 import { SITE_ENV, INDEXABLE, SITE_URL, GSC_TOKEN } from '../src/lib/site-env.mjs';
 import business from '../src/data/business.json' with { type: 'json' };
+import {
+  IS_CAPTURE_LIVE,
+  CAPTURE_PUBLISHED,
+  KIT_FORM_ID,
+  DELIVERABLE_ROUTE,
+  CAPTURE_PROVIDER,
+} from '../src/lib/capture.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = process.argv.find((a) => a.startsWith('--dist='))?.slice('--dist='.length) ?? 'dist';
@@ -630,6 +637,73 @@ if (pages.length) console.log(`  ----  ${pages.length} page(s) examined: ${pages
 // ---------------------------------------------------------------------------
 // 3. Site-level artifacts
 // ---------------------------------------------------------------------------
+
+// ---------------------------------------------------------------------------
+// 2b. Story 1-19 — email capture may not go live without something to deliver
+// ---------------------------------------------------------------------------
+//
+// 🔴 A FORM THAT TAKES AN ADDRESS AND DELIVERS NOTHING IS WORSE THAN NO FORM.
+// It burns the single first impression, and on a health practitioner's list it
+// opens the relationship with a broken promise. Foundry made that a hard
+// constraint in SM-26; this is the part that makes it structural rather than a
+// rule someone has to remember on the day.
+//
+// Three states are checked against each other — the flag, the markup, and the
+// deliverable actually being in the build. Any disagreement fails.
+{
+  const capturePages = pages.filter((f) => /kit\.com\/forms\//i.test(readFileSync(f, 'utf8')));
+  const relOf = (f) => relative(DIST_ABS, f).split(sep).join('/');
+
+  if (IS_CAPTURE_LIVE) {
+    // Published: the promise must be keepable.
+    const deliverable = DELIVERABLE_ROUTE.replace(/^\/+|\/+$/g, '');
+    const hasDeliverable =
+      existsSync(join(DIST_ABS, deliverable, 'index.html')) ||
+      existsSync(join(DIST_ABS, deliverable));
+    if (!hasDeliverable) {
+      fail(
+        `email capture is LIVE but its deliverable ${DELIVERABLE_ROUTE} is not in ${DIST}. ` +
+          `Someone would hand over an address and receive nothing. Ship the deliverable ` +
+          `or set CAPTURE_PUBLISHED=false in src/lib/capture.mjs.`,
+      );
+    } else {
+      pass(`email capture is live and its deliverable ${DELIVERABLE_ROUTE} exists`);
+    }
+    if (!capturePages.length) {
+      fail('email capture is LIVE but no page embeds the Kit form — the switch is on and nothing captures.');
+    }
+    // The policy must name the processor on exactly these builds.
+    const privacy = pages.find((f) => relOf(f) === 'privacy/index.html');
+    if (privacy && !readFileSync(privacy, 'utf8').includes(CAPTURE_PROVIDER.name)) {
+      fail(
+        `email capture is LIVE but the privacy policy does not name ${CAPTURE_PROVIDER.name} ` +
+          `in its overseas-providers table — the site would be sending addresses to a ` +
+          `processor the policy does not disclose.`,
+      );
+    }
+  } else {
+    // Not published: there must be no way to submit an address.
+    if (capturePages.length) {
+      fail(
+        `a Kit form embed is present on ${capturePages.map(relOf).join(', ')} but capture is NOT live ` +
+          `(CAPTURE_PUBLISHED=${CAPTURE_PUBLISHED}, KIT_FORM_ID=${KIT_FORM_ID ? 'set' : 'empty'}). ` +
+          `That is a form collecting addresses with nothing configured to answer them.`,
+      );
+    }
+    // And the policy must NOT claim a processor that is not receiving anything.
+    const privacy = pages.find((f) => relOf(f) === 'privacy/index.html');
+    if (privacy) {
+      const html = readFileSync(privacy, 'utf8');
+      const inTable = new RegExp(`<td[^>]*>\\s*${CAPTURE_PROVIDER.name}\\s*</td>`, 'i').test(html);
+      if (inTable) {
+        fail(
+          `the privacy policy lists ${CAPTURE_PROVIDER.name} as a provider but capture is not live — ` +
+            `the policy would be disclosing a data flow that is not happening.`,
+        );
+      }
+    }
+  }
+}
 
 const distFile = (f) => join(DIST_ABS, f);
 const need = (f, why) => {

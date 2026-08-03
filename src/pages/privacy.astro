@@ -13,14 +13,22 @@
 // been missing, not a gate that trips when email capture switches on.
 //
 // ⚠️ THE OVERSEAS PROVIDERS TABLE IS THE PART THAT GOES STALE.
-// Whoever adds an email platform, a form service, a chat widget or any embed
-// that phones home MUST add a row. Omnisend's row is written and commented out
-// below: it goes in the day an email form does, not before.
+// Whoever adds a form service, a chat widget or any embed that phones home MUST
+// add a row.
+//
+// The two rows that CANNOT go stale are the ones that are derived rather than
+// hand-maintained: analytics reads IS_ANALYTICS_ENABLED, email capture reads
+// IS_CAPTURE_LIVE. Each names its provider on exactly the builds where that
+// provider is receiving data. Prefer that shape for anything added here — the
+// email row used to be a commented-out Omnisend line with a note asking the
+// next person to remember, which is the same "a comment is not a control"
+// failure that let the home h1 regress for eleven commits (FD-23).
 //
 // Researched and drafted, NOT legal advice.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import business from '../data/business.json' with { type: 'json' };
 import { IS_ANALYTICS_ENABLED } from '../lib/analytics.mjs';
+import { IS_CAPTURE_LIVE, CAPTURE_PROVIDER } from '../lib/capture.mjs';
 
 // DELIBERATELY NOT the build date. A privacy policy's "last updated" means the
 // date the POLICY changed. Wiring it to the build would bump it on every deploy
@@ -47,9 +55,14 @@ const providers = [
         },
       ]
     : []),
-  // ADD THIS ROW THE DAY AN EMAIL FORM GOES LIVE, not before:
-  // { name: 'Omnisend', handles: 'Email subscriptions',
-  //   where: 'European Union and United States — confirm from their DPA at signup' },
+  // Story 1-19. Email capture. This was a commented-out Omnisend row with a
+  // note asking whoever shipped the form to remember to uncomment it — the same
+  // "a comment is not a control" shape that let the home h1 regress for eleven
+  // commits. It is DERIVED now, exactly like the Cloudflare row above: the
+  // provider appears on precisely the builds where Kit is receiving addresses,
+  // because both read one flag from src/lib/capture.mjs and cannot disagree.
+  // (Omnisend was superseded — Keegan created a Kit account on 2026-08-03.)
+  ...(IS_CAPTURE_LIVE ? [CAPTURE_PROVIDER] : []),
 ];
 ---
 

@@ -1,0 +1,67 @@
+---
+// Story 1-19. The email-capture opt-in, as a Kit form embed.
+//
+// ⚠️ THIS RENDERS NOTHING UNLESS THE CAPTURE IS LIVE, and that is the whole
+// safety property. It is not "hidden with CSS" and it is not behind a comment
+// someone has to remember to uncomment — with the gates unsatisfied there is no
+// form in the HTML at all, so there is no way to submit an address to a list
+// that has nothing to send back. See src/lib/capture.mjs for the two gates.
+//
+// PLACEMENT IS NOT THIS COMPONENT'S DECISION, and it is not free. Manny's
+// approved shape (funnel-mechanic-spec-2026-08-03, Keegan-approved): the opt-in
+// sits AFTER the instant self-result and NEVER gates the Screen. Someone
+// dropping this above a result, or in front of the quiz, breaks a decision that
+// was made deliberately. Story 1-21 owns where it goes.
+//
+// SPAM ACT 2003 (ACMA — consent, sender identification, working unsubscribe):
+// all three are Kit's to satisfy, which is the reason for using their embed
+// rather than posting to an API ourselves. Kit runs the double opt-in and puts
+// a one-click unsubscribe in every send. What is OURS is the consent context —
+// the label below has to say plainly what arrives, so the tick is informed.
+import { IS_CAPTURE_LIVE, KIT_FORM_ID } from '../lib/capture.mjs';
+
+interface Props {
+  /** One line saying what actually lands in their inbox. Required — an opt-in
+      without a stated reward is not informed consent, and it converts worse. */
+  promise: string;
+}
+
+const { promise } = Astro.props;
+---
+
+{
+  IS_CAPTURE_LIVE && (
+    <section class="capture" aria-labelledby="capture-heading">
+      <h2 id="capture-heading">Get the movement pack</h2>
+      <p class="capture-promise">{promise}</p>
+
+      {/* Kit's own embed. It carries the form markup, the double opt-in and the
+          unsubscribe handling; we supply the surrounding context and nothing
+          else. data-uid is the public form id — not a credential. */}
+      <script async data-uid={KIT_FORM_ID} src={`https://kit.com/forms/${KIT_FORM_ID}/index.js`} />
+
+      <p class="capture-fineprint">
+        You will get an email asking you to confirm — that is Kit checking the address is
+        really yours. Unsubscribe from any email in one click. We do not share your address.
+      </p>
+    </section>
+  )
+}
+
+<style>
+  .capture {
+    margin-block: 3rem;
+  }
+  .capture-promise {
+    max-width: 34rem;
+  }
+  /* The fine print is genuinely fine print, but it must stay READABLE — this is
+     the consent context, so it takes --ml-ink at a smaller size rather than a
+     lighter colour. Muted here would put it near the AA floor on sage, and the
+     one thing a consent notice must never be is hard to read. */
+  .capture-fineprint {
+    font-size: 0.875rem;
+    color: var(--ml-ink);
+    max-width: 34rem;
+  }
+</style>
