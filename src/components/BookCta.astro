@@ -14,7 +14,20 @@ interface Props {
   slug: string;
   /** Override the link text. Defaults to the service label. */
   label?: string;
-  /** Show duration and price alongside. Off for classes, which have no price. */
+  /**
+   * Show duration and price beside the label. Off for classes, which have no
+   * price — and now off EVERYWHERE, by Keegan 2026-08-03: "the booking butons
+   * don't need to all show the price right next to them."
+   *
+   * He was right that it had stopped earning its place. Every instance that
+   * carried it sat directly under something that already stated the price: the
+   * three service CTAs each follow an <h3> reading "— 1 hour, $120", and the
+   * services-page button sits immediately below the pricing table. The button
+   * was repeating a number the eye had just read.
+   *
+   * Kept as a prop rather than deleted: it is the right behaviour for a CTA
+   * that appears WITHOUT its price nearby, which is a page we may yet write.
+   */
   showDetail?: boolean;
 }
 
