@@ -484,10 +484,16 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
          Orange as a BORDER, which is what it is licensed to do here — this is
          the one place the accent appears on a text-bearing element without
          ever being the text itself. */
+      /* Keegan, 2026-08-03: "I like how all the headings have little orange
+         lines under them, but could we make those lines long enough to not just
+         be a little dash? Just make those lines a bit longer."
+         Was a flat 2.25rem (36px), which is a dash. Now clamped so it scales
+         with the viewport instead of staying the same stub on a phone and a
+         desktop: 56px at 375 up to 88px at 1280. */
       main h2::after {
         content: '';
         display: block;
-        width: 2.25rem;
+        width: clamp(3.5rem, 7vw, 5.5rem);
         height: 3px;
         margin-top: 0.6rem;
         border-radius: 2px;
