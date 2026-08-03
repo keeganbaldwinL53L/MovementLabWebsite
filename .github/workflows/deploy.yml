@@ -506,6 +506,39 @@ jobs:
           # The markers are checked against the DELETION list specifically, not
           # the whole dry-run: a file we are about to ADD called wp-config.php
           # would be our own doing and is a different problem.
+          # ╔══════════════════════════════════════════════════════════════════╗
+          # ║  🔴 DO NOT INVERT, ADJUST OR RELAX THIS CHECK. NOT AT CUTOVER,   ║
+          # ║     NOT EVER. IF IT LOOKS WRONG FOR PRODUCTION, STOP.            ║
+          # ╚══════════════════════════════════════════════════════════════════╝
+          #
+          # This is the single control standing between `rsync --delete` and
+          # Keegan's live WordPress files.
+          #
+          # IT IS ALREADY CORRECT FOR PRODUCTION. Cutover uses approach A: the
+          # domain's document root is repointed at the BUILT directory, and
+          # WordPress stays on disk untouched. So the rsync target is a new,
+          # WordPress-free directory both before and after cutover, and this
+          # check needs no adjustment to keep being right. [Verified by Argus,
+          # AG-9, against the recorded decisions in 1-13 rather than the label.]
+          #
+          # IF THIS CHECK EVER APPEARS TO NEED INVERTING, THAT IS THE SIGNAL
+          # THAT THE PLAN HAS DRIFTED TO APPROACH B — deploying into
+          # public_html itself, which was REJECTED on safety grounds because it
+          # is the operation that deletes the live site and is reversible only
+          # via 1-12's restore. This check refusing that is DELIBERATE. It is
+          # not an obstacle to work around; it is the rejection, enforced.
+          # STOP and escalate to Keegan. Do not edit this line.
+          #
+          # WHY THIS WARNING IS IN THE CODE AND NOT ONLY THE TRACKER: story
+          # 1-14 briefly carried an acceptance criterion reading "the
+          # WordPress-root check is present with its sense adjusted for the new
+          # target" — an instruction to make exactly this edit, on cutover day,
+          # in writing. It survived review by both Foundry and Argus for a full
+          # day before Argus caught it while testing something else (AG-9 ->
+          # FD-21). The tracker is read once, on the day; this file is read
+          # every time anyone touches the workflow, which is the wider surface
+          # and the one where a well-meaning "this looks wrong for production"
+          # actually happens.
           if printf '%s\n' "$WOULD_DELETE" | grep -qE 'wp-config\.php|wp-admin/|wp-content/|wp-includes/|xmlrpc\.php'; then
             echo "::error::REFUSING: the deploy target contains a WordPress installation."
             echo "  rsync --delete would remove it. This means DEPLOY_PATH or the"
@@ -549,6 +582,14 @@ jobs:
                    *\"\$EXPECT\") ;;
                    *) echo \"REFUSING: resolved path does not end in \$EXPECT (\$REAL)\"; exit 1 ;;
                  esac
+                 # 🔴 DO NOT INVERT — same rule as the primary WordPress-root
+                 # check above, and for the same reason: under approach A the
+                 # target is a new WordPress-free directory, so this stays
+                 # correct at cutover. Needing to invert it means the plan has
+                 # drifted to the rejected approach B. STOP and escalate.
+                 # The full reasoning is at the primary check; this is the
+                 # second place someone could 'fix' it, so it carries the
+                 # warning too.
                  if [ -f \"\$REAL/wp-config.php\" ] || [ -d \"\$REAL/wp-admin\" ]; then
                    echo 'REFUSING: resolved path looks like a WordPress root'; exit 1
                  fi
