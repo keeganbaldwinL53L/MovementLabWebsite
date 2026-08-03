@@ -124,13 +124,35 @@ const isCurrent = (href: string) => current === href;
        costs nothing if this ever moves. */
     justify-self: start;
   }
+  /* Story 1-16, from Keegan on the live site: "make the banner at the top a bit
+     thicker, and the logo on the top left looks a bit off from the centre
+     (looks too high) including the title".
+
+     BOTH HALVES WERE REAL AND MEASURABLE, which is worth recording because "looks
+     too high" is the kind of report that gets treated as taste:
+       header box            0..59, centre 30
+       brand lockup box      0..30, centre 15   <- 15px above the header's centre
+       nav box              13..38, centre 25   <- and 10px off the brand
+     Two separate causes.
+
+     1. THE PADDING WAS ONE-SIDED. `padding-bottom: 1.25rem` with no top pair, so
+        the content sat flush against the top edge of the band. Invisible while
+        body supplied 2rem of its own padding above it; the moment 1-16 gave the
+        home page a full-bleed hero, body's top padding went to 0 and the header
+        had nothing holding it off the top of the viewport. Now symmetric, and
+        larger, which is the "thicker" half.
+     2. `align-items: baseline` CANNOT CENTRE A LOCKUP. It lines up text
+        baselines, so a 30px graphic mark and 15px nav text end up on different
+        centre lines by construction — the mark hangs off the text baseline
+        rather than sitting beside it. `center` is what a mark-plus-wordmark
+        lockup wants; the baseline value was fine when the header was text only. */
   .site-header {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 0.75rem 1.5rem;
-    padding-bottom: 1.25rem;
+    padding-block: clamp(0.95rem, 2vw, 1.7rem);
     margin-bottom: 2.5rem;
     border-bottom: 1px solid var(--ml-rule);
   }
