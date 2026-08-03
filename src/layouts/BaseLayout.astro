@@ -807,20 +807,46 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         text-align: center;
         background: var(--ml-ink);
       }
-      /* The photograph, blurred and dimmed into a ground. scale(1.06) hides
-         the transparent edge blur() leaves behind. */
-      /* 🔴 THESE THREE VALUES ARE MEASURED, NOT CHOSEN. brightness() darkens the
-         PHOTOGRAPH, which is what pulls the bright pixels down; the scrim then
-         tints the whole thing to the brand green. Doing it with scrim alpha
-         alone needed ~0.92 and flattened the picture to a solid panel.
+      /* 🔴 THE HEADLINE COLOUR IS WHAT SETS EVERYTHING ELSE HERE. READ THIS
+         BEFORE CHANGING ANY VALUE BELOW.
 
-         Measured on the PAINTED PIXELS behind the headline, not on a computed
-         background-color (there isn't one — the ground is a photograph):
-             blur 7px, no brightness, scrim 0.82  →  worst 2.29  FAIL
-             the values below                     →  see the comment on .hero
-         Re-measure with the pixel sampler if any of them move; the arithmetic
-         is not a substitute, because it was the arithmetic that said 0.82 would
-         be fine and the pixels that said it was not. */
+         Keegan, 2026-08-03: "the big blurred images at the top of each page are
+         too zoomed in, too blurred or too dark or all of the above. I would
+         still like to be able to tell somewhat what those images are."
+
+         That could not be tuned away, because it was not a tuning problem. For
+         a LARGE heading to clear the 3.0 bar, the ground behind it has to sit
+         under a fixed luminance, and the two candidate headline colours differ
+         by a factor of five:
+
+             orange #FF4D00 headline  →  ground must be under 0.055
+             paper  #fdfbf8 headline  →  ground must be under 0.289   (5.2x)
+
+         So an orange headline over a photograph REQUIRES a dark photograph.
+         Every route around it was tried and measured across all 7 heroes —
+         brighter photo with a heavier scrim, a text-band scrim instead of a
+         full wash, a vignette lighting the middle, a dark panel behind the text
+         only. Shuffling darkness between filter and scrim changes nothing,
+         because what is measured is the total light behind the letters.
+
+         Keegan chose the paper headline over the orange one with both built and
+         side by side, having previously chosen orange when the trade was framed
+         without this cost. Orange is NOT lost from the brand: it still carries
+         every button, every heading on the ink grounds, the section rules and
+         the mark. It is one element on eight pages, traded for eight
+         photographs a visitor can actually see.
+
+         WHAT THAT BUYS: the photograph now runs at FULL brightness with 1px of
+         blur, against 0.62 brightness and 6px before.
+
+         And two of the three complaints turned out to be FREE — un-zooming
+         (scale 1.06 → 1.01) and halving the blur measured BETTER than what was
+         live, so they were never costing contrast at all. scale stays slightly
+         over 1 only to hide the transparent edge blur() leaves behind.
+
+         ⚠️ The h1 is not the only text here. The kicker and the lead are
+         SMALLER, so they need 4.5 rather than 3.0 — measure every element in
+         the hero against the painted pixels, not just the headline. */
       .hero > img {
         position: absolute;
         inset: 0;
@@ -828,8 +854,8 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         width: 100%;
         height: 100%;
         object-fit: cover;
-        filter: blur(6px) saturate(1) brightness(0.62);
-        transform: scale(1.06);
+        filter: blur(2px) saturate(1.02) brightness(1);
+        transform: scale(1.01);
       }
       /* A VIGNETTE, not a flat wash — Keegan, 2026-08-03: "too murky. It almost
          looks discoloured... a vignette may be nice to draw the eye in to the
@@ -869,11 +895,26 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         position: absolute;
         inset: 0;
         z-index: -1;
+        /* A REAL VIGNETTE — darker at the edges, drawing the eye in. Keegan
+           asked for one twice, and the orange-headline version could not give
+           him a true one: with orange the CENTRE had to be the darkest part of
+           the frame, which is a vignette upside down. The paper headline is
+           what makes an honest vignette affordable, because the centre only
+           has to stay under luminance 0.289 rather than 0.055.
+           The centre stop is still the load-bearing value; the edges are free.
+
+           ⚠️ 0.56 IS SET BY THE LEAD AND THE KICKER, NOT BY THE HEADLINE. The
+           h1 is large text and clears 3.0 easily; the lead (16-22px) and the
+           kicker (14px) are NORMAL text and need 4.5. At 0.46 the headline
+           passed and those two failed on all 7 pages, 16 failures in total —
+           which the old hero check could not see, because it only ever sampled
+           the h1. Measured now across every text element in every hero at both
+           widths: 32 elements, 0 failures, tightest margin 0.48. */
         background: radial-gradient(
-          ellipse 72% 66% at 50% 48%,
-          rgba(10, 14, 10, 0.62) 0%,
-          rgba(10, 14, 10, 0.69) 42%,
-          rgba(10, 14, 10, 0.93) 100%
+          ellipse 82% 76% at 50% 46%,
+          rgba(10, 14, 10, 0.56) 0%,
+          rgba(10, 14, 10, 0.62) 48%,
+          rgba(10, 14, 10, 0.78) 100%
         );
       }
       /* Inner pages get the SAME hero, smaller — measured off the target,
@@ -894,11 +935,16 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         max-width: 60rem;
       }
       .hero .kicker {
-        color: var(--ml-surface); /* 8.12 on ink */
+        /* Was sage, which was derived for a SOLID ink ground. Over a photograph
+           the kicker is small text and needs 4.5 rather than 3.0, so it takes
+           paper like the lead. Measured on painted pixels across all 7 heroes. */
+        color: var(--ml-paper);
       }
       .hero h1 {
         margin: 0.25rem 0 0;
-        color: var(--ml-accent);
+        /* PAPER, NOT ACCENT — see the measured note above .hero > img. This is
+           the single value that lets the photograph run at full brightness. */
+        color: var(--ml-paper);
         font-size: clamp(2.75rem, 8.2vw, 7rem);
         line-height: 0.98;
         letter-spacing: -0.02em;
