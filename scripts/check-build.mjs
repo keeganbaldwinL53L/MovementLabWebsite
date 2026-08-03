@@ -651,7 +651,18 @@ if (pages.length) console.log(`  ----  ${pages.length} page(s) examined: ${pages
 // Three states are checked against each other — the flag, the markup, and the
 // deliverable actually being in the build. Any disagreement fails.
 {
-  const capturePages = pages.filter((f) => /kit\.com\/forms\//i.test(readFileSync(f, 'utf8')));
+  // ⚠️ DETECT ON THE HOST, NOT ON A PATH SHAPE — SM-27.
+  // This used to be /kit\.com\/forms\//, a path I had INVENTED in SM-26 rather
+  // than taken from a real embed. Kit serves the script from the ACCOUNT
+  // subdomain (`<account>.kit.com/<id>/index.js`), so the pattern matched only
+  // the fixture I had written and would have been BLIND to every real embed.
+  // The mutation case that proved "an embed while unpublished fails" therefore
+  // proved nothing about reality — it tested my own assumption.
+  //
+  // Any Kit embed is a <script> whose src is on kit.com, whatever the path, so
+  // that is what is matched now. Re-proven against Keegan's actual snippet.
+  const KIT_SCRIPT = /<script[^>]*\bsrc=["'][^"']*\bkit\.com\/[^"']*["'][^>]*>/i;
+  const capturePages = pages.filter((f) => KIT_SCRIPT.test(readFileSync(f, 'utf8')));
   const relOf = (f) => relative(DIST_ABS, f).split(sep).join('/');
 
   if (IS_CAPTURE_LIVE) {

@@ -18,7 +18,7 @@
 // rather than posting to an API ourselves. Kit runs the double opt-in and puts
 // a one-click unsubscribe in every send. What is OURS is the consent context —
 // the label below has to say plainly what arrives, so the tick is informed.
-import { IS_CAPTURE_LIVE, KIT_FORM_ID } from '../lib/capture.mjs';
+import { IS_CAPTURE_LIVE, KIT_FORM_ID, KIT_EMBED_SRC } from '../lib/capture.mjs';
 
 interface Props {
   /** One line saying what actually lands in their inbox. Required — an opt-in
@@ -37,8 +37,10 @@ const { promise } = Astro.props;
 
       {/* Kit's own embed. It carries the form markup, the double opt-in and the
           unsubscribe handling; we supply the surrounding context and nothing
-          else. data-uid is the public form id — not a credential. */}
-      <script async data-uid={KIT_FORM_ID} src={`https://kit.com/forms/${KIT_FORM_ID}/index.js`} />
+          else. data-uid is the public form id — not a credential.
+          The src comes from capture.mjs rather than being built here: I
+          reconstructed it from memory once and it 404'd. */}
+      <script async data-uid={KIT_FORM_ID} src={KIT_EMBED_SRC} />
 
       <p class="capture-fineprint">
         You will get an email asking you to confirm — that is Kit checking the address is

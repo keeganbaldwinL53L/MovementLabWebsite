@@ -36,10 +36,31 @@
  * NOT a secret — it appears in the page source of every site using it, which is
  * exactly why this integration needs no credential.
  *
- * EMPTY UNTIL KEEGAN CREATES THE FORM IN KIT AND HANDS THE ID OVER. The account
- * exists (UD-31, 2026-08-03); the form does not yet.
+ * SUPPLIED 2026-08-03 (UD-32). Keegan created and published the form; Foundry
+ * verified it live rather than trusting the paste, and so did I — see the
+ * URL measurements below.
  */
-export const KIT_FORM_ID = (process.env.KIT_FORM_ID ?? '').trim();
+export const KIT_FORM_ID = '26d1041fdf';
+
+/**
+ * The Kit account subdomain. The embed is served from the ACCOUNT host, not
+ * from kit.com — and that distinction is not cosmetic.
+ *
+ * ⚠️ I GOT THIS WRONG IN SM-26 AND IT WOULD HAVE SHIPPED BROKEN. I wrote the
+ * src as `https://kit.com/forms/<id>/index.js` from memory rather than from
+ * Keegan's actual snippet. Measured once the real form existed:
+ *
+ *     https://kit.com/forms/26d1041fdf/index.js              404
+ *     https://keegansmovementlab.kit.com/26d1041fdf/index.js 200, 34,091b
+ *
+ * The failure would have been silent in the worst way: the page renders, the
+ * script 404s, no form appears, and nothing in the build errors. Both halves
+ * live here now so the component cannot reconstruct a URL from a guess.
+ */
+export const KIT_ACCOUNT = 'keegansmovementlab';
+
+/** The exact script src, assembled in one place from the two values above. */
+export const KIT_EMBED_SRC = `https://${KIT_ACCOUNT}.kit.com/${KIT_FORM_ID}/index.js`;
 
 /**
  * The route that fulfils the promise — the page or download the subscriber is
