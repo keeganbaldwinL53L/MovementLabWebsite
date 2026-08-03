@@ -95,11 +95,20 @@ const frameId = `cliniko-${crypto.randomUUID().slice(0, 8)}`;
   </div>
 
   <noscript>
+    {/* SM-28: a full stop rather than the colon the ten list items took. This
+        one is an instruction followed by its reason, not a label followed by a
+        gloss, so a colon would promise an explanation of the booking page and
+        then not give one. The dash had to go either way: it is the
+        clause-joining em-dash, on outward-facing copy.
+
+        Worth knowing if you ever sweep for this again: `</a>` and the dash sit
+        on SEPARATE SOURCE LINES here, so a line-based grep of src/ cannot see
+        this construction at all. It is only visible in built HTML. */}
     <p>
       <a href={buildBookingUrl({ appointmentTypeIds })} rel="noopener">
         Open the booking page
       </a>
-      — the embedded booking form needs JavaScript.
+      . The embedded booking form needs JavaScript.
     </p>
   </noscript>
 </section>
