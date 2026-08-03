@@ -129,13 +129,30 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
       loading="eager"
       fetchpriority="high"
     />
+    {/* 🔴 THE h1 CARRIES THE SERVICE. DO NOT PUT THE BRAND LINE BACK IN IT.
+        MN-48 decision 3, confirmed by Keegan 2026-07-31: "service-led h1,
+        tagline as styled brand text. Not open; build to it."
+
+        This exact shape is Manny's locked draft, reproduced:
+            (styled brand line, small, above)  Keegans Movement Lab · Live Better, Longer
+            # Movement-focused chiropractic on the Northern Beaches
+            (sub) Get out of pain, find why it happened, and build a body that keeps up.
+
+        I BROKE THIS MYSELF in the 1-16 parity work and Foundry caught it
+        (LN-13, via Manny's FD-22 P2.1). Copying the old site's look brought its
+        brand-line h1 back with it, against a carve-out that story carried in
+        bold. Worth naming: parity was the thing the work was MEASURED on and
+        the decision was only written down, so parity won. A carve-out in a
+        story is not a control.
+
+        Why it is more than tidiness: the h1 is the strongest on-page statement
+        of what the business does, and "Move better, live longer" tells a search
+        engine nothing. It is the same entity-confusion that got Keegan's Google
+        Business Profile edits rejected — on the page that matters most. */}
     <div class="hero-inner">
       <p class="kicker">{business.name} · Live Better, Longer</p>
-      <h1>Move better, live longer</h1>
-      <p class="lead">
-        Movement-focused chiropractic on the Northern Beaches. Get out of pain, find why it
-        happened, and build a body that keeps up.
-      </p>
+      <h1>Movement-focused chiropractic on the Northern Beaches</h1>
+      <p class="lead">Get out of pain, find why it happened, and build a body that keeps up.</p>
       <BookCta slug="new-patient" label="Book an appointment" />
     </div>
   </section>
