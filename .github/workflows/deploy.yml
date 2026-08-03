@@ -31,8 +31,13 @@ name: Build and deploy to staging
 # rrsync (the official Python one from the rsync project, since this host has no
 # perl) refuses anything that is not `rsync --server`, chdirs into the restricted
 # directory, and rejects `..`. The key is therefore STRUCTURALLY unable to reach
-# the WordPress root — not checked, incapable. The Guard step below no longer
-# validates the path; it asserts that property instead.
+# the WordPress root — not checked, incapable.
+#
+# STORY 1-17 then made the Guard do BOTH, because "the key is confined" and
+# "the destination is correct" are different claims and only the first was
+# being made once the key was confined. It now asserts, in EVERY state, that
+# the thing we are about to converge is not somebody's live site — by asking
+# rsync itself, in a dry run, what --delete would remove.
 
 on:
   push:
@@ -71,6 +76,17 @@ concurrency:
 env:
   SITE_ENV: staging
   DEPLOY_URL: https://staging.keegansmovementlab.com/
+  # STORY 1-17. The THIRD declaration, and it exists so the destination is
+  # asserted against something DECLARED rather than a literal buried mid-file.
+  # `DEPLOY_PATH` is a secret, so nothing in the repo could previously state
+  # where this deploy is supposed to land; the check that did exist hardcoded
+  # `/staging` two hundred lines down, which is the same shape as AG-3 F1 — a
+  # literal that survives a copy and then quietly describes the wrong site.
+  #
+  # Cutover changes these THREE together. Changing one is caught: check-build
+  # cross-checks SITE_ENV against DEPLOY_URL, and the guard cross-checks
+  # DEPLOY_PATH against this.
+  DEPLOY_PATH_EXPECT: /staging
 
 jobs:
   build-and-deploy:
@@ -272,9 +288,12 @@ jobs:
           fi
 
           echo "--- deploy path shape ---"
+          # STORY 1-17: compared against the DECLARED expectation at the top of
+          # this file, not a literal written here. This is the check that
+          # catches a stale DEPLOY_PATH secret pointing at a sibling directory.
           case "${H_PATH}" in
-            */staging) echo "ends in /staging: yes" ;;
-            *) echo "::error::DEPLOY_PATH does not end in /staging (check for a trailing space or newline in the secret)"; exit 1 ;;
+            *"${DEPLOY_PATH_EXPECT}") echo "ends in ${DEPLOY_PATH_EXPECT}: yes" ;;
+            *) echo "::error::DEPLOY_PATH does not end in ${DEPLOY_PATH_EXPECT} (check for a trailing space or newline in the secret, or a cutover that changed DEPLOY_PATH_EXPECT without changing the secret)"; exit 1 ;;
           esac
           printf 'length: %s chars\n' "$(printf '%s' "${H_PATH}" | wc -c | tr -d ' ')"
 
@@ -411,6 +430,83 @@ jobs:
             sed 's/^/    /' /tmp/guard.err | head -3
             [ "$ATTEMPT" -lt 3 ] && sleep 15
           done
+
+          # ── STORY 1-17: THE DESTINATION ASSERTION, AND IT RUNS IN EVERY STATE ──
+          #
+          # Argus found (AG-7 F2 -> FD-19 -> this story) that every assertion
+          # about WHICH directory we are about to converge lived in the
+          # `unconfined` branch below. The two branches are mutually exclusive,
+          # so once the key IS confined nothing checked the destination at all.
+          #
+          # Fine while the confined DIR is staging. NOT fine at cutover, which
+          # repoints that DIR at production while the key stays confined — so
+          # the branch that asserts direction would stop running at exactly the
+          # moment the destination becomes the live site. The WordPress-root
+          # check was unreachable by construction.
+          #
+          # ⚠️ THE OBVIOUS IMPLEMENTATION IS IMPOSSIBLE HERE, which is why this
+          # looks unusual: a confined key cannot run `test -f wp-config.php`,
+          # because it cannot run anything that is not rsync. So the assertion
+          # is made THROUGH rsync — a --dry-run --delete, which reports exactly
+          # what the real destructive command would remove, over the same
+          # channel, with the same path resolution, under the same forced
+          # command. It cannot disagree with the operation it is guarding, and
+          # it is inert (verified: the fixture was untouched afterwards).
+          #
+          # What it catches is the concrete failure the story names: a DIR set
+          # one level too high, or a stale DEPLOY_PATH at a sibling. Either way
+          # the would-delete list contains someone else's files, and WordPress
+          # markers in that list mean we are pointed at the live site.
+          #
+          # AT CUTOVER THE SENSE OF THIS CHECK DOES NOT INVERT. Approach A
+          # repoints the document root at a NEW directory and leaves WordPress
+          # on disk untouched, so the deploy target must still never contain
+          # wp-config.php. It is also one of the things that makes the rejected
+          # approach B — deploying into public_html itself — structurally
+          # refuse rather than merely discouraged. That is a feature; if B is
+          # ever revisited this check is the conversation.
+          echo "--- destination assertion (runs in every state) ---"
+          DRY=""
+          DRY_OK=0
+          for ATTEMPT in 1 2 3; do
+            set +e
+            DRY=$(rsync -rlz --delete --dry-run --itemize-changes \
+                    -e "ssh $SSH_ARGS" \
+                    dist/ "${H_USER}@${H_HOST}:${H_PATH}/" 2>/tmp/dry.err)
+            RC=$?
+            set -e
+            [ "$RC" -eq 0 ] && { DRY_OK=1; break; }
+            echo "dry-run attempt ${ATTEMPT} failed (rc=${RC})"
+            sed 's/^/    /' /tmp/dry.err | head -3
+            [ "$ATTEMPT" -lt 3 ] && sleep 15
+          done
+
+          if [ "$DRY_OK" -ne 1 ]; then
+            echo "::error::could not preview the deploy, so the destination is UNVERIFIED"
+            echo "  rsync --delete must not run against a target nothing has inspected."
+            echo "  If each attempt hung for the full timeout this is UD-27; re-run the job."
+            exit 1
+          fi
+
+          WOULD_DELETE=$(printf '%s\n' "$DRY" | grep '^\*deleting' || true)
+          if [ -n "$WOULD_DELETE" ]; then
+            echo "this deploy would REMOVE the following from the target:"
+            printf '%s\n' "$WOULD_DELETE" | sed 's/^/    /' | head -40
+          else
+            echo "nothing at the target would be removed"
+          fi
+
+          # The markers are checked against the DELETION list specifically, not
+          # the whole dry-run: a file we are about to ADD called wp-config.php
+          # would be our own doing and is a different problem.
+          if printf '%s\n' "$WOULD_DELETE" | grep -qE 'wp-config\.php|wp-admin/|wp-content/|wp-includes/|xmlrpc\.php'; then
+            echo "::error::REFUSING: the deploy target contains a WordPress installation."
+            echo "  rsync --delete would remove it. This means DEPLOY_PATH or the"
+            echo "  server-side rrsync DIR is pointed at the live site rather than at"
+            echo "  the deploy directory. Nothing has been written."
+            exit 1
+          fi
+          echo "destination holds no WordPress installation"
 
           case "$STATE" in
             confined)
