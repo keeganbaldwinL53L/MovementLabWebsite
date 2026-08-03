@@ -7,7 +7,7 @@
 // The price and label come from src/data/services.json via the slug — a page
 // may NOT pass its own price text. Prices appear on the site, in schema and on
 // a Google profile, so one source is the only way they stay in agreement.
-import { bookingUrlForSlug, serviceBySlug } from '../lib/cliniko.mjs';
+import { serviceBySlug } from '../lib/cliniko.mjs';
 
 interface Props {
   /** A slug from src/data/services.json. An unknown slug fails the build. */
@@ -34,7 +34,33 @@ interface Props {
 const { slug, label, showDetail = false } = Astro.props;
 
 const service = serviceBySlug(slug);
-const href = bookingUrlForSlug(slug);
+
+// Keegan, 2026-08-03: "i noticed all the buttons send to jakes booking page,
+// maybe send them to my own booking page instead."
+//
+// They used to deep-link straight out to Cliniko. Those links were correct —
+// scoped to Keegan's business + practitioner + one appointment type, so nobody
+// could reach another practitioner — but they left his site, and the address
+// bar then read `jake-williams-chiropractic.au1.cliniko.com`, because the
+// Cliniko account belongs to the shared Restore Health Clinic.
+//
+// /contact/ already embeds the same widget, scoped the same way, so the whole
+// journey now stays on keegansmovementlab.com. `#book` lands the reader on the
+// widget rather than the top of the page.
+//
+// ⚠️ THE EXTERNAL URL BUILDER IS STILL LOAD-BEARING — do not delete it. The
+// embed on /contact/ is built with it, and scripts/check-booking-links.mjs
+// exercises it against the real Cliniko account to catch the silent failure
+// where a recreated appointment type gets a new id and a stale link quietly
+// falls back to a wider list.
+//
+// TRADE-OFF, stated because it is a real one: the old link pre-selected the
+// appointment type and this does not — the reader picks from Keegan's types on
+// arrival. The button label says which one they came for. Pre-selecting through
+// the embed would mean rewriting the iframe src client-side, on the page whose
+// resize handshake caused the 451px mobile clipping in LN-4, so it is not worth
+// the risk for one saved click.
+const href = '/contact/#book';
 
 // price === null means Cliniko has no billable item set. Render nothing rather
 // than inventing a number or printing "$null".
@@ -42,7 +68,7 @@ const priceText = service.price === null ? null : `$${service.price}`;
 ---
 
 <p class="book-cta">
-  <a href={href} rel="noopener">
+  <a href={href}>
     {label ?? `Book ${service.label.toLowerCase()}`}
   </a>
   {
