@@ -62,7 +62,23 @@ const isCurrent = (href: string) => current === href;
       webp — 30x smaller. A build gate that pushes authors off astro:assets
       costs real bytes, which is why the blind spot was worth fixing rather
       than working around. */}
+  {/* 🔴 THE NAME COMES FIRST AND THE MARK SITS TO ITS RIGHT — that is the
+      original site's lockup, and restoring it was Keegan's call on 2026-08-04:
+      "original had the small logo on the right of the text and also the text
+      was orange. is there a reason we changed that?"
+
+      There was a reason for exactly one of the three differences he spotted,
+      and it is the one below about live text. The mark being on the LEFT had
+      no reason at all — an unforced parity miss from the 1-15 brand pass, and
+      free to correct.
+
+      DOM ORDER, NOT `row-reverse`. Both render identically here because the
+      mark is aria-hidden, but reversing visually while leaving the DOM the
+      other way round is a divergence waiting to bite the next person who adds
+      something focusable to this lockup. Ordering the elements is the honest
+      version of the same result. */}
   <a class="brand" href="/">
+    <span>{business.name}</span>
     {/* eager, not astro's default lazy: this sits in the header of every page,
         above the fold on all of them, and it is 936 bytes. */}
     <Image
@@ -74,7 +90,6 @@ const isCurrent = (href: string) => current === href;
       height={30}
       class="brand-mark"
     />
-    <span>{business.name}</span>
   </a>
 
   <nav aria-label="Main">
@@ -156,15 +171,34 @@ const isCurrent = (href: string) => current === href;
     margin-bottom: 2.5rem;
     border-bottom: 1px solid var(--ml-rule);
   }
+  /* 🔴 THE WORDMARK IS ORANGE, AND THE 24px IS LOAD-BEARING FOR CONFORMANCE.
+     READ THIS BEFORE CHANGING EITHER VALUE.
+
+     The site's oldest brand rule is that ORANGE IS NEVER A TEXT COLOUR:
+     --ml-accent on paper measures 3.22:1, which fails the 4.5 bar WCAG 1.4.3
+     asks of normal text. This is the one exception, and it is legal by exactly
+     the same route UD-21 used to save the booking button — at >= 24px the text
+     qualifies as LARGE, the bar drops to 3.0, and 3.22 clears it.
+
+     ⚠️ HEADROOM IS 0.22. `font-size: 1.5rem` is a FLOOR, not a preference.
+     Anything smaller puts the business name back under the 4.5 rule and it
+     fails on every page of the site at once. If the lockup ever needs to be
+     smaller, it goes back to --ml-ink (12.40) in the same change.
+
+     WEIGHT 400 rather than the 600 this used to carry: the brand deck's own
+     register is light and regular weights, never heavy, and 400 is also the
+     closest match to the original site's artwork. Weight is free here — the
+     large-text threshold is met on SIZE alone at 24px, so the weight is not
+     doing conformance work and can follow the brand. */
   .brand {
     display: inline-flex;
     align-items: center;
-    gap: 0.55rem;
-    font-weight: 600; /* the brand deck never uses heavy weights */
-    font-size: 1.0625rem;
+    gap: 0.6rem;
+    font-weight: 400;
+    font-size: 1.5rem; /* 24px — the WCAG large-text floor. See above. */
     letter-spacing: 0.005em;
     text-decoration: none;
-    color: var(--ml-ink);
+    color: var(--ml-accent);
   }
   .brand-mark {
     /* CORRECTED SM-14 — this used to say "the global `img` rule sets
