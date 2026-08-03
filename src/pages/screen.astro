@@ -1,0 +1,455 @@
+---
+// Story 1-21 (LN-15). The public Movement Lab Screen — the free, readable,
+// self-score version of the 10-Point Movement Screen.
+//
+// ⚠️ THE ROUTE IS NOT A FREE CHOICE. `src/lib/capture.mjs` already declares
+// DELIVERABLE_ROUTE = '/screen/' and scripts/check-build.mjs refuses a build
+// that says the capture is published while that route is missing from dist.
+// This file IS that route. Renaming it silently breaks the 1-19 gate.
+//
+// 🔴 SCOPE, HARD (Keegan + Foundry, 2026-08-03):
+//   - The FREE, READABLE version only. NO interactive scoring, NO email
+//     capture, NO quiz tool. Those are 1-19 and Phase 3 and they carry cost
+//     and platform decisions.
+//   - Future site ONLY. The current WordPress site is not touched.
+//   - The longevity / mortality angle is CUT. There is no research, aging or
+//     mortality claim anywhere on this page, and item 3 makes a plain
+//     functional statement rather than an evidence one.
+//
+// 🔴 THE SAFETY LINES ARE LOAD-BEARING, NOT DECORATION. This is the most
+// patient-facing page on the site: it instructs body movements, one of them
+// spinal. Three things must survive any edit:
+//   1. The item-10 stop-rule, reproduced from canon and Star's transcription.
+//   2. The half-lotus (item 3) and full-bridge (item 10) framing as "in a
+//      session / with guidance, not on your own". These are the two named
+//      injury vectors in the canon's audience split. FLATTENING THEM INTO A
+//      SELF-ATTEMPT RE-OPENS THE INJURY VECTOR — it is not a tone edit.
+//   3. The opening "this is not a test that predicts injury, and it is not a
+//      diagnosis" framing. AHPRA: no outcome claim, no diagnosis, no
+//      testimonial anywhere on this page.
+//
+// GO-LIVE IS GATED ON KEEGAN'S OWN AHPRA READ. He is the registered
+// practitioner and the only person who can sign this off. Staging is
+// noindexed, so building here is safe; publishing is his call.
+//
+// COPY SOURCE: Star ST-56,
+// _projects/mlc/px-output/star/screen-public-page-copy-2026-08-03.md,
+// transcribed from `mlc/shared/knowledge/movement-lab-screen.md` v5 canon plus
+// Manny's MN-52 two-score split. Reproduced here as written; the only changes
+// are typographic (curly apostrophes, to match the rest of the site).
+import { Image } from 'astro:assets';
+import BaseLayout from '../layouts/BaseLayout.astro';
+import BookCta from '../components/BookCta.astro';
+import business from '../data/business.json' with { type: 'json' };
+
+// Hero ground. A wide seated straddle, which is position 4 of the ten — so the
+// page's own hero photograph is one of the things it asks you to try, rather
+// than a generic clinic shot.
+import heroStraddle from '../assets/site/IMG_1531.jpg';
+// A low lunge, the shape behind position 6. Portrait, so it takes the `.tall`
+// width cap — a 2:3 photo at the full 44rem measure paints 1.32 screens tall.
+import lunge from '../assets/site/IMG_1537.jpg';
+
+const LAST_CHANGED = new Date('2026-08-03T00:00:00+10:00');
+---
+
+<BaseLayout
+  title={`The Movement Lab Screen, a free 10-position self-check | ${business.name}`}
+  description="A free self-check of ten positions a healthy body should still be able to get into. Score yourself out of 10, see which positions have quietly gone missing, and re-test in a month or two."
+  updated={LAST_CHANGED}
+>
+  {/* The hero photograph is blurred and dimmed into a ground rather than shown
+      as a picture — decorative in that state, hence the empty alt plus
+      aria-hidden. See the measured note on `.hero` in BaseLayout before
+      touching any value there: this page adds an eighth hero photograph, and
+      each one is its own painted ground. */}
+  <section class="hero hero--page">
+    <Image
+      src={heroStraddle}
+      alt=""
+      aria-hidden="true"
+      widths={[768, 1280, 1920]}
+      sizes="100vw"
+      loading="eager"
+      fetchpriority="high"
+    />
+    <div class="hero-inner">
+      <p class="kicker">Free self-check &middot; 10 to 15 minutes</p>
+      <h1>The Movement Lab Screen</h1>
+      <p class="lead">Can you still get into the positions a healthy body should?</p>
+    </div>
+  </section>
+
+  <p>
+    This is a simple self-check of whether your body can still access the positions it’s built for.
+    Ten positions, on the floor, no equipment, about ten to fifteen minutes. You give yourself a pass
+    or a fail on each, and you get a score you can re-test later to see what’s changing.
+  </p>
+
+  {/* 🔴 THE FRAMING PARAGRAPH. Canon calls this non-negotiable and AHPRA is the
+      reason: a screen that predicts injury or names a condition is a clinical
+      claim. "It's a mirror" is the whole permission structure for putting this
+      in front of a stranger. Do not soften it, shorten it, or move it below
+      the fold. */}
+  <p>
+    <strong>One thing to be clear about upfront:</strong> this isn’t a test that predicts injury, and
+    it isn’t a diagnosis. It’s a mirror. It shows you which positions you can still get into and
+    which ones have quietly gone missing, so you know what’s worth working on. The test is the
+    mirror. The training is the medicine.
+  </p>
+
+  {/* The instructions and the scoring explanation share one sage band: they are
+      the "how this works" half of the page, and banding them separates them
+      from the positions themselves at a glance.
+
+      ⚠️ NO BookCta IN HERE. Orange on sage is 2.11:1 — the one pairing the
+      brand contract rules out — and the booking pill is an orange fill. Every
+      call to action on this page stays on paper. Same reason the pricing block
+      on /services/chiropractic-treatment/ was left un-banded. */}
+  <section class="band">
+    <h2>How to use it</h2>
+    <ul>
+      <li>
+        <strong>Go through the ten positions and give yourself a pass or fail on each.</strong> Be
+        honest. A near-miss is a fail, and that’s useful information, not a bad mark.
+      </li>
+      <li>
+        <strong>Your Pass score is out of 10.</strong> Count your passes. Any position you can’t
+        pass is what I call a <strong>position of concern</strong>, a spot worth some attention.
+      </li>
+      <li>
+        <strong>There’s a second score, out of 10, for the elite version of each.</strong> More on
+        that below. It’s a bonus ruler, not part of the main number.
+      </li>
+      <li>
+        <strong>Re-test every month or two.</strong> The single most useful thing here is watching a
+        position come back over time. That’s the point.
+      </li>
+      <li>
+        <strong>Stay comfortable.</strong> Effort and mild stretch are fine. Sharp pain is a stop
+        sign. If something hurts, skip it.
+      </li>
+    </ul>
+
+    {/* MN-52. The two scores are deliberately NOT blended into one number out
+        of twenty, and the reason is written into the copy rather than left as
+        an internal decision: a blend lets a few elite marks mask the passes
+        someone is failing, which is the exact thing this check exists to
+        show them. */}
+    <h2>The two scores, and why they’re separate</h2>
+    <p>
+      <strong>Your Pass score (out of 10)</strong> is the one that matters. One point for each
+      position you pass. This is your snapshot, and every position you <em>don’t</em> pass is one
+      worth working on.
+    </p>
+    <p>
+      <strong>Your Elite score (out of 10)</strong> is a separate bonus. Some positions have a harder
+      “elite” version, and this score tracks how many of those you own. It’s kept separate on
+      purpose. If I blended them into one score out of twenty, a few impressive elite marks could
+      hide the passes you’re failing, which is exactly the thing this check exists to show you. So:
+      the Pass score tells you whether the range exists. The Elite score tells you whether you truly
+      own it. Two questions, two numbers.
+    </p>
+  </section>
+
+  <h2>Before you start, one safety note</h2>
+  <div class="note">
+    <p>
+      Nothing here should cause sharp pain. Effort, yes. Mild stretch, yes. Pain, no. If a position
+      hurts, skip it and note it. That’s a position worth having someone look at rather than push
+      through on your own. The one movement that needs a specific caution is spinal extension,
+      position 10, and I’ve put the stop-rule right there with it.
+    </p>
+  </div>
+
+  <Image
+    src={lunge}
+    alt="Keegan in a low lunge on a wooden studio floor, back knee down and torso upright, opening the front of the back hip"
+    widths={[480, 800]}
+    sizes="(max-width: 44rem) 100vw, 24rem"
+    class="page-img tall"
+  />
+
+  <h2>The 10 positions</h2>
+  <p>
+    For each one: what it checks, how to give yourself a pass, and the elite version if you want to
+    chase it.
+  </p>
+
+  {/* `role="list"` is not redundant here. `list-style: none` makes Safari drop
+      the list semantics entirely, so a screen reader would lose "item 3 of 10"
+      — which is the one piece of structure a person working through these on
+      the floor actually needs. The visible number is a decorative chip built
+      from a CSS counter, so it is not announced twice. */}
+  <ol class="positions" role="list">
+    <li>
+      <h3>Deep squat</h3>
+      <p><strong>What it checks:</strong> can you rest at the bottom of a squat, the position humans are built to sit in.</p>
+      <p><strong>Pass:</strong> hips below your knees, both heels flat on the floor, held for 10 seconds.</p>
+      <p><strong>Elite (any one of these):</strong> a 2-minute resting squat &middot; an overhead squat holding a stick overhead with heels down &middot; a deep squat with your knees held together.</p>
+      <p><strong>Don’t kid yourself:</strong> if your heels lift, it’s a fail. That’s usually stiff ankles, and it’s worth knowing.</p>
+    </li>
+
+    <li>
+      <h3>Seiza (kneel and sit back)</h3>
+      <p><strong>What it checks:</strong> can you kneel and sit back onto your heels, which asks a lot of the knees, ankles and thighs.</p>
+      <p><strong>Pass:</strong> sit back with your hips resting on your heels, tops of the feet down (untucked), held about 60 seconds, no sharp pain.</p>
+      <p><strong>Elite:</strong> the same, but with your toes tucked under, or leaning back from there.</p>
+    </li>
+
+    <li>
+      <h3>Cross-legged sit and rise</h3>
+      <p><strong>What it checks:</strong> can you sit cross-legged comfortably, and get up again with little help. It’s a good read on your hips and on staying mobile and independent over the years.</p>
+      <p><strong>Pass:</strong> sit cross-legged with your knees settling down rather than poking up high, <strong>and</strong> get up using no more than one hand.</p>
+      <p><strong>Elite:</strong> stand up from cross-legged using no hands and no knees on the floor.</p>
+      {/* 🔴 INJURY VECTOR — the audience split, not a tone choice. Half lotus
+          can hurt a knee if it is forced, so on a page a stranger reads
+          unsupervised it is named as a supervised thing and is never offered
+          as a self-attempt. Do not promote this to an ordinary "Elite" row. */}
+      <p><strong>Beyond elite (in a session, not on your own):</strong> half lotus. It’s a real hip test, but it can hurt the knee if you force it, so it’s worth trying with someone watching rather than pushing into it at home.</p>
+    </li>
+
+    <li>
+      <h3>Seated straddle (pancake)</h3>
+      <p><strong>What it checks:</strong> can you sit in a wide straddle upright, hips open, without your pelvis rolling back underneath you.</p>
+      <p><strong>Pass:</strong> sit in a wide straddle, upright and tall, pelvis not falling backward, held 30 to 60 seconds.</p>
+      <p><strong>Elite:</strong> bring your chest or head toward the floor in the straddle.</p>
+    </li>
+
+    <li>
+      <h3>Standing toe-touch</h3>
+      <p><strong>What it checks:</strong> the whole back line of your body, heels to head.</p>
+      <p><strong>Pass:</strong> stand with straight legs and touch your fingertips to the floor.</p>
+      <p><strong>Elite:</strong> palms flat on the floor, or seated with your chest resting on your thighs.</p>
+    </li>
+
+    <li>
+      <h3>Hip-flexor length</h3>
+      <p><strong>What it checks:</strong> whether the front of your hip can reach neutral. This is the classic thing sitting quietly shortens.</p>
+      <p><strong>Pass:</strong> lie on your back at the edge of a bed, hug both knees to your chest, then keep one hugged and slowly lower the other leg. The lowered thigh should settle flat, resting level, with no arch in your low back and the thigh not drifting out to the side.</p>
+      <p><strong>Elite:</strong> hold a full couch stretch, back knee down and back foot up a wall, torso tall.</p>
+    </li>
+
+    <li>
+      <h3>Thoracic rotation</h3>
+      <p><strong>What it checks:</strong> can your mid-back rotate on its own, without just twisting from your low back and hips.</p>
+      <p><strong>Pass:</strong> lie on your side, hips and knees stacked and bent to about 90 degrees, knees pinned together. Arms straight out in front, palms together. Keeping your knees pinned, sweep your top arm up and over to the other side and try to lay that shoulder to the floor.</p>
+      <p><strong>Pass = the top shoulder reaches the floor (or within a hand’s width) without your knees peeling apart.</strong> If the knees lift, that’s your low back cheating, and it doesn’t count.</p>
+      <p><strong>Elite:</strong> sitting tall with a stick across your shoulders, rotate about 70 degrees or more each way with your hips staying square.</p>
+    </li>
+
+    <li>
+      <h3>Overhead reach</h3>
+      <p><strong>What it checks:</strong> can both arms reach fully overhead without your ribs and back arching to fake it. For surfers, this is the paddling shoulder.</p>
+      <p><strong>Pass:</strong> lie on your back with your knees bent (this stops you arching), and reach both arms overhead to the floor behind you with your ribs staying down and only minimal fudging.</p>
+      <p><strong>Elite:</strong> a full 180-degree overhead reach holding a stick, arms straight.</p>
+    </li>
+
+    <li>
+      <h3>Behind-back reach</h3>
+      <p><strong>What it checks:</strong> can one hand reach over your shoulder and the other up your back to meet. One side is nearly always tighter.</p>
+      <p><strong>Pass:</strong> reach one hand over your shoulder and the other up your back, and get your fingertips to touch, on both sides.</p>
+      <p><strong>Elite:</strong> reverse prayer, palms together behind your back with fingers pointing up (no equipment needed). There’s also a bar version (a German hang) if you have a bar and know your way around one.</p>
+    </li>
+
+    <li>
+      <h3>Spinal extension</h3>
+      <p><strong>What it checks:</strong> can your spine extend and arch gently backward, the exact direction sitting deletes.</p>
+      <p><strong>Pass (full cobra):</strong> lie face-down, hands under your shoulders, and press up with your arms straight and elbows locked until your shoulders stack over your hands, chest lifted, with your pelvis staying in contact with the floor. Hold 10 seconds, no sharp pain.</p>
+      <p><strong>If that’s too much (the scaling step):</strong> sphinx, up on your forearms instead of your hands, pelvis down. That’s your starting point toward the cobra.</p>
+      <p><strong>Don’t kid yourself:</strong> if your pelvis lifts off the floor, you’re pushing back into your hips and faking the shape. Pelvis down is what forces the movement into your spine.</p>
+
+      {/* 🔴 THE STOP-RULE. This is the single most load-bearing sentence on the
+          page and it is reproduced from canon (movement-lab-screen.md § item
+          10) through Star's transcription, word for word.
+
+          WHY IT EXISTS: extension is the right direction for most people with
+          a directional preference and the WRONG direction for some — lumbar
+          stenosis, spondylolisthesis, post-fusion, and anyone whose symptoms
+          peripheralise. A public page instructing a spinal movement without
+          this line is instructing some readers into harm.
+
+          It gets its own visual treatment on purpose: a reader skimming
+          bolded lead-ins must not be able to skim past it.
+
+          ⚠️ IT CARRIES A CLAUSE-JOINING EM-DASH, which is Keegan's named AI
+          tell, and it is LEFT IN DELIBERATELY. Two reasons: the desk item
+          requires the stop-rule verbatim, and it is a quotation from canon.
+          A full stop in place of the dash would read identically and change
+          no clinical meaning — that is a one-character decision for Keegan to
+          make on his AHPRA read, not one to take on his behalf. */}
+      {/* The label and the rule are SEPARATE ELEMENTS rather than a <span>
+          followed by loose text, and that is not cosmetic. Astro drops the
+          newline between an inline tag and the next word, so the flat text run
+          served was "...before you try itStop if this causes..." — invisible
+          on screen because the label is display:block, and wrong for anyone
+          reading the text rather than the pixels. check-build.mjs caught it
+          (the LN-2 F3 check, which exists for exactly this). */}
+      <div class="stop">
+        <p class="stop-label">Safety, read this before you try it</p>
+        <p>
+          Stop if this causes sharp pain, or any numbness, tingling or pain travelling down your leg
+          — that means extension isn’t the right direction for you. Skip this item and check with a
+          practitioner.
+        </p>
+      </div>
+
+      {/* 🔴 INJURY VECTOR — same audience split as the half lotus above. A
+          full bridge is a loaded backbend. Named as something to build toward
+          with help; never offered as a cold self-attempt. */}
+      <p><strong>Beyond elite (build toward it with guidance, not on your own):</strong> a full bridge. It’s a loaded backbend with a real injury risk, so it’s something to work toward with help, not to attempt cold at home.</p>
+    </li>
+  </ol>
+
+  <h2>What your score tells you, and what to do next</h2>
+  <p>
+    Add up your passes. That’s your Pass score out of 10, and it’s your starting line. Every position
+    you couldn’t pass is a position of concern, and that’s exactly where the useful work is.
+  </p>
+  <p>
+    Here’s the honest part. This check shows you <em>which</em> positions have gone missing. What it
+    can’t do on its own is tell you <em>why</em> a particular one is stuck, because sometimes the
+    tight spot isn’t the real problem. It can be compensating for something else further up or down
+    the chain, and figuring out which is which is what an in-person assessment is for.
+  </p>
+  <p>So the two next steps are simple:</p>
+  <ul>
+    <li>
+      <strong>Work the positions you didn’t pass, and re-test in a month or two.</strong> Watching the
+      number move is the whole reward.
+    </li>
+    <li>
+      <strong>If a position won’t shift no matter how consistent you are, that’s the signal it’s
+      worth a proper look.</strong> That’s what the Movement Plan Analysis is for: finding what’s
+      actually driving it, and building the plan for your body.
+    </li>
+  </ul>
+  <p>No pressure, no packages. The goal is to help you move well enough that you need me less.</p>
+
+  {/* Kept on paper rather than in a band: the pill is an orange fill and orange
+      on sage is 2.11:1. `showDetail` stays off — Keegan, 2026-08-03: the
+      buttons don't need to repeat the price. */}
+  <BookCta slug="movement-plan-analysis" label="Book a Movement Plan Analysis" />
+
+  <p class="sig">Keegan &middot; {business.name} &middot; Live Better, Longer.</p>
+
+  {/* ⚠️ COLONS, NOT EM-DASHES, AND THAT IS A DELIBERATE DIVERGENCE FROM THE
+      OTHER SEVEN PAGES. The identical block on /services/chiropractic-treatment/,
+      /about/ and the rest uses `<a>label</a> — gloss`, which is the
+      clause-joining em-dash Keegan names as his number-one AI tell, on
+      outward-facing copy. I am not adding new instances of it on a new public
+      page. Bringing the other seven into line is a site-wide copy sweep rather
+      than part of this story, and it is routed as a finding. */}
+  <h2>Where to next?</h2>
+  <ul class="next-links">
+    <li><a href="/services/chiropractic-treatment/">Chiropractic and movement</a>: what an appointment involves, and what it costs.</li>
+    <li><a href="/contact/">Book an appointment</a>: all booking types, including group sessions.</li>
+    <li><a href="/services/group-classes/">Group classes</a>: a lower-commitment way to start.</li>
+    <li><a href="/about/">About Keegan</a>: background, training and approach.</li>
+  </ul>
+</BaseLayout>
+
+<style>
+  /* The ten positions. A plain <ol> would put a small default numeral against
+     a block that is four paragraphs tall, which reads as a bulleted wall
+     rather than as ten separate things to work through. The chip gives each
+     one a visible anchor at the size the content deserves.
+
+     SAGE, NOT ORANGE. The numeral is ~17px/600, which is NORMAL text under
+     WCAG, so it needs 4.5:1 — paper on orange is 3.22 and fails. Ink on sage
+     is 8.12. The site's oldest brand rule is that orange is never a text
+     colour, and a numeral inside a circle is still text. */
+  .positions {
+    list-style: none;
+    padding: 0;
+    margin: 2rem 0 0;
+    counter-reset: position;
+  }
+  .positions > li {
+    counter-increment: position;
+    padding-left: 3.25rem;
+    margin-bottom: 2.75rem;
+  }
+  /* THE CHIP HANGS OFF THE HEADING, NOT OFF THE LIST ITEM, and that is the
+     whole fix. Anchored to the <li> it needed a hard `top` offset, and the
+     heading's own font-size is a clamp() — so one offset could only be right
+     at one viewport. Measured on the list item it sat 7px below the heading's
+     optical centre at 1280 and 2px below at 375: a moving target by
+     construction.
+     Hung off the h3 with `top: 50%`, it centres on the heading's own line box
+     at every width, with no magic number to keep in sync. A heading that wraps
+     to two lines at 320px centres the chip across both, which is the right
+     answer for a two-line title anyway. */
+  .positions > li > h3 {
+    position: relative;
+  }
+  .positions > li > h3::before {
+    content: counter(position);
+    position: absolute;
+    left: -3.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    display: grid;
+    place-items: center;
+    width: 2.35rem;
+    height: 2.35rem;
+    border-radius: 999px;
+    background: var(--ml-surface);
+    color: var(--ml-ink);
+    font-size: 1.0625rem;
+    font-weight: 600;
+    line-height: 1;
+  }
+  .positions h3 {
+    margin-top: 0;
+  }
+  .positions p {
+    margin: 0.45rem 0;
+  }
+
+  /* Callouts. The accent is a BORDER here, which is the one thing it is
+     licensed to do on a text-bearing element — the words themselves stay ink
+     on a shade fill. */
+  .note,
+  .stop {
+    background: var(--ml-shade);
+    border-left: 4px solid var(--ml-accent);
+    border-radius: 4px;
+    padding: 0.9rem 1.1rem;
+    margin: 1.5rem 0;
+  }
+  .note p {
+    margin: 0;
+  }
+  /* Heavier than the general note, and it carries a text label as well as the
+     border — colour alone must not be the thing that marks it as a stop-rule. */
+  .stop {
+    border-left-width: 6px;
+    font-weight: 500;
+  }
+  .stop > p {
+    margin: 0;
+  }
+  /* (0,2,1) so it beats the `.stop > p { margin: 0 }` reset above without
+     reaching for !important. */
+  .stop > .stop-label {
+    margin-bottom: 0.35rem;
+    font-size: 0.8125rem;
+    font-weight: 600;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ml-ink);
+  }
+
+  .sig {
+    margin-top: 2rem;
+    color: var(--ml-muted);
+    font-size: 0.9375rem;
+  }
+  .next-links {
+    padding-left: 1.1rem;
+  }
+  .next-links li {
+    margin: 0.35rem 0;
+  }
+</style>
