@@ -79,15 +79,21 @@ const isCurrent = (href: string) => current === href;
       version of the same result. */}
   <a class="brand" href="/">
     <span>{business.name}</span>
-    {/* eager, not astro's default lazy: this sits in the header of every page,
-        above the fold on all of them, and it is 936 bytes. */}
+    {/* eager, not astro's default lazy: this sits in the header of every page
+        and above the fold on all of them.
+
+        🔴 REQUESTED AT 2x AND DISPLAYED AT 1x. The old version asked Astro for
+        a 30px asset and displayed it at 30px, which is soft on every retina
+        screen — i.e. on Keegan's phone and most visitors'. The CSS below pins
+        the displayed size, so this only controls how many real pixels arrive.
+        If the CSS size changes, change this to twice it. */}
     <Image
       src={mark}
       alt=""
       aria-hidden="true"
       loading="eager"
-      width={30}
-      height={30}
+      width={86}
+      height={86}
       class="brand-mark"
     />
   </a>
@@ -200,17 +206,46 @@ const isCurrent = (href: string) => current === href;
     text-decoration: none;
     color: var(--ml-accent);
   }
+  /* 🔴 43px, AND THE NUMBER IS DERIVED FROM KEEGAN'S OWN ARTWORK RATHER THAN
+     CHOSEN. Keegan, 2026-08-04: "can we enlarge the actual logo a little bit,
+     it looks too small compared to text."
+
+     He was reading a real defect, not expressing a preference, and the cause is
+     one nobody could see from the markup: **mark.png carries 27% transparent
+     padding.** Measured on the file — the asterisk's ink is 340x374 inside a
+     512x512 canvas, so it fills 73% of the box height. A 30px box therefore
+     painted only 21.9px of visible mark.
+
+     The target came from measuring the original site's logo artwork
+     (cropped-Logos-White-BG.png): its mark is 100px tall against a 56px
+     wordmark, a ratio of 1.786. Our wordmark at 24px renders 17.67px of
+     ascender-to-baseline ink (measured on "Movement Lab", the artwork's own
+     string — measuring "Keegans Movement Lab" instead gives 22.33px because the
+     g descender is included, and that comparison is not like-for-like).
+
+         wanted visible mark  17.67 x 1.786 = 31.6px
+         box needed           31.6 / 0.73   = 43.3px  ->  43
+
+     So the box grows 30 -> 43 while the VISIBLE mark grows 21.9 -> 31.4, which
+     lands on the artwork ratio at 1.777 against its 1.786.
+
+     ⚠️ IF THIS NUMBER EVER CHANGES, the padding is the thing to remember: the
+     visible mark is always 73% of whatever you set here, so sizing this box
+     against the text by eye will always come out small. Fixing the asset (a
+     tight crop) would remove the trap, but it would also change the favicon
+     derivation in BaseLayout, which uses `fit: contain` and relies on this
+     source — so it is left alone here and recorded instead. */
   .brand-mark {
     /* CORRECTED SM-14 — this used to say "the global `img` rule sets
        width:100%, so the mark must opt out or it fills the header". It does
        not: BaseLayout's global rule is `max-width: 100%; height: auto`, and
        measured with this class hook deliberately broken the mark still rendered
-       30x30 off its width/height attributes alone. So these two lines are
-       belt-and-braces, not the thing holding the size. Keeping them anyway —
-       they cost nothing and they pin the size if an attribute ever goes
-       missing — but nobody should read them as load-bearing. */
-    width: 30px;
-    height: 30px;
+       off its width/height attributes alone.
+       ⚠️ THESE TWO LINES ARE NOW LOAD-BEARING, which they were not before: the
+       element is REQUESTED at 86px for retina sharpness and DISPLAYED at 43px,
+       so without them it would paint at 86 and swamp the header. */
+    width: 43px;
+    height: 43px;
     margin: 0;
     flex: none;
     border-radius: 0;
