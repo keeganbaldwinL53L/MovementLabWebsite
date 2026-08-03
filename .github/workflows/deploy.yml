@@ -343,77 +343,114 @@ jobs:
 
           if [ "$AUTH_OK" != "1" ]; then
             echo "::error::could not reach the server (2 attempts)"
-            echo "  If both attempts hit the FULL 20s timeout, the connection is being dropped by a firewall,
-          echo "  not refused and not rejected — check hPanel for an SSH block and see UD-27.""
+            # AG-7 F4. This was one string split across two lines with a stray
+            # trailing quote, so the second `echo` became literal text and the
+            # log printed `echo  not refused and not rejected …` — in the
+            # failure branch of the recurring SSH fault, i.e. at exactly the
+            # moment someone is reading the log to work out what happened.
+            echo "  If both attempts hit the FULL 20s timeout, the connection is being"
+            echo "  DROPPED, not refused and not rejected — see UD-27."
             echo "  Check the secrets, and check hPanel for an SSH or host-key change."
             sed 's/^/  /' /tmp/ssherr
             exit 1
           fi
 
       - name: Guard — the key must be structurally unable to leave staging
-        # STORY 1-11 (a) / AG-1 F5. THIS STEP CHANGED SHAPE, and the reason is
-        # the point of the story.
+        # STORY 1-11 (a) / AG-1 F5. The deploy key carries a forced command in
+        # the server's authorized_keys — `command="~/bin/rrsync -wo -absolute
+        # <staging>"` — so it is STRUCTURALLY incapable of touching the
+        # WordPress root rather than merely checked. This step asserts that
+        # property instead of validating the path.
         #
-        # It used to run a series of `test` commands on the server to check the
-        # deploy PATH looked like the staging directory. That constrained the
-        # WORKFLOW, not the KEY: anyone holding the key could still rsync
-        # anywhere in the account, including the live WordPress files, because
-        # the key authenticates as the hosting account user, which owns every domain.
+        # ⚠️ AG-7 F1 — THIS STEP USED TO FAIL OPEN, and Argus was right that it
+        # is the place confinement quietly dies. The old version was:
         #
-        # The durable fix is a forced command in the server's authorized_keys —
-        # `command="~/bin/rrsync -wo <staging>"` — which makes the key
-        # STRUCTURALLY incapable of touching anything else. Proven before it was
-        # applied, using a throwaway key, in five directions:
-        #   push into staging                     SUCCEEDS
-        #   arbitrary shell command               REFUSED ("does not run rsync")
-        #   rsync at the WordPress root           REFUSED, nothing written
-        #   ../ traversal                         REFUSED by name
-        #   `ssh host true`                       SUCCEEDS (rrsync special-case,
-        #                                         which is why Diagnose uses it)
+        #     if ssh … 'echo MARKER' 2>/dev/null | grep -q MARKER; then …
+        #     else  echo "the deploy key is CONFINED"  fi
         #
-        # So this step no longer CHECKS the path. It asserts the SECURITY
-        # PROPERTY instead: that an arbitrary command is refused. That is a
-        # stronger claim, and unlike the old checks it cannot be satisfied by a
-        # workflow that was copied and edited.
+        # A REFUSED command and a connection that NEVER OPENED both produce no
+        # marker, `2>/dev/null` threw away the only evidence separating them,
+        # and there was no pipefail. So a transient drop printed "CONFINED"
+        # having proven nothing — and in the UNCONFINED case that same branch
+        # skipped the only destination checks that exist. The asymmetry was the
+        # tell: Diagnose retries twice, Deploy three times, and the Guard took
+        # one attempt on a host whose defining fault is dropped connections
+        # (UD-27, which fired on run #24 and on #28 attempt 1) and read failure
+        # as success.
         #
-        # ⚠️ IT IS DELIBERATELY TOLERANT OF THE UNRESTRICTED STATE, so the
-        # workflow change and the authorized_keys change can land in either
-        # order without a broken window. If the key is not yet confined it says
-        # so loudly and falls back to the old path checks rather than failing a
-        # deploy that would have worked.
+        # THE THREE STATES ARE DISTINGUISHABLE, measured against this host
+        # rather than assumed:
+        #   exit 0   + marker on stdout            the command really ran   -> UNCONFINED
+        #   exit 1   + "rrsync error:" on stderr   opened and was refused   -> CONFINED
+        #   exit 255 / no such evidence            never opened             -> UNKNOWN
+        # so stderr is preserved, the status is captured separately from the
+        # pipe, the probe retries like its neighbours, and UNKNOWN fails the
+        # deploy rather than waving it through.
         run: |
-          set -u
-          SSH_BASE="ssh -i $HOME/.ssh/deploy_key -p ${H_PORT} \
+          set -uo pipefail
+          SSH_ARGS="-i $HOME/.ssh/deploy_key -p ${H_PORT} \
             -o StrictHostKeyChecking=yes -o UserKnownHostsFile=$HOME/.ssh/known_hosts \
             -o BatchMode=yes -o IdentitiesOnly=yes -o ConnectTimeout=20"
 
-          if $SSH_BASE "${H_USER}@${H_HOST}" 'echo ARBITRARY_COMMAND_RAN' 2>/dev/null | grep -q ARBITRARY_COMMAND_RAN; then
-            echo "::warning::the deploy key is NOT confined — it can still run arbitrary commands"
-            echo "  Story 1-11 (a) applies a forced command to authorized_keys to close this."
-            echo "  Falling back to the path checks while that is outstanding."
-            $SSH_BASE "${H_USER}@${H_HOST}" \
-              "TARGET='${H_PATH}'
-               case \"\$TARGET\" in
-                 */staging) ;;
-                 *) echo 'REFUSING: deploy path does not end in /staging'; exit 1 ;;
-               esac
-               test -d \"\$TARGET\" || { echo 'REFUSING: target directory does not exist'; exit 1; }
-               test ! -L \"\$TARGET\" || { echo 'REFUSING: target itself is a symlink'; exit 1; }
-               REAL=\$(readlink -f \"\$TARGET\")
-               case \"\$REAL\" in
-                 */staging) ;;
-                 *) echo \"REFUSING: resolved path does not end in /staging (\$REAL)\"; exit 1 ;;
-               esac
-               if [ -f \"\$REAL/wp-config.php\" ] || [ -d \"\$REAL/wp-admin\" ]; then
-                 echo 'REFUSING: resolved path looks like a WordPress root'; exit 1
-               fi
-               echo \"path guard passed for \$TARGET\""
-          else
-            echo "the deploy key is CONFINED: an arbitrary command was refused by the"
-            echo "server's forced command, so this key cannot reach the WordPress root"
-            echo "even if this workflow asked it to. That is the guarantee the path"
-            echo "checks were only approximating."
-          fi
+          STATE=unknown
+          for ATTEMPT in 1 2 3; do
+            set +e
+            ssh $SSH_ARGS "${H_USER}@${H_HOST}" 'echo ARBITRARY_COMMAND_RAN' \
+              >/tmp/guard.out 2>/tmp/guard.err
+            RC=$?
+            set -e
+
+            if [ "$RC" -eq 0 ] && grep -q ARBITRARY_COMMAND_RAN /tmp/guard.out; then
+              STATE=unconfined; break
+            fi
+            if [ "$RC" -ne 255 ] && grep -qi 'rrsync error' /tmp/guard.err; then
+              STATE=confined; break
+            fi
+
+            echo "guard probe attempt ${ATTEMPT}: inconclusive (rc=${RC})"
+            sed 's/^/    /' /tmp/guard.err | head -3
+            [ "$ATTEMPT" -lt 3 ] && sleep 15
+          done
+
+          case "$STATE" in
+            confined)
+              echo "the deploy key is CONFINED: the connection OPENED and the server's"
+              echo "forced command refused an arbitrary command. This key cannot reach"
+              echo "the WordPress root even if this workflow asked it to."
+              ;;
+            unconfined)
+              echo "::warning::the deploy key is NOT confined — it can still run arbitrary commands"
+              echo "  Story 1-11 (a) applies a forced command to authorized_keys to close this."
+              echo "  Falling back to the destination checks while that is outstanding."
+              ssh $SSH_ARGS "${H_USER}@${H_HOST}" \
+                "TARGET='${H_PATH}'
+                 case \"\$TARGET\" in
+                   */staging) ;;
+                   *) echo 'REFUSING: deploy path does not end in /staging'; exit 1 ;;
+                 esac
+                 test -d \"\$TARGET\" || { echo 'REFUSING: target directory does not exist'; exit 1; }
+                 test ! -L \"\$TARGET\" || { echo 'REFUSING: target itself is a symlink'; exit 1; }
+                 REAL=\$(readlink -f \"\$TARGET\")
+                 case \"\$REAL\" in
+                   */staging) ;;
+                   *) echo \"REFUSING: resolved path does not end in /staging (\$REAL)\"; exit 1 ;;
+                 esac
+                 if [ -f \"\$REAL/wp-config.php\" ] || [ -d \"\$REAL/wp-admin\" ]; then
+                   echo 'REFUSING: resolved path looks like a WordPress root'; exit 1
+                 fi
+                 echo \"path guard passed for \$TARGET\""
+              ;;
+            *)
+              echo "::error::the guard could not determine whether the deploy key is confined"
+              echo "  3 probes were inconclusive — the connection did not open, or it opened"
+              echo "  and said something this step does not recognise. Either way the"
+              echo "  destination is UNVERIFIED and rsync --delete must not run."
+              echo "  This is the UD-27 dropped-connection fault if the attempts each hung"
+              echo "  for the full 20s timeout; re-run the job. Last stderr:"
+              sed 's/^/    /' /tmp/guard.err | head -5
+              exit 1
+              ;;
+          esac
 
       - name: Deploy
         # The trailing slash on dist/ is load-bearing: it copies the CONTENTS

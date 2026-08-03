@@ -1,0 +1,41 @@
+# Expected server-side confinement for the deploy key — story 1-11 (a), AG-7 F3
+#
+# WHY THIS FILE EXISTS
+#
+# The thing that stops the deploy key reaching the live WordPress files is not in
+# this repository. It is two pieces of state on a shared host:
+#
+#   1. the forced command on the deploy key's authorized_keys line
+#   2. the ~/bin/rrsync script that forced command runs
+#
+# Neither is versioned, neither is checksummed by anything, and hPanel or a
+# support action can rewrite either without a commit ever happening here. Backups
+# and a recovery path are good practice, but recovery is not DETECTION — nothing
+# would notice. This file is the pinned expectation; verify-deploy-confinement.sh
+# is what compares reality against it.
+#
+# ⚠️ CI CANNOT RUN THAT CHECK, and the reason is the mechanism working correctly:
+# the deploy key is confined to rsync, so it cannot read authorized_keys or
+# checksum a file. Asking it to self-verify returns
+# "rrsync error: SSH_ORIGINAL_COMMAND does not run rsync". Verification therefore
+# needs a SEPARATE unrestricted credential and is an operator step, not a build
+# step. Saying so plainly beats a check that looks automated and cannot run.
+#
+# Re-run the verifier after any hPanel change, any support ticket that touches
+# SSH, and as a cutover precondition.
+
+# The exact command= prefix expected on the deploy key's authorized_keys entry.
+# Paths are written with ~ so this file carries no account identifier.
+authorized_keys_prefix: command="~/bin/rrsync -wo -absolute ~/domains/keegansmovementlab.com/public_html/staging",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding
+
+# SHA-256 of ~/bin/rrsync as installed 2026-08-03. This is the official Python
+# rrsync from the rsync project (3.2.4+), used because the host's own rsync 3.1.3
+# ships a PERL rrsync and perl is not installed here.
+rrsync_sha256: 67886e1c0c15421db4e866abca359a838fa671f96cd63a525cacef81af487046
+
+# Flags that must be present, spelled out so a diff is readable:
+#   -wo         write-only: the key can push, never pull
+#   -absolute   permits absolute destination SYNTAX (the workflow sends an
+#               absolute path). It does NOT permit escape — rrsync still
+#               requires the arg to equal or start with the restricted dir, and
+#               anything resolving outside still hits "unsafe arg".
