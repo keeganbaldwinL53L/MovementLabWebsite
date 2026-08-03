@@ -983,25 +983,34 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       }
       .hero h1 {
         margin: 0.25rem 0 0;
-        /* PAPER. Keegan, after seeing the strong glow: "that glow effect is
-           way too intense. it is meant to be subtle... i dont want the darkness
-           to obscure the image that much just put a light gradiated shade of
-           darkness that allows the text to pop better" — with a reference
-           image, which uses WHITE text over a barely-there gradient.
+        /* 🔴 ORANGE, AND IT IS BELOW THE 3.0 LARGE-TEXT BAR. THIS IS KEEGAN'S
+           EXPLICIT, INFORMED DECISION ON HIS OWN SITE. DO NOT "FIX" IT.
 
-           That is not a coincidence, it is the whole reason the reference can
-           be subtle. On the same subtle glow:
-               white  headline   7.18   PASS
-               orange headline   2.23   under the 3.0 bar
-           White tolerates 5.2x more light behind it, so it is what buys the
-           bright, unobscured photograph he keeps asking for. A subtle shade and
-           an orange headline cannot coexist; a subtle shade and a white one can.
+           He has been shown the measurement three times and asked for orange
+           each time, most recently with everything else left exactly as it is:
+             "change to the orange for the heading text despite it going
+              against protocol so i can eyeball it"
 
-           Orange remains on every button, every heading on the ink grounds, the
-           section rules and the mark. To go back to orange the trade returns:
-           the glow has to be roughly 4x stronger and the picture behind the
-           words goes with it. */
-        color: var(--ml-paper);
+           Measured on painted pixels with the SHIPPED subtle glow:
+               orange headline   ~2.2   (bar 3.0)
+               paper  headline   ~7.2
+           The gap is structural, not tunable: orange needs a ground under
+           luminance 0.055 and paper tolerates 0.289, so the only ways to close
+           it are a much darker photograph or a much stronger glow — both of
+           which he has now rejected twice for obscuring the picture.
+
+           SCOPE OF THE NON-CONFORMANCE: exactly one element, the hero h1, on 8
+           pages. Everything else in the hero is measured and passing — the
+           kicker and the lead are normal text held to 4.5 and clear it. It is
+           also the largest text on the site (44px mobile, 105px desktop), which
+           is the mitigating factor, though large size is why the bar is already
+           reduced to 3.0 rather than a reason to go under it.
+
+           If anyone wants to revisit: raise it WITH Keegan and WITH the number.
+           And note the direction — on a dark ground a LIGHTER orange helps and
+           a deeper one hurts (#C43A00 measured 1.69 vs brand orange's 2.71 on
+           the same pixels). */
+        color: var(--ml-accent);
         font-size: clamp(2.75rem, 8.2vw, 7rem);
         line-height: 0.98;
         letter-spacing: -0.02em;
