@@ -53,7 +53,10 @@ import heroStraddle from '../assets/site/IMG_1531.jpg';
 // width cap — a 2:3 photo at the full 44rem measure paints 1.32 screens tall.
 import lunge from '../assets/site/IMG_1537.jpg';
 
-const LAST_CHANGED = new Date('2026-08-03T00:00:00+10:00');
+// The date the PAGE changed, not the date of the build (AG-3 F5). Moved to
+// 08-04 when Keegan's authorised stop-rule punctuation change landed — the
+// visible "last updated" is a truth claim, and on a health page it should be.
+const LAST_CHANGED = new Date('2026-08-04T00:00:00+10:00');
 ---
 
 <BaseLayout
@@ -341,13 +344,14 @@ const LAST_CHANGED = new Date('2026-08-03T00:00:00+10:00');
 
   <p class="sig">Keegan &middot; {business.name} &middot; Live Better, Longer.</p>
 
-  {/* ⚠️ COLONS, NOT EM-DASHES, AND THAT IS A DELIBERATE DIVERGENCE FROM THE
-      OTHER SEVEN PAGES. The identical block on /services/chiropractic-treatment/,
-      /about/ and the rest uses `<a>label</a> — gloss`, which is the
-      clause-joining em-dash Keegan names as his number-one AI tell, on
-      outward-facing copy. I am not adding new instances of it on a new public
-      page. Bringing the other seven into line is a site-wide copy sweep rather
-      than part of this story, and it is routed as a finding. */}
+  {/* COLONS, NOT EM-DASHES — and as of SM-28 (2026-08-04) that is the SITE-WIDE
+      rule rather than this page's divergence. This page held out first: the
+      dash-joins-a-gloss construction is the clause-joining em-dash Keegan names
+      as his number-one AI tell, and a "Where to next?" list is outward-facing
+      copy. The other four pages carrying it (10 instances across /, /about/,
+      /services/chiropractic-treatment/, /services/group-classes/,
+      /services/handstand/) were brought into line, so a colon here now matches
+      every other page. Any new link-plus-gloss list uses a colon. */}
   <h2>Where to next?</h2>
   <ul class="next-links">
     <li><a href="/services/chiropractic-treatment/">Chiropractic and movement</a>: what an appointment involves, and what it costs.</li>
