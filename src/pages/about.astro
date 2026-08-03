@@ -74,27 +74,37 @@ const PHYSICIAN = physician(SITE_URL);
     </div>
   </section>
 
-  <Image
-    src={portrait}
-    alt="Keegan Baldwin, chiropractor, smiling against a plain light background"
-    widths={[320, 640]}
-    sizes="(max-width: 44rem) 60vw, 20rem"
-    class="portrait"
-  />
-
-  <h2>Why should you work with me?</h2>
-  <p>
-    Because I do not think one size fits all, and I can point at the results. All my methods have not
-    only worked to improve my own movement, but many of my clients as well. You won’t find
-    cookie-cutter approaches when working with me. Every body is different, therefore every client of
-    mine gets unique advice and techniques to achieve the best results for them.
-  </p>
-  <p>
-    I take a holistic approach to physical health using evidence-based techniques. That means helping
-    you feel your best by targeting the root cause of your movement limitation and supporting you in
-    building an efficient program to tackle it. If you are not happy with how your body feels or
-    functions, I can help.
-  </p>
+  {/* Story 1-16 inner-page rhythm. The target follows its hero with a tinted
+      band carrying one large centred statement, then a two-column
+      portrait-and-text block. Same two moves here, with our own content and
+      the answer-first structure intact — the h2 is still the question a real
+      person asks and the first sentence still answers it. */}
+  <section class="section section--wide section--field">
+    <div class="split">
+      <Image
+        src={portrait}
+        alt="Keegan Baldwin, chiropractor, smiling against a plain light background"
+        widths={[480, 960]}
+        sizes="(max-width: 40rem) 100vw, 45vw"
+      />
+      <div>
+        <h2>Why should you work with me?</h2>
+        <p>
+          Because I do not think one size fits all, and I can point at the results. All my methods
+          have not only worked to improve my own movement, but many of my clients as well. You won’t
+          find cookie-cutter approaches when working with me. Every body is different, therefore
+          every client of mine gets unique advice and techniques to achieve the best results for
+          them.
+        </p>
+        <p>
+          I take a holistic approach to physical health using evidence-based techniques. That means
+          targeting the root cause of your movement limitation and supporting you in building an
+          efficient program to tackle it. If you are not happy with how your body feels or
+          functions, I can help.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <h2>How did you get here?</h2>
   <p>

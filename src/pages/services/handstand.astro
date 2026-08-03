@@ -74,15 +74,27 @@ const SERVICE_NODE = service(SITE_URL, 'handstand-class');
     </div>
   </section>
 
-  <Image
-    src={handstand}
-    alt="Keegan holding a straight handstand in a mirrored studio, body stacked vertically over both hands with his legs together"
-    widths={[384, 768]}
-    sizes="(max-width: 44rem) 100vw, 24rem"
-    class="page-img tall"
-    loading="eager"
-    fetchpriority="high"
-  />
+  {/* Story 1-16 inner-page rhythm: the target's two-column image-and-text
+      block on a tinted ground, directly under the hero. */}
+  <section class="section section--wide section--field">
+    <div class="split">
+      <Image
+        src={handstand}
+        alt="Keegan holding a straight handstand in a mirrored studio, body stacked vertically over both hands with his legs together"
+        widths={[480, 960]}
+        sizes="(max-width: 40rem) 100vw, 45vw"
+      />
+      <div>
+        <h2>Why train handstands?</h2>
+        <p>
+          Because one skill develops strength, balance, mobility and body awareness at the same
+          time, and they depend on each other. Ten years of acrobatic training is where the movement
+          side of my clinical work comes from, and it is still the clearest way I know to show
+          someone what their body can be taught to do.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <h2>Who is handstand training for?</h2>
   <p>

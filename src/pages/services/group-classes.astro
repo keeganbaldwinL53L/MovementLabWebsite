@@ -92,13 +92,26 @@ const SERVICE_NODE = service(SITE_URL, 'group-class');
     </div>
   </section>
 
-  <Image
-    src={classBands}
-    alt="Four people kneeling on mats in a mirrored studio, leaning back and holding resistance bands overhead during a group mobility class"
-    widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 24rem"
-    class="page-img tall"
-  />
+  {/* Story 1-16 inner-page rhythm: the target's two-column image-and-text
+      block on a tinted ground, directly under the hero. */}
+  <section class="section section--wide section--field">
+    <div class="split">
+      <Image
+        src={classBands}
+        alt="Four people kneeling on mats in a mirrored studio, leaning back and holding resistance bands overhead during a group mobility class"
+        widths={[480, 960]}
+        sizes="(max-width: 40rem) 100vw, 45vw"
+      />
+      <div>
+        <h2>Is a class the right way in?</h2>
+        <p>
+          If you are not sure you want a one-to-one appointment yet, yes. An hour costs $20, the
+          groups are small, and you get the same methods I use in the clinic without committing to
+          an assessment. Complete beginners are the norm rather than the exception.
+        </p>
+      </div>
+    </div>
+  </section>
 
   <h2>What happens in the mobility and flexibility class?</h2>
   {/* Keegan confirmed Wednesday 6-7pm on 2026-08-01, which corroborates the

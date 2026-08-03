@@ -684,9 +684,28 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       /* The old site runs one continuous field behind the whole middle of the
          page rather than alternating bands, and eases it from deep green into
          sage. Reproduced as a gradient between the two EXISTING tokens. */
+      /* 🔴 THE FIELD IS SOLID INK BY DEFAULT, AND THE FADE IS OPT-IN. It used to
+         run ink → sage on every field section, and that shipped two REAL AA
+         failures: paper body text drifting onto the light end measured **4.17
+         on /about/ and 3.73 on /services/** against the 4.5 floor.
+
+         The sweep reported "0 contrast failures" through both of them, because
+         a gradient ground cannot be resolved to one colour so it SKIPS those
+         elements — the skip count quietly went 45 → 125 when these sections
+         landed. Caught by measuring the painted pixels behind every
+         gradient-ground text node instead of trusting the pass. Paper needs a
+         ground under luminance 0.176 and sage is 0.616, so it was never close.
+
+         The fade is only safe where something opaque covers the light end —
+         on the home page the card grid does exactly that, which is why it is a
+         modifier rather than the default. Do not add `--fade` to a section
+         whose own text reaches the bottom. */
       .section--field {
-        background: linear-gradient(180deg, var(--ml-ink) 0%, var(--ml-ink) 55%, var(--ml-surface) 100%);
+        background: var(--ml-ink);
         color: var(--ml-paper);
+      }
+      .section--field.section--fade {
+        background: linear-gradient(180deg, var(--ml-ink) 0%, var(--ml-ink) 55%, var(--ml-surface) 100%);
       }
       .section > :first-child {
         margin-top: 0;
@@ -992,12 +1011,18 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         align-items: center;
         grid-template-columns: repeat(auto-fit, minmax(min(100%, 20rem), 1fr));
       }
+      /* NO forced aspect-ratio here, unlike .card. A card is a repeating frame
+         and needs a consistent crop; a split holds ONE image, so there is
+         nothing to line it up with and cropping only creates risk. Forcing 3/2
+         on the About head-shot (1600x1562, near square) would have cut the top
+         and bottom off a face — the same clipped-chin failure AG-5 hit twice
+         with automatic crops, and no gate can see a bad crop. Natural ratio at
+         ~45% of the row is well under a screen, which was the other constraint. */
       .split img {
         width: 100%;
         max-width: none;
+        height: auto;
         border-radius: 14px;
-        aspect-ratio: 3 / 2;
-        object-fit: cover;
       }
       .split h2 {
         font-size: clamp(1.85rem, 4vw, 2.75rem);

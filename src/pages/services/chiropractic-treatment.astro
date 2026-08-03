@@ -135,15 +135,30 @@ const FAQ_ENTRIES = [
     </div>
   </section>
 
-  <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
-
-  <Image
-    src={assessing}
-    alt="Keegan assessing a patient's hip and knee range of motion on a treatment table, anatomy charts on the wall behind"
-    widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 24rem"
-    class="page-img tall"
-  />
+  {/* Story 1-16 inner-page rhythm: the target follows its hero with a
+      two-column image-and-text block on a tinted ground. Here it carries the
+      question the page exists to answer, with the assessment photograph that
+      was previously stacked above it as a lone column image. */}
+  <section class="section section--wide section--field">
+    <div class="split">
+      <Image
+        src={assessing}
+        alt="Keegan assessing a patient's hip and knee range of motion on a treatment table, anatomy charts on the wall behind"
+        widths={[480, 960]}
+        sizes="(max-width: 40rem) 100vw, 45vw"
+      />
+      <div>
+        <h2>What does an appointment involve?</h2>
+        <p>
+          Assessment first, then hands-on treatment, then a plan. I look at how the painful area
+          actually moves and what around it is contributing, treat what needs treating, and give you
+          something specific to do between visits. Thirty minutes is what makes that possible rather
+          than a ten-minute adjust-and-go.
+        </p>
+        <BookCta slug="new-patient" label="Book an initial consultation" showDetail={true} />
+      </div>
+    </div>
+  </section>
 
   <h2>What is chiropractic?</h2>
   <p>

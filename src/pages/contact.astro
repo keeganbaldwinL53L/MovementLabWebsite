@@ -67,6 +67,23 @@ const { address } = business;
     </div>
   </section>
 
+  {/* Story 1-16 inner-page rhythm. A tinted band under the hero, as the target
+      does — but a SHORT one, and the booking widget stays on the plain ground
+      immediately below it. LN-4 is the reason: the embed is a reserved-height
+      iframe whose content is tallest at the narrowest viewport, and 451px of it
+      was once cut off on mobile. It does not go inside a decorative container
+      that could constrain it again. */}
+  <section class="section section--field">
+    <div class="intro">
+      <p class="kicker">Wheeler Heights, Northern Beaches</p>
+      <h2>Booking takes about a minute</h2>
+      <p>
+        Pick a type and a time below. If you have not seen me before, the one-hour new patient
+        appointment is the one you want, whatever the reason for coming in.
+      </p>
+    </div>
+  </section>
+
   {/* One embed, scoped by construction. slugs omitted = all five of Keegan's
       types and nobody else's. */}
   <ClinikoBooking title="Book an appointment with Keegan" />
