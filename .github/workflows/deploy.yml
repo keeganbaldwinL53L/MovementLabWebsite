@@ -86,6 +86,13 @@ env:
   # Cutover changes these THREE together. Changing one is caught: check-build
   # cross-checks SITE_ENV against DEPLOY_URL, and the guard cross-checks
   # DEPLOY_PATH against this.
+  #
+  # ⚠️ THAT SENTENCE WAS UNTRUE WHEN FIRST WRITTEN — AG-9 F2. Two hardcoded
+  # `*/staging` literals survived in the guard's unconfined fallback, 435 lines
+  # below, so cutover actually needed FIVE edits while the comment promised
+  # three. They now derive from this value, and `grep -c '\*/staging'` over this
+  # file returns only the comment that records the fix. If you add another
+  # destination test, derive it here too or this comment goes stale again.
   DEPLOY_PATH_EXPECT: /staging
 
 jobs:
@@ -518,18 +525,29 @@ jobs:
               echo "::warning::the deploy key is NOT confined — it can still run arbitrary commands"
               echo "  Story 1-11 (a) applies a forced command to authorized_keys to close this."
               echo "  Falling back to the destination checks while that is outstanding."
+              # AG-9 F2. These two used to be hardcoded `*/staging`, which made
+              # the DEPLOY_PATH_EXPECT comment above a lie: cutover would have
+              # needed FIVE edits, two of them 435 lines from the declaration
+              # that claims to own the value. It fails CLOSED — an unconfined
+              # key at cutover would refuse a legitimate production deploy — so
+              # it was a stumble rather than a hazard, but the refusal would
+              # have named the path and nobody would have attributed it to a
+              # value they were told was centralised. It is the exact AG-3 F1
+              # shape the declaration exists to remove, surviving in the one
+              # branch nobody exercises.
               ssh $SSH_ARGS "${H_USER}@${H_HOST}" \
                 "TARGET='${H_PATH}'
+                 EXPECT='${DEPLOY_PATH_EXPECT}'
                  case \"\$TARGET\" in
-                   */staging) ;;
-                   *) echo 'REFUSING: deploy path does not end in /staging'; exit 1 ;;
+                   *\"\$EXPECT\") ;;
+                   *) echo \"REFUSING: deploy path does not end in \$EXPECT\"; exit 1 ;;
                  esac
                  test -d \"\$TARGET\" || { echo 'REFUSING: target directory does not exist'; exit 1; }
                  test ! -L \"\$TARGET\" || { echo 'REFUSING: target itself is a symlink'; exit 1; }
                  REAL=\$(readlink -f \"\$TARGET\")
                  case \"\$REAL\" in
-                   */staging) ;;
-                   *) echo \"REFUSING: resolved path does not end in /staging (\$REAL)\"; exit 1 ;;
+                   *\"\$EXPECT\") ;;
+                   *) echo \"REFUSING: resolved path does not end in \$EXPECT (\$REAL)\"; exit 1 ;;
                  esac
                  if [ -f \"\$REAL/wp-config.php\" ] || [ -d \"\$REAL/wp-admin\" ]; then
                    echo 'REFUSING: resolved path looks like a WordPress root'; exit 1

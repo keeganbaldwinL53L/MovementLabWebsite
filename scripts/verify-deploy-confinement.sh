@@ -32,9 +32,38 @@ want_prefix=$(sed -n 's/^authorized_keys_prefix: //p' "$EXPECTED")
 want_sha=$(sed -n 's/^rrsync_sha256: //p' "$EXPECTED")
 [ -n "$want_prefix" ] && [ -n "$want_sha" ] || { echo "could not parse $EXPECTED"; exit 1; }
 
+# AG-8 F6. `adm` used to swallow stderr and return only stdout, so a dropped
+# connection was indistinguishable from "the value is genuinely absent". The
+# reachability probe below guarded the FIRST call only; a UD-27 transient
+# between the calls left both empty and the script reported "no deploy-key line
+# found" AND "~/bin/rrsync is MISSING" — two causes it had never established.
+#
+# It failed ALARMING rather than open, so it was safe, and Argus was careful to
+# say so. But it is the same category my own comment claims this script avoids:
+# rendering a verdict from an absence that was never distinguished from silence.
+#
+# Now every call reports its exit status, and a connection-level failure (255)
+# anywhere aborts as UNVERIFIED instead of being read as evidence.
+# ⚠️ THE EXIT STATUS IS RETURNED, NOT STASHED IN A GLOBAL, and that is not a
+# style choice. The first version of this fix set `ADM_RC=$?` inside the
+# function — but every caller invokes it as `line=$(adm …)`, which runs the
+# function in a SUBSHELL, so the assignment died with the subshell and the
+# parent's copy stayed 0. The guard could never fire. Caught by driving it with
+# a stub ssh rather than reading it; `bash -x` showed the `++` nesting.
+# So: adm's own exit status IS ssh's, and each caller captures $? immediately.
 adm() {
   ssh -i "$ADMIN_KEY" -p "$PORT" -o StrictHostKeyChecking=yes -o BatchMode=yes \
       -o IdentitiesOnly=yes -o ConnectTimeout=20 "${H_USER}@${H_HOST}" "$@" 2>/dev/null
+}
+
+# Aborts the whole run rather than letting a caller interpret silence.
+unverified() {
+  echo ""
+  echo "  UNVERIFIED — lost the connection partway through ($1)."
+  echo "  This says NOTHING about the confinement, and the checks that did not"
+  echo "  run are not evidence either. Re-run; if attempts hang for the full"
+  echo "  timeout it is the UD-27 dropped-connection fault."
+  exit 2
 }
 
 fail=0
@@ -52,7 +81,10 @@ if ! adm true >/dev/null; then
   exit 2
 fi
 
-line=$(adm 'grep github-actions-deploy ~/.ssh/authorized_keys')
+line=$(adm 'grep github-actions-deploy ~/.ssh/authorized_keys'); rc=$?
+# rc 255 is ssh's own "could not connect". A non-zero rc from grep (1 = no match)
+# is a real answer and must still be reported as a finding.
+[ "$rc" -eq 255 ] && unverified "reading authorized_keys"
 if [ -z "$line" ]; then
   bad "no deploy-key line found in authorized_keys"
 else
@@ -66,7 +98,8 @@ else
   fi
 fi
 
-got_sha=$(adm 'sha256sum ~/bin/rrsync 2>/dev/null | cut -d" " -f1')
+got_sha=$(adm 'sha256sum ~/bin/rrsync 2>/dev/null | cut -d" " -f1'); rc=$?
+[ "$rc" -eq 255 ] && unverified "checksumming ~/bin/rrsync"
 if [ -z "$got_sha" ]; then
   bad "~/bin/rrsync is MISSING — the forced command points at nothing"
 elif [ "$got_sha" = "$want_sha" ]; then

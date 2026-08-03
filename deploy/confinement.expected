@@ -28,10 +28,43 @@
 # Paths are written with ~ so this file carries no account identifier.
 authorized_keys_prefix: command="~/bin/rrsync -wo -absolute ~/domains/keegansmovementlab.com/public_html/staging",no-agent-forwarding,no-port-forwarding,no-pty,no-user-rc,no-X11-forwarding
 
-# SHA-256 of ~/bin/rrsync as installed 2026-08-03. This is the official Python
-# rrsync from the rsync project (3.2.4+), used because the host's own rsync 3.1.3
-# ships a PERL rrsync and perl is not installed here.
+# SHA-256 of ~/bin/rrsync as installed 2026-08-03. The official Python rrsync
+# from the rsync project, used because the host's own rsync 3.1.3 ships a PERL
+# rrsync and perl is not installed here.
 rrsync_sha256: 67886e1c0c15421db4e866abca359a838fa671f96cd63a525cacef81af487046
+
+# ⚠️ PROVENANCE, PINNED TO A COMMIT — AG-8 F5.
+#
+# This file used to describe the source as "(3.2.4+)", which was wrong in a way
+# that had a concrete cost: v3.2.4's rrsync hashes d288d8d6…, not ours. Rebuild
+# the server or wipe ~/bin, reinstall from that description, and the verifier
+# would report "~/bin/rrsync has CHANGED" — the wording reserved for tampering.
+# A security check that cries wolf on a legitimate reinstall gets ignored.
+#
+# ⚠️ AND A TAGGED RELEASE IS NOT AVAILABLE, which is why this pins a commit
+# rather than a version. Checked, not assumed: v3.2.4, v3.4.3 and v3.4.4 all
+# ship an rrsync with NO `-absolute` flag — including v3.4.4, tagged 2026-06-08,
+# three days AFTER the commit that added it. We depend on `-absolute` because
+# the workflow sends an absolute destination path, so a tagged release would
+# break the deploy rather than merely differ.
+#
+# A raw `master` URL would be no better: master moves, so a reinstall six months
+# from now would fetch a different file and produce the same false alarm. The
+# permalink below is immutable.
+rrsync_source: https://raw.githubusercontent.com/RsyncProject/rsync/0d0399bb1420cea150931245f152feb4768e1e06/support/rrsync
+rrsync_commit: 0d0399bb1420cea150931245f152feb4768e1e06   # "rrsync: add -absolute argument", 2026-06-05
+rrsync_retrieved: 2026-08-03
+
+# REINSTALL RECIPE — reproduces the pinned file byte for byte, and verifies it
+# before trusting it. Independently confirmed by Argus (AG-8), who hashed
+# support/rrsync at six upstream revisions and matched ours to this commit.
+#
+#   curl -fsSL "<rrsync_source above>" -o /tmp/rrsync
+#   shasum -a 256 /tmp/rrsync     # must equal rrsync_sha256 above
+#   scp /tmp/rrsync <host>:~/bin/rrsync && ssh <host> 'chmod 700 ~/bin/rrsync'
+#   ssh <host> 'python3 -m py_compile ~/bin/rrsync'   # host runs Python 3.6.8
+#
+# Then re-run scripts/verify-deploy-confinement.sh.
 
 # Flags that must be present, spelled out so a diff is readable:
 #   -wo         write-only: the key can push, never pull
