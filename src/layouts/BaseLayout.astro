@@ -963,17 +963,17 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       .hero-inner::before {
         content: '';
         position: absolute;
-        inset: -30% -17%;
+        inset: -34% -20%;
         z-index: -1;
         pointer-events: none;
         background: radial-gradient(
           ellipse at 50% 50%,
-          rgba(4, 7, 4, 0.95) 0%,
-          rgba(4, 7, 4, 0.84) 46%,
-          rgba(4, 7, 4, 0.34) 74%,
+          rgba(4, 7, 4, 0.42) 0%,
+          rgba(4, 7, 4, 0.28) 50%,
+          rgba(4, 7, 4, 0.08) 75%,
           rgba(4, 7, 4, 0) 100%
         );
-        filter: blur(32px);
+        filter: blur(42px);
       }
       .hero .kicker {
         /* Was sage, which was derived for a SOLID ink ground. Over a photograph
@@ -983,23 +983,25 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       }
       .hero h1 {
         margin: 0.25rem 0 0;
-        /* ORANGE, AND IT PASSES — because of the glow below, not in spite of
-           it. Worth reading together with .hero-inner::before.
+        /* PAPER. Keegan, after seeing the strong glow: "that glow effect is
+           way too intense. it is meant to be subtle... i dont want the darkness
+           to obscure the image that much just put a light gradiated shade of
+           darkness that allows the text to pop better" — with a reference
+           image, which uses WHITE text over a barely-there gradient.
 
-           Keegan asked to see orange on the full-brightness hero with nothing
-           else changed, was shown it measured at **1.57** against the 3.0
-           large-text bar, and chose it anyway: "can you make that change
-           despite the fact that it goes against your protocols." He then asked
-           for a mitigation — an Instagram-style glow behind the text — and that
-           idea is what removed the trade-off entirely. Measured across 7 pages
-           x 2 widths: **3.46 to 4.25, all passing.** No override was needed in
-           the end; the owner's instinct produced the compliant answer.
+           That is not a coincidence, it is the whole reason the reference can
+           be subtle. On the same subtle glow:
+               white  headline   7.18   PASS
+               orange headline   2.23   under the 3.0 bar
+           White tolerates 5.2x more light behind it, so it is what buys the
+           bright, unobscured photograph he keeps asking for. A subtle shade and
+           an orange headline cannot coexist; a subtle shade and a white one can.
 
-           Note the direction if this is ever revisited: on a DARK ground a
-           LIGHTER orange helps and a deeper one HURTS — a deeper #C43A00
-           measured 1.69 against brand orange's 2.71 on the same ground, the
-           opposite of the intuition from paper. */
-        color: var(--ml-accent);
+           Orange remains on every button, every heading on the ink grounds, the
+           section rules and the mark. To go back to orange the trade returns:
+           the glow has to be roughly 4x stronger and the picture behind the
+           words goes with it. */
+        color: var(--ml-paper);
         font-size: clamp(2.75rem, 8.2vw, 7rem);
         line-height: 0.98;
         letter-spacing: -0.02em;
