@@ -202,6 +202,58 @@ const INLINE_TAGS = 'a|em|strong|b|i|code|small|abbr|span|sup|sub|time';
 const JAMMED_OPEN = new RegExp(`[A-Za-z0-9,.!?)"'’”]<(?:${INLINE_TAGS})[\\s>]`, 'g');
 const JAMMED_CLOSE = new RegExp(`</(?:${INLINE_TAGS})>[A-Za-z0-9(]`, 'g');
 
+/**
+ * AG-11 F2. The sibling of JAMMED_CLOSE, and it exists because that check was
+ * already looking in exactly the right place and still could not see the
+ * defect.
+ *
+ * SM-28 stripped the `<a>label</a> - gloss` construction from five pages: the
+ * clause-joining em-dash, the number-one named AI tell, on copy an outside
+ * audience reads. Eleven instances, and the eleventh was invisible to a source
+ * grep. `</a>` and the dash sat on separate lines in ClinikoBooking.astro's
+ * noscript fallback, so the pairing only existed after Astro collapsed the
+ * whitespace. A property observable ONLY in built HTML is precisely the kind
+ * that needs a machine on it, and nothing asserted it: a grep for any dash
+ * assertion across all four gates and deploy.yml returned comment prose only.
+ *
+ * JAMMED_CLOSE missed it mechanically. Its trailing class is `[A-Za-z0-9(]`
+ * and a dash is not a member.
+ *
+ * Deliberately narrow. A `.` `,` `:` `;` or `)` after an inline close is all
+ * legitimate, and the colon is the site-wide replacement SM-28 settled on, so
+ * only the two dash glyphs are banned.
+ *
+ * BOTH glyphs are matched, and the failure message MUST distinguish them,
+ * because on this site they mean opposite things:
+ *
+ *   em-dash  U+2014  the AI tell. Replace it with a colon.
+ *   en-dash  U+2013  the CLIENT'S OWN PUNCTUATION, and protected. The live
+ *                    WordPress page being replaced carries 18 en-dashes and
+ *                    zero em-dashes, several of them joining clauses in body
+ *                    prose. No agent may strip those. A hit here does not mean
+ *                    "fix the dash": his prose is plain text at those
+ *                    positions, so a match means someone wrapped an inline tag
+ *                    around the words in front of one.
+ *
+ * Driven, not proposed. Argus built the pre-fix artifact at ab028b8 in an
+ * isolated worktree: 15 hits, exactly the change count of the two SM-28
+ * commits, including the eleventh instance. At HEAD, 0 hits across all 98
+ * legitimate en-dashes.
+ */
+const CLAUSE_DASH = new RegExp(`</(?:${INLINE_TAGS})>\\s*([–—])`, 'g');
+
+/**
+ * The literal glyph is not the only way this codebase writes a dash. The two
+ * class pages already write `10&ndash;11am` and `6&ndash;7pm`, 5 occurrences,
+ * so `</a>&mdash;` is not hypothetical and a glyph-only pattern would be blind
+ * to it. Decode the six spellings before matching.
+ *
+ * Applied to a COPY used by this check alone, so the two text-run checks above
+ * keep matching the exact bytes they were driven against.
+ */
+const decodeDashes = (text) =>
+  text.replace(/&mdash;|&#8212;|&#x2014;/gi, '—').replace(/&ndash;|&#8211;|&#x2013;/gi, '–');
+
 const context = (text, index) =>
   JSON.stringify(text.slice(Math.max(0, index - 30), index + 30)).replace(/\\n/g, ' ');
 
@@ -543,6 +595,25 @@ for (const file of pages) {
   }
   for (const m of body.matchAll(JAMMED_CLOSE)) {
     fail(at(`an inline tag runs straight into the next word with no space: ...${context(body, m.index)}...`));
+  }
+
+  // -- AG-11 F2, the dash that joins an inline tag to its gloss ---------------
+  const dashText = decodeDashes(body);
+  for (const m of dashText.matchAll(CLAUSE_DASH)) {
+    const where = `...${context(dashText, m.index)}...`;
+    fail(
+      at(
+        m[1] === '—'
+          ? `an em-dash joins an inline tag to what follows it: ${where}. That is the ` +
+              `clause-joining em-dash on reader-visible copy. SM-28 settled the site-wide ` +
+              `replacement as a colon.`
+          : `an en-dash follows an inline tag: ${where}. CHECK WHOSE SENTENCE THIS IS ` +
+              `BEFORE TOUCHING THE DASH. The spaced en-dash is the client's own punctuation ` +
+              `and is protected (AG-11), and his prose carries no inline markup at those ` +
+              `positions, so this is most likely a tag someone wrapped around the words in ` +
+              `front of one. Move the tag, not the dash.`,
+      ),
+    );
   }
 
   // -- AG-5 F2: every root-relative thing this page REFERENCES must exist ----
