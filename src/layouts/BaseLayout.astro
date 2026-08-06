@@ -1229,6 +1229,43 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
       .card-body h3::after {
         display: none;
       }
+      /* THE CARD ACTION — Keegan 2026-08-06, H3: the services block's link is
+         "too quiet to read as an action", and he offered "a proper button, or
+         the brand orange, or similar".
+
+         IT IS A BUTTON AND IT IS NOT ORANGE, deliberately, on both counts.
+         Orange is never a text colour here (LN-6), so "the brand orange"
+         could only ever mean a FILLED orange pill — and that is exactly what
+         `.book-cta` already is. Putting four filled orange pills in the card
+         grid would give the page five equally loud CTAs and leave Book, the
+         one action that earns money, competing with four links to more
+         reading. So this is the SECONDARY button in the pair: same geometry
+         and radius as the primary, ink outline instead of orange fill.
+         Unmistakably a button, one clear step below Book.
+
+         Ink on paper is 12.40 for the label and the same for the 2px border,
+         so both clear 4.5 text and 3.0 non-text (WCAG 1.4.11) with room to
+         spare. Hover and focus invert to a solid ink fill rather than moving
+         the border, so nothing reflows under the pointer. */
+      .card-cta {
+        margin: 0;
+      }
+      .card-cta a {
+        display: inline-block;
+        padding: 0.55rem 1.1rem;
+        border: 2px solid var(--ml-ink);
+        border-radius: 4px;
+        color: var(--ml-ink);
+        font-weight: 700;
+        font-size: 1rem;
+        line-height: 1.3;
+        text-decoration: none;
+      }
+      .card-cta a:hover,
+      .card-cta a:focus-visible {
+        background: var(--ml-ink);
+        color: var(--ml-paper);
+      }
       .card-body p {
         margin: 0 0 1rem;
       }
@@ -1259,6 +1296,39 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         max-width: none;
         height: auto;
         border-radius: 14px;
+      }
+      /* Keegan 2026-08-06, H9 on "Who is this for?": the image is "too large
+         for the amount of text beside it". He named the one he was looking at;
+         it is the THIRD worst of the five. Image height against text height at
+         1280, before this rule:
+
+             classes    5.08x   (0.59 portrait)
+             handstand  4.45x   (0.67 portrait)
+             home       3.63x   (0.67 portrait)  ← the one he flagged
+             treatment  2.75x   (0.67 portrait)
+             about      1.41x   (1.02 near-square)  ← the only balanced one
+
+         Same family as the hero crops: a portrait source dropped into a layout
+         that wants width. In a 50/50 split a 0.67 portrait at 552px wide is
+         827px tall by arithmetic, and no amount of copy fills that.
+
+         CAPPED BY HEIGHT, NOT CROPPED. `max-height` with `width: auto` scales
+         the whole frame down and keeps its natural ratio, so nothing is cut —
+         the comment above is right that a forced crop on a single portrait
+         risks the clipped-chin failure, and that reasoning applies here too.
+         `justify-self: center` keeps the narrower picture centred in its
+         column so the leftover space reads as a margin rather than a gap.
+
+         Desktop only. Below 48rem the split is already stacked and the
+         proportions are fine (1.5x), so the cap is scoped out of the way
+         rather than shaving a few pixels off every phone. */
+      @media (min-width: 48rem) {
+        .split img {
+          max-height: 30rem;
+          width: auto;
+          max-width: 100%;
+          justify-self: center;
+        }
       }
       .split h2 {
         font-size: clamp(1.85rem, 4vw, 2.75rem);
