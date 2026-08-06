@@ -165,34 +165,57 @@ const FAQ_ENTRIES = [
     </div>
   </section>
 
-  <h2>What is chiropractic?</h2>
-  <p>
-    Chiropractic is a combination of two Greek words that translates as ‘Done By Hand’. Chiropractic
-    care is a hands-on, drug-free approach to health that focuses on the nervous, skeletal and
-    muscular systems and how they relate to overall wellbeing. When the joints of your spine and body
-    aren’t moving the way they should, it can result in tension, pain, discomfort and reduced
-    performance – and that’s where chiropractic comes in.
-  </p>
-  <p>
-    Using gentle, targeted adjustments, chiropractic care works to restore proper movement, reduce
-    pain, and support your body’s natural ability to heal. Whether you’re dealing with a niggling
-    back problem, recovering from an injury, managing a sports load, or simply want to stay on top of
-    your health – chiropractic can play a valuable role at every stage of life, for every kind of
-    body.
-  </p>
-  <p>
-    I blend the best of clinical evidence with a whole-body perspective, so you’re never just treated
-    as a set of symptoms. I take the time to understand what’s going on, explain what I find, and
-    work with you toward lasting results – not just short-term relief.
-  </p>
+  {/* T4, Keegan 2026-08-06: "change the image under 'what is chiropractic
+      care' for variety. Landscape is probably better; if it stays portrait,
+      put it ALONGSIDE the text rather than above."
 
-  <Image
-    src={adjusting}
-    alt="Keegan performing a hands-on thoracic adjustment on a patient lying face down"
-    widths={[480, 800]}
-    sizes="(max-width: 44rem) 100vw, 24rem"
-    class="page-img tall"
-  />
+      This is the second half of his instruction, which needs no new photograph
+      — the picture now sits beside its three paragraphs instead of stacked
+      under them, and .split's height cap keeps it from towering (see H9).
+      Text first in source order, so the image lands on the RIGHT and
+      alternates against the split higher up this page, and so the heading
+      still leads when it stacks on a phone.
+
+      🔴 THE IMAGE ITSELF IS STILL HIS CALL AND HAS NOT BEEN CHANGED. His
+      instinct about variety has a concrete cause: Rib-adjust.jpg is on the
+      home page too, in the "Who is this for?" split, so a reader arriving here
+      from home meets the same photograph twice. Unused clinical alternatives
+      already in the library: C-spine-tx, cranial-palpation-2, wrist-tx,
+      seated-C-spine-test-2, Psoas-test-2, Supine-lat-rom-scaled — all 0.67
+      portrait, so any of them drops in without touching this layout. There is
+      no unused LANDSCAPE clinical shot, which is why his first preference
+      needs a photograph he has not supplied. */}
+  <div class="split">
+    <div>
+      <h2>What is chiropractic?</h2>
+      <p>
+        Chiropractic is a combination of two Greek words that translates as ‘Done By Hand’.
+        Chiropractic care is a hands-on, drug-free approach to health that focuses on the nervous,
+        skeletal and muscular systems and how they relate to overall wellbeing. When the joints of
+        your spine and body aren’t moving the way they should, it can result in tension, pain,
+        discomfort and reduced performance – and that’s where chiropractic comes in.
+      </p>
+      <p>
+        Using gentle, targeted adjustments, chiropractic care works to restore proper movement,
+        reduce pain, and support your body’s natural ability to heal. Whether you’re dealing with a
+        niggling back problem, recovering from an injury, managing a sports load, or simply want to
+        stay on top of your health – chiropractic can play a valuable role at every stage of life,
+        for every kind of body.
+      </p>
+      <p>
+        I blend the best of clinical evidence with a whole-body perspective, so you’re never just
+        treated as a set of symptoms. I take the time to understand what’s going on, explain what I
+        find, and work with you toward lasting results – not just short-term relief.
+      </p>
+    </div>
+
+    <Image
+      src={adjusting}
+      alt="Keegan performing a hands-on thoracic adjustment on a patient lying face down"
+      widths={[480, 800]}
+      sizes="(max-width: 44rem) 100vw, 24rem"
+    />
+  </div>
 
   <h2>Why am I different?</h2>
   <p>
@@ -274,61 +297,67 @@ const FAQ_ENTRIES = [
 
   <h2>What will it cost, and what do I get?</h2>
 
-  <h3>Initial consultation – 1 hour, $120</h3>
-  <p>
-    <strong>Who is this for?</strong> If you suffer from long or short term pain or tension in your
-    body and want to get to the bottom of it, then this is for you. All ages, demographics and levels
-    of health and fitness are welcome.
-  </p>
-  <p>
-    <strong>What is included?</strong> A detailed verbal investigation, physical assessment,
-    structural analysis, warm up massage, joint adjustment, muscle compensation correction and a
-    rehab plan.
-  </p>
-  <p>
-    <strong>What do you need to know?</strong> Treatments are health fund rebatable for those that
-    have chiropractic care cover as an extra. This can be claimed immediately at payment or post
-    payment with an invoice. Patient gowns are provided although comfortable and mobile pants are
-    recommended. Treatment modalities can be declined if you do not wish to use them although this
-    may alter results. I will always discuss your treatment options and obtain informed consent
-    before proceeding with a technique or modality.
-  </p>
-  <BookCta slug="new-patient" label="Book an initial consultation" />
+  <article class="consult">
+    <h3>Initial consultation – 1 hour, $120</h3>
+    <p>
+      <strong>Who is this for?</strong> If you suffer from long or short term pain or tension in your
+      body and want to get to the bottom of it, then this is for you. All ages, demographics and levels
+      of health and fitness are welcome.
+    </p>
+    <p>
+      <strong>What is included?</strong> A detailed verbal investigation, physical assessment,
+      structural analysis, warm up massage, joint adjustment, muscle compensation correction and a
+      rehab plan.
+    </p>
+    <p>
+      <strong>What do you need to know?</strong> Treatments are health fund rebatable for those that
+      have chiropractic care cover as an extra. This can be claimed immediately at payment or post
+      payment with an invoice. Patient gowns are provided although comfortable and mobile pants are
+      recommended. Treatment modalities can be declined if you do not wish to use them although this
+      may alter results. I will always discuss your treatment options and obtain informed consent
+      before proceeding with a technique or modality.
+    </p>
+    <BookCta slug="new-patient" label="Book an initial consultation" />
+  </article>
 
-  <h3>Follow-up consultation – 30 minutes, $95</h3>
-  <p>
-    <strong>Who is this for?</strong> If you have already seen me in an initial consult in the past
-    and are returning for further treatment of a new or old condition, problem or injury.
-  </p>
-  <p>
-    <strong>What is included?</strong> These consults start with a warm up massage where I get up to
-    date on your progress since last session. This is followed by a reassessment of your
-    musculoskeletal structure and a retesting of any joint compensations. We then proceed to joint
-    adjustments and active muscle release or dry needling to address any current dysfunction in your
-    body. We then finish with a rehab plan update if this is needed.
-  </p>
-  <BookCta slug="existing-patient" label="Book a follow-up consultation" />
+  <article class="consult">
+    <h3>Follow-up consultation – 30 minutes, $95</h3>
+    <p>
+      <strong>Who is this for?</strong> If you have already seen me in an initial consult in the past
+      and are returning for further treatment of a new or old condition, problem or injury.
+    </p>
+    <p>
+      <strong>What is included?</strong> These consults start with a warm up massage where I get up to
+      date on your progress since last session. This is followed by a reassessment of your
+      musculoskeletal structure and a retesting of any joint compensations. We then proceed to joint
+      adjustments and active muscle release or dry needling to address any current dysfunction in your
+      body. We then finish with a rehab plan update if this is needed.
+    </p>
+    <BookCta slug="existing-patient" label="Book a follow-up consultation" />
+  </article>
 
   {/* D1 — the Movement Plan Analysis is NEW to the website. It exists in
       Cliniko and is absent from the current site entirely. */}
-  <h3>Movement Plan Analysis – 1 hour, $160</h3>
-  <p>
-    <strong>Who is this for?</strong> If you are not in pain right now but you want to understand
-    your body’s limitations and build a plan around them. This is the dedicated version of the
-    mobility work above: a full analysis session that produces your personalised routine.
-  </p>
-  <p>
-    <strong>How does it work?</strong> I will analyse and treat your body for any joint or muscle
-    dysfunction using chiropractic skills to create the best environment for mobility progress. We
-    will then test different flexibility positions which I will use to formulate the most efficient
-    mobility routine for you to follow and increase your range of motion.
-  </p>
-  <p>
-    <strong>What you need to know.</strong> Health funds with chiropractic cover included can claim a
-    rebate at time of payment or afterwards through an invoice. Comfortable and non-restrictive
-    clothing such as active wear is required.
-  </p>
-  <BookCta slug="movement-plan-analysis" label="Book a Movement Plan Analysis" />
+  <article class="consult">
+    <h3>Movement Plan Analysis – 1 hour, $160</h3>
+    <p>
+      <strong>Who is this for?</strong> If you are not in pain right now but you want to understand
+      your body’s limitations and build a plan around them. This is the dedicated version of the
+      mobility work above: a full analysis session that produces your personalised routine.
+    </p>
+    <p>
+      <strong>How does it work?</strong> I will analyse and treat your body for any joint or muscle
+      dysfunction using chiropractic skills to create the best environment for mobility progress. We
+      will then test different flexibility positions which I will use to formulate the most efficient
+      mobility routine for you to follow and increase your range of motion.
+    </p>
+    <p>
+      <strong>What you need to know.</strong> Health funds with chiropractic cover included can claim a
+      rebate at time of payment or afterwards through an invoice. Comfortable and non-restrictive
+      clothing such as active wear is required.
+    </p>
+    <BookCta slug="movement-plan-analysis" label="Book a Movement Plan Analysis" />
+  </article>
 
   <Faq entries={FAQ_ENTRIES} />
 
@@ -349,6 +378,45 @@ const FAQ_ENTRIES = [
   }
   h3 {
     margin-top: 2rem;
+  }
+  /* T6, Keegan 2026-08-06: the consult-type buttons "do not visually belong to
+     their block of text".
+
+     He is describing a spacing fact. The three types were a flat run of
+     h3 / p / p / p / button, so each button sat the same distance from its own
+     last paragraph as from the NEXT type's heading, and nothing said which one
+     it belonged to. Grouping is the fix, not more spacing: each type is now one
+     panel, so the heading, its copy and its button are visibly one object and
+     the boundary between types is a real edge.
+
+     ⚠️ THE ORANGE LEFT EDGE IS LOAD-BEARING, NOT DECORATION. The shade fill
+     measures only 1.14 against paper, which is nowhere near enough to draw a
+     panel on its own; the border is what makes the grouping visible, and
+     removing it would quietly undo the fix while leaving the tint behind. That
+     is a BORDER, which is what the accent token is for — never a text colour
+     here. Measured: ink on shade 10.84 (text bar 4.5), orange on paper 3.22
+     against the 3.0 non-text bar of WCAG 1.4.11 — headroom 0.22, so treat the
+     accent hex as a floor here exactly as the book pill does. The pill itself
+     is unaffected: its contrast is internal, paper label on its own orange
+     fill, independent of the ground it sits on.
+
+     `consider accompanying photos per type` is the other half of his note and
+     is NOT done: it needs three photographs chosen by him, one per type. The
+     panel is the right container for them when they arrive. */
+  .consult {
+    background: var(--ml-shade);
+    border-left: 4px solid var(--ml-accent);
+    border-radius: 0 14px 14px 0;
+    padding: 0.25rem clamp(1.1rem, 3vw, 1.6rem) 1.25rem;
+    margin-block: 1.75rem;
+  }
+  /* The panel's own top padding is the separation now, so the global 2rem that
+     spaces headings in the flat run would double it. */
+  .consult h3 {
+    margin-top: 1.25rem;
+  }
+  .consult > :last-child {
+    margin-bottom: 0;
   }
   .next-links {
     padding-left: 1.1rem;
