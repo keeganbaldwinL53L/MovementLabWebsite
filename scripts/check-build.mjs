@@ -227,13 +227,25 @@ const JAMMED_CLOSE = new RegExp(`</(?:${INLINE_TAGS})>[A-Za-z0-9(]`, 'g');
  * because on this site they mean opposite things:
  *
  *   em-dash  U+2014  the AI tell. Replace it with a colon.
- *   en-dash  U+2013  the CLIENT'S OWN PUNCTUATION, and protected. The live
- *                    WordPress page being replaced carries 18 en-dashes and
- *                    zero em-dashes, several of them joining clauses in body
- *                    prose. No agent may strip those. A hit here does not mean
- *                    "fix the dash": his prose is plain text at those
- *                    positions, so a match means someone wrapped an inline tag
- *                    around the words in front of one.
+ *   en-dash  U+2013  NEVER a copy defect on this site. Two ways to trip it, and
+ *                    the fix for both is to move the TAG, never the dash:
+ *                      (a) a RANGE whose first operand got wrapped, e.g.
+ *                          `<strong>Saturdays, 10</strong>&ndash;11am`. This is
+ *                          the likelier trigger by some way — the two class
+ *                          pages already write `10&ndash;11am` and `6&ndash;7pm`
+ *                          and are safe only because the dash currently sits
+ *                          INSIDE the `<strong>`. One restructure moves it out.
+ *                          Correct typography; nothing about the copy is wrong.
+ *                      (b) a tag wrapped around the words in front of one of the
+ *                          client's spaced en-dashes. The live WordPress page
+ *                          being replaced carries 18 en-dashes and zero
+ *                          em-dashes, several joining clauses in body prose.
+ *                          That is HIS punctuation. No agent may strip them.
+ *
+ *                    AG-12 F1: the first draft of this message named only (b)
+ *                    and told the reader to "check whose sentence this is",
+ *                    which is useless advice for (a) — the sentence is his, the
+ *                    dash is right, and the repair is mechanical.
  *
  * Driven, not proposed. Argus built the pre-fix artifact at ab028b8 in an
  * isolated worktree: 15 hits, exactly the change count of the two SM-28
@@ -607,11 +619,14 @@ for (const file of pages) {
           ? `an em-dash joins an inline tag to what follows it: ${where}. That is the ` +
               `clause-joining em-dash on reader-visible copy. SM-28 settled the site-wide ` +
               `replacement as a colon.`
-          : `an en-dash follows an inline tag: ${where}. CHECK WHOSE SENTENCE THIS IS ` +
-              `BEFORE TOUCHING THE DASH. The spaced en-dash is the client's own punctuation ` +
-              `and is protected (AG-11), and his prose carries no inline markup at those ` +
-              `positions, so this is most likely a tag someone wrapped around the words in ` +
-              `front of one. Move the tag, not the dash.`,
+          : `an en-dash follows an inline tag: ${where}. IN EITHER CASE BELOW THE FIX IS ` +
+              `TO MOVE THE TAG, NEVER THE DASH. (1) Most likely a RANGE whose first operand ` +
+              `got wrapped, e.g. "<strong>Saturdays, 10</strong>&ndash;11am". That is correct ` +
+              `typography and nothing about the copy is wrong; the closing tag simply belongs ` +
+              `after the range, not inside it. This site already writes 10&ndash;11am and ` +
+              `6&ndash;7pm on the two class pages. (2) Otherwise a tag wrapped around the ` +
+              `words in front of one of the client's spaced en-dashes, which are HIS OWN ` +
+              `punctuation and protected (AG-11). Do not "fix" the dash to satisfy this gate.`,
       ),
     );
   }
