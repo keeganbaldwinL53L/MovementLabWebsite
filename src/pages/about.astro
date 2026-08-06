@@ -55,7 +55,12 @@ const PHYSICIAN = physician(SITE_URL);
       picture, which is what makes the orange headline legible over it — see
       the measured note on .hero in BaseLayout. It is decorative in that state,
       hence empty alt plus aria-hidden. */}
-  <section class="hero hero--page">
+  {/* Keegan 2026-08-06, "could maybe be zoomed out a bit, but this isn't as bad
+      as other pages" — and he ranked it correctly: 27.7% visible against the
+      other two at 25.9%. So a small nudge, not the big one. 50% cut the crown
+      of his head; 30% dropped him to the floor and filled the frame with wall.
+      42% clears the head with air above it. See --ml-hero-focus in BaseLayout. */}
+  <section class="hero hero--page" style="--ml-hero-focus: 42%">
     <Image
       src={heroLunge}
       alt=""

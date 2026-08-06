@@ -116,7 +116,12 @@ const FAQ_ENTRIES = [
       into a ground rather than shown as a picture, which is what makes the
       orange headline legible over it — see the measured note on .hero in
       BaseLayout. Decorative in that state, hence empty alt + aria-hidden. */}
-  <section class="hero hero--page">
+  {/* Crop aimed at the work, not the midriff — Keegan 2026-08-06, "still too
+      zoomed in". The centred strip landed on a grey t-shirt and a towel; the
+      face, the elbow going into the glute and the muscular-system poster all
+      sat above it. See the --ml-hero-focus note in BaseLayout for why the
+      strip cannot be made WIDER, only aimed. */}
+  <section class="hero hero--page" style="--ml-hero-focus: 35%">
     <Image
       src={heroSoftTissue}
       alt=""

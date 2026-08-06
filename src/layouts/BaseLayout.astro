@@ -853,6 +853,63 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
          ⚠️ The h1 is not the only text here. The kicker and the lead are
          SMALLER, so they need 4.5 rather than 3.0 — measure every element in
          the hero against the painted pixels, not just the headline. */
+      /* ⚠️ `--ml-hero-focus` IS THE ONLY HERO CROP CONTROL, AND THE ONLY ONE
+         THERE CAN BE. READ THIS BEFORE ANYONE ASKS TO "ZOOM THE HERO OUT".
+
+         Keegan, 2026-08-06, on three of the four pages he walked: treatment
+         "still too zoomed in", booking "could be zoomed out", about "could
+         maybe be zoomed out a bit, but this isn't as bad as other pages".
+
+         HIS RANKING IS EXACTLY RIGHT AND IT IS ARITHMETIC. How much of a
+         photograph a hero can show is fixed by two aspect ratios and nothing
+         else:
+
+             visible fraction of the photo = source AR / hero box AR
+
+         At 1280 the page hero box is 1280x496 (AR 2.58), so:
+
+             page        source AR          visible   his verdict
+             home         1.50 landscape     99.6%    no complaint
+             handstand    1.50 landscape     58.1%    no complaint
+             screen       0.80               31.0%    not reviewed
+             about        0.71 portrait      27.7%    "not as bad"
+             treatment    0.67 portrait      25.9%    "still too zoomed in"
+             booking      0.67 portrait      25.9%    "could be zoomed out"
+             services     0.67 portrait      25.8%    not reviewed
+             classes      0.67 portrait      25.8%    not reviewed
+
+         The complaints track the number in order. The two heroes nobody
+         objected to are the two landscape sources, and the five portraits sit
+         within 2 points of each other.
+
+         🔴 SO ZOOMING OUT IS NOT AVAILABLE, AND RE-CROPPING THE FILE CANNOT
+         BUY IT. `cover` scales by max(boxW/srcW, boxH/srcH); for every one of
+         these the WIDTH term wins, so the visible region is always the full
+         width of the photograph by boxH/scale of its height — the same strip
+         of the same photograph no matter how the file is trimmed beforehand.
+         Pre-cropping a portrait to landscape changes the DENOMINATOR and not
+         one rendered pixel. Only three things move it:
+           1. a photograph composed WIDE (what the two clean pages have),
+           2. a taller hero box — weak and expensive: even matching the home
+              hero's 858px only lifts a 0.67 portrait to 44.7%, and it spends
+              the "a service page is not the front door" decision below, or
+           3. this property — choosing WHICH strip, at the same magnification.
+
+         WHAT THIS PROPERTY IS FOR. It cannot make the crop wider, so it aims
+         it instead: on treatment and booking the centred strip cut across a
+         torso and the pictures read as anonymous flesh, while the faces, the
+         hands and the anatomy poster — everything that says "hands-on care" —
+         sat just above the cut. Aiming the strip is the whole available fix
+         and it is a large one; it is NOT the zoom-out he asked for, and the
+         honest answer to that request is a landscape photograph.
+
+         ⚠️ RE-MEASURE CONTRAST AFTER EVERY CHANGE TO THIS NUMBER. Moving the
+         strip changes the painted ground behind the text, and on these
+         photographs up means brighter (ceilings, walls, windows). The kicker
+         and lead are NORMAL text at 4.5 — they are what breaks first, not the
+         headline, and they broke 16 times across 7 pages the last time a
+         ground got brighter. Default 50% keeps any page that does not set it
+         pixel-identical. */
       .hero > img {
         position: absolute;
         inset: 0;
@@ -860,6 +917,7 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        object-position: 50% var(--ml-hero-focus, 50%);
         filter: blur(2px) saturate(1.02) brightness(1);
         transform: scale(1.01);
       }

@@ -48,7 +48,10 @@ const { address } = business;
       into a ground rather than shown as a picture, which is what makes the
       orange headline legible over it — see the measured note on .hero in
       BaseLayout. Decorative in that state, hence empty alt + aria-hidden. */}
-  <section class="hero hero--page">
+  {/* Keegan 2026-08-06, "could be zoomed out". Same fix and same limit as the
+      treatment hero: the strip was a shirt and a doorframe, with his face and
+      the anatomy poster just above it. See --ml-hero-focus in BaseLayout. */}
+  <section class="hero hero--page" style="--ml-hero-focus: 30%">
     <Image
       src={heroTreatment}
       alt=""
