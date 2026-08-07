@@ -134,12 +134,27 @@ const PHYSICIAN = physician(SITE_URL);
     and maintaining a healthy, balanced life.
   </p>
 
-  <h2>Why does the handbalancing matter?</h2>
+  {/* ST-62 A2. Keegan: this section "reads oddly where it is", offering either
+      a cut or a reframe. ✅ MANNY CONFIRMED THE REFRAME (MN-57, 2026-08-07) —
+      the cut loses the one thing no other Northern Beaches chiropractor can
+      say, so it was the more expensive option.
+
+      WHAT THE OVERCLAIM ACTUALLY WAS: the live version opened "Because it is
+      where the movement side of the practice comes from", which makes
+      handbalancing the ORIGIN of his clinical method. That is what made it sit
+      oddly on a chiropractor's About page. Demoting it to "it also happens to
+      be a good teacher" keeps the whole credential and drops the claim, which
+      is what the chiro-primary decision (MN-48) asks for everywhere else. */}
+  <h2>Where does handbalancing fit in?</h2>
   <p>
-    Because it is where the movement side of the practice comes from. Handstands demand strength,
-    balance, mobility and body awareness at the same time, and training them for years is what taught
-    me how those qualities depend on each other. That is the lens I bring to a patient who is stiff,
-    sore, or stuck at a plateau.
+    It is a skill I picked up over ten years of acrobatic training and never put down, and I still
+    teach it on the side as a bit of a passion project.
+  </p>
+  <p>
+    It also happens to be a good teacher. Handstands demand strength, balance, mobility and body
+    awareness at the same time, and training them for years is what taught me how much those
+    qualities depend on each other. That is the lens I bring to a patient who is stiff, sore or stuck
+    at a plateau.
   </p>
   <Image
     src={straddle}
@@ -149,9 +164,12 @@ const PHYSICIAN = physician(SITE_URL);
     class="page-img tall"
   />
 
+  {/* A2 absorbs the paragraph that used to follow this section — "I still
+      coach it" is now said above, so repeating it here would say it twice. The
+      inbound link to the handstand page is load-bearing and stays. */}
   <p>
-    I still coach it, and I organise handstand meetups around the Northern Beaches.{' '}
-    <a href="/services/handstand/">Handstand coaching and classes</a> have their own page if that is
+    I run handstand meetups around the Northern Beaches, and{' '}
+    <a href="/services/handstand/">handstand coaching and classes</a> have their own page if that is
     what brought you here.
   </p>
 

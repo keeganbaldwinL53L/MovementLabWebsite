@@ -1330,6 +1330,22 @@ const updatedHuman = updated.toLocaleDateString('en-AU', {
           justify-self: center;
         }
       }
+      /* ⚠️ MEASURED COST OF THE CAP ABOVE, recorded so nobody rediscovers it as
+         a mystery: `width: auto` means a not-yet-loaded lazy image has no
+         intrinsic width to reserve space from, so it lays out at 0 and jumps to
+         its real size on load. Worst measured CLS is 0.0133 (group-classes and
+         handstand, the two most extreme portraits) against a 0.0070 baseline
+         and the 0.1 "good" threshold — so it is a real regression, seven times
+         inside the bar, and accepted deliberately rather than missed.
+
+         The obvious alternative is WORSE, which is why it was not taken:
+         `width: 100%` with `object-fit: contain` reserves space perfectly but
+         letterboxes the picture inside a wider box, and `border-radius` then
+         rounds the BOX rather than the photograph — square corners on every
+         split image. Narrowing the grid column instead reserves space too, but
+         it re-inflates the tall portraits this cap exists to shrink.
+         If this ever needs to be zero, the honest fix is a per-image
+         `aspect-ratio` at each call site, not a change to this rule. */
       .split h2 {
         font-size: clamp(1.85rem, 4vw, 2.75rem);
         line-height: 1.1;

@@ -28,14 +28,41 @@ interface Props {
   heading?: string;
   /** Heading level, so the block nests correctly wherever it is used (G-7). */
   level?: 2 | 3;
+  /**
+   * Emit the FAQPage JSON-LD alongside the visible list. Defaults TRUE, which
+   * is the behaviour every existing caller relies on.
+   *
+   * ⚠️ SET THIS FALSE ON A SECOND INSTANCE OF QUESTIONS THAT ARE ALREADY MARKED
+   * UP ELSEWHERE ON THE SITE, AND NOWHERE ELSE. Added for ST-62 H11, where
+   * Keegan asked for a reduced version of the treatment page's questions on the
+   * home page. Reusing this component as-is would have published a SECOND
+   * FAQPage whose entries duplicate four already marked up on
+   * /services/chiropractic-treatment/. [INFERRED, not verified against current
+   * Google behaviour] duplicating marked-up Q&A across two URLs on one site is
+   * the kind of thing that gets rich results suppressed for both, so the
+   * conservative default is to mark up the canonical page only.
+   *
+   * This does NOT weaken the rule above: the visible list is still generated
+   * from the same array, so the two cannot disagree. It only decides whether
+   * THIS instance is the one that claims the markup.
+   */
+  schema?: boolean;
 }
 
-const { entries, heading = 'Frequently Asked Questions', level = 2 } = Astro.props;
+const {
+  entries,
+  heading = 'Frequently Asked Questions',
+  level = 2,
+  schema: withSchema = true,
+} = Astro.props;
 const Heading = `h${level}` as 'h2' | 'h3';
-const schema = faqPage(entries);
+const schema = withSchema ? faqPage(entries) : null;
 ---
 
-<section class="faq">
+{/* A stable anchor so other pages can link straight to the questions —
+    the home page's "More questions about treatment" does exactly that.
+    One FAQ block per page, so this id stays unique. */}
+<section class="faq" id="faq">
   <Heading>{heading}</Heading>
 
   {

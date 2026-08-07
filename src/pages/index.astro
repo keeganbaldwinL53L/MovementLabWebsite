@@ -36,6 +36,9 @@
 import { Image } from 'astro:assets';
 import BaseLayout from '../layouts/BaseLayout.astro';
 import BookCta from '../components/BookCta.astro';
+import WhatsInvolved from '../components/WhatsInvolved.astro';
+import Faq from '../components/Faq.astro';
+import { byQuestion } from '../data/faq.mjs';
 import business from '../data/business.json' with { type: 'json' };
 
 import Carousel from '../components/Carousel.astro';
@@ -199,7 +202,8 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
       <p>
         It is chiropractic that treats how you move, not just where it hurts. I settle the acute
         problem, find the movement pattern behind it, and give you a plan so it stops coming back.
-        Appointments are 30 minutes rather than 10, which is what makes that possible.
+        Standard appointments are 30 minutes rather than 10, and a full hour when we need to go
+        deeper, which is what makes that possible.
       </p>
       <BookCta slug="new-patient" label="Book an appointment here" />
     </div>
@@ -215,9 +219,10 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
         <div class="card-body">
           <h3>Chiropractic consultation &amp; treatment</h3>
           <p>
-            If you have pain or stiffness, start here. Spinal and joint adjustments, hands-on muscle
-            release and massage, and rehab based on what your assessment actually showed rather than
-            a generic sheet. $120 for the first hour, $95 for a 30-minute follow-up.
+            If you have pain or stiffness, start here. Spinal and limb joint adjustments, hands-on
+            muscle release and massage, and rehab based on what your assessment actually indicated
+            rather than a generic cookie-cutter plan. $120 for the first hour, $95 for a 30-minute
+            follow-up.
           </p>
           <p class="card-cta"><a href="/services/chiropractic-treatment/">More about chiropractic and movement</a></p>
         </div>
@@ -233,8 +238,8 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
         <div class="card-body">
           <h3>Movement Plan Analysis</h3>
           <p>
-            If you want more out of your body rather than relief from pain, this is the one. A full
-            mobility assessment that finds the weak links holding your range back, and a
+            If you have no current injuries but want to get more out of your body, start here. A
+            full mobility assessment that finds the weak links holding your range back, and a
             personalised routine to address them. $160 for one hour.
           </p>
           <p class="card-cta"><a href="/services/">Full services and pricing</a></p>
@@ -251,8 +256,9 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
         <div class="card-body">
           <h3>Weekly group classes</h3>
           <p>
-            The lowest-commitment way in. Mobility and flexibility on Wednesdays, both open to
-            complete beginners, at Just Train Gym in Cromer. $20 for an hour.
+            The lowest-commitment way in. Mobility and flexibility on Wednesdays, open to complete
+            beginners, at Just Train Gym in Cromer. $20 for the hour. Casual drop-in, but book your
+            spot first.
           </p>
           <p class="card-cta"><a href="/services/group-classes/">More about group classes</a></p>
         </div>
@@ -269,7 +275,8 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
           <h3>Handstand coaching and classes</h3>
           <p>
             Handbalancing from the first kick-up to a freestanding hold, coached with the same
-            assessment-led approach. Saturday mornings, and worth checking the booking page for the
+            assessment-led approach. Saturday mornings as a group class, or private one-to-one
+            coaching if you would rather have the hour to yourself. Check the booking page for this
             week's session.
           </p>
           <p class="card-cta"><a href="/services/handstand/">More about handstand coaching</a></p>
@@ -310,14 +317,21 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
       />
       <div>
         <h2>Who is this for?</h2>
+        <p>Two kinds of people, and they are the same problem at two stages.</p>
         <p>
-          Anyone in pain or stiffness who wants to know why, and anyone with no pain at all who
-          wants more out of their body. Those are the same problem seen at two stages. All ages,
-          demographics and levels of health and fitness are welcome.
+          The first is in pain or stiffness and wants to know why. A back that keeps flaring, a
+          shoulder that will not settle, a knee that complains after every run. We settle the
+          immediate problem, then work out what caused it so it stops coming back.
         </p>
         <p>
-          If your shoulder, hip or knee is part of the problem, we address it. Most patients need
-          fewer visits overall.
+          The second has no pain at all and wants more out of their body. Deeper positions, better
+          control, a body that keeps up with the surfing or the lifting for another few decades. We
+          test how you actually move, find the weak links, and build a plan around them.
+        </p>
+        <p>
+          Plenty of people arrive as the first and end up as the second. All ages, demographics and
+          levels of health and fitness are welcome, and if your shoulder, hip or knee is part of the
+          problem, we address it.
         </p>
       </div>
     </div>
@@ -330,10 +344,10 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
     <div class="intro">
       <p class="kicker">In the clinic</p>
       <h2>What does treatment actually involve?</h2>
-      <p>
-        Hands-on assessment and treatment, then something specific to do between visits. Thirty
-        minutes is what makes that possible rather than a ten-minute adjust-and-go.
-      </p>
+      {/* ST-62 H10 — shared with the treatment page's T3. Edit the words in
+          WhatsInvolved.astro, never here: two copies is the drift Keegan's own
+          review caught. */}
+      <WhatsInvolved />
     </div>
     <Carousel label="Photographs of treatment in the clinic" slides={CLINIC} />
     <div class="intro">
@@ -359,6 +373,36 @@ const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
     {business.address.addressLocality}, on Sydney’s Northern Beaches. Full opening hours, the address
     and my phone number are at the bottom of every page on this site.
   </p>
+
+  {/* ST-62 H11. Keegan: turn the questions at the bottom of home into the
+      treatment page's FAQ, "or a reduced version in the same format".
+
+      REDUCED MEANS FEWER QUESTIONS, NOT SHORTENED ANSWERS — the FAQ is ported
+      verbatim from his old site and is under a standing rule: anyone may ADD a
+      question, nobody may REWORD one. So these four are PULLED FROM THE SAME
+      ARRAY the treatment page renders, not copied. byQuestion() throws if a
+      question is reworded, which turns that rule into a build failure instead
+      of a silent divergence.
+
+      These four are the ones a stranger asks BEFORE booking, which is the home
+      page's job. The fifth candidate, "Can I claim my health fund?", is already
+      answered in "What does it cost?" directly above, so including it would
+      repeat the page to itself.
+
+      ⚠️ schema={false} IS LOAD-BEARING — see the prop's note in Faq.astro. The
+      canonical markup for these questions stays on the treatment page; this
+      instance renders the visible list only. */}
+  <Faq
+    entries={byQuestion(
+      'Does the adjustment hurt?',
+      'Do you just crack backs?',
+      'Is Chiropractic safe?',
+      'How are Chiropractors, Physiotherapists and Osteopaths different?',
+    )}
+    heading="Common questions"
+    schema={false}
+  />
+  <p><a href="/services/chiropractic-treatment/#faq">More questions about treatment</a></p>
 
   <h2>Where to next?</h2>
   <ul class="next-links">
