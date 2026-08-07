@@ -56,7 +56,10 @@ const { address } = business;
 
 // <Image> cannot art-direct between two DIFFERENT source images, so the two
 // crops are processed here and handed to a plain <picture>.
-const mapWide = await getImage({ src: clinicMap, widths: [704, 1200], format: 'webp' });
+// Rendered at close to 1:1 on a wide screen on purpose: OSM label glyphs are a
+// fixed pixel size in the tile, so downscaling this image is what makes suburb
+// names unreadable. Width, not zoom, is what buys the regional view.
+const mapWide = await getImage({ src: clinicMap, widths: [900, 1280], format: 'webp' });
 const mapNarrow = await getImage({ src: clinicMapNarrow, widths: [420, 620], format: 'webp' });
 const MAP_ALT =
   'Map of the Northern Beaches showing the clinic at Wheeler Heights, between Collaroy and Cromer, with North Narrabeen to the north and Freshwater to the south';
@@ -152,15 +155,31 @@ const MAP_ALT =
     {address.addressLocality} {address.addressRegion} {address.postalCode}. Group classes are held
     separately at Just Train Gym in Cromer.
   </p>
-  {/* ⚠️ THE ZOOM IS THE ACCEPTANCE TEST, NOT A PREFERENCE. Keegan, 2026-08-07:
-      "make sure the image chosen is zoomed out enough that it gives context.
-      the dafualt zoom on my current site is far enoughout that you can see
-      north narrabean and fresh water." So this is built at OSM zoom 13 over
-      1200x900, which spans 14.3km north to south — North Narrabeen (~3km N)
-      and Freshwater (~6km S) are both inside the frame AND their labels are
-      still legible. Zooming in loses them; zooming out to 12 keeps them but
-      shrinks every label. Verified by reading the rendered image.
-      Re-cropping or re-centring this asset means re-checking those two names.
+  {/* ⚠️ THE EXTENT IS THE ACCEPTANCE TEST, AND IT IS SET BY A SCREENSHOT.
+      Keegan first described it — "zoomed out enough that it gives context...
+      you can see north narrabean and fresh water" — and I built to that. He
+      said it "looked off" and sent a Google Maps screenshot: "this is what it
+      is meant to look like."
+
+      THE DIAGNOSIS WAS SHAPE, NOT ZOOM. Reconstructed from two labelled
+      suburbs and their pixel positions, his screenshot is 40.9km wide by
+      14.4km tall — a 2.9:1 panorama. My first build was 19.1 x 14.3km, the
+      SAME north-south span at less than half the width, so it read as a chunk
+      of coast rather than the region. This is now 40.7 x 14.3km, which is his
+      screenshot's footprint to within a few hundred metres.
+
+      ⚠️ AND THE TRADE THAT CAME WITH IT, so nobody "fixes" it back: OSM's
+      standard style labels FEWER suburbs at this extent than Google does, so
+      North Narrabeen and Freshwater — the two names from his first
+      description — are no longer printed here. They are still legible on the
+      phone crop below, which stayed at the tighter zoom. Google shows both at
+      this width because its cartography is denser, not because the zoom
+      differs. Flagged to him rather than silently dropped.
+
+      NOT A CROP OF HIS SCREENSHOT, deliberately. Google Maps imagery carries
+      its own terms on a commercial site, which is the entire reason the live
+      embed was scrapped (D6). Same view, rebuilt from OpenStreetMap.
+      Re-cropping or re-centring either asset means re-checking the extent.
 
       The pin is a CSS overlay at dead centre rather than burnt into the raster,
       because the image is composited centred on the coordinates — so the marker
@@ -178,9 +197,9 @@ const MAP_ALT =
         <img
           src={mapWide.src}
           srcset={mapWide.srcSet.attribute}
-          sizes="(max-width: 44rem) 100vw, 44rem"
-          width={1200}
-          height={900}
+          sizes="(max-width: 76rem) 100vw, 76rem"
+          width={1280}
+          height={450}
           alt={MAP_ALT}
           loading="lazy"
           decoding="async"
@@ -224,8 +243,19 @@ const MAP_ALT =
   .lead {
     font-size: 1.125rem;
   }
+  /* The map earns more width than the reading column gives it: at 44rem a
+     40km panorama downscales to ~0.55x and every suburb name goes soft. This
+     breaks it out to the wide measure, which is where it renders near 1:1. */
   .map {
     margin: 1.5rem 0 0;
+    max-width: 76rem;
+    width: 100%;
+  }
+  @media (min-width: 48rem) {
+    .map {
+      margin-inline: calc((100% - min(76rem, 92vw)) / 2);
+      width: min(76rem, 92vw);
+    }
   }
   /* The frame is what the pin is positioned against, so it has to wrap the
      image tightly — `display: block` on the img kills the inline-descender gap

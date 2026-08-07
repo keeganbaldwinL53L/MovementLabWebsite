@@ -323,10 +323,25 @@ const SERVICE_NODES = ['new-patient', 'existing-patient', 'movement-plan-analysi
 </BaseLayout>
 
 <style>
-  .lead {
-    font-size: 1.125rem;
-    color: var(--ml-ink);
-  }
+  /* 🔴 THE `.lead` RULE THAT USED TO LIVE HERE IS DELETED, NOT MOVED.
+     Keegan, 2026-08-07: "the secondary text on the hero image on the
+     chiropractic treatment info page is the wrong colour can't read it."
+
+     It set `color: var(--ml-ink)` and `font-size: 1.125rem`. The ONLY `.lead`
+     on this page is the hero lead, which sits on a dark photograph — so this
+     painted dark green on dark and shrank it from 22px to 18px. Audited across
+     all eight pages: this was the ONLY one wrong on either axis, because it is
+     the only page whose own stylesheet set a colour for `.lead`.
+
+     ⚠️ WHY IT WON, and the trap for anyone re-adding it: a page's scoped
+     `.lead[data-astro-cid-…]` and the layout's global `.hero .lead` are BOTH
+     specificity (0,2,0), so the winner is decided by source order alone, and
+     the page's styles come last. Equal specificity means a page-level `.lead`
+     rule silently overrides the hero styling with nothing to warn you.
+
+     The layout already styles the hero lead correctly on the other seven
+     pages. If this page ever needs a body-copy lead that is NOT the hero one,
+     give it its own class rather than reaching for `.lead`. */
   h3 {
     margin-top: 2rem;
   }
