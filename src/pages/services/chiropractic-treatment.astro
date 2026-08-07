@@ -44,6 +44,10 @@ const SERVICE_NODES = ['new-patient', 'existing-patient', 'movement-plan-analysi
 
 ---
 
+{/* ⚠️ AG-14 F1 site 5 — THE SUBURB IN THE TITLE IS A DELIBERATE LITERAL, same
+    ruling as index.astro. It is a LOCAL-SEO KEYWORD, not an address statement,
+    so it is NOT coupled to business.address.addressLocality. See the longer
+    note on index.astro's BaseLayout for why the two are separable. */}
 <BaseLayout
   title={`Chiropractic & Mobility Treatment, Wheeler Heights | ${business.name}`}
   description="Hands-on chiropractic care for pain, stiffness and dysfunction, plus personalised mobility coaching. 30-minute appointments, joint adjustments, muscle release and a rehab plan built from your assessment."

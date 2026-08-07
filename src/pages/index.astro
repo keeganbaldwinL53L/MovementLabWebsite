@@ -109,6 +109,18 @@ import splitAdjust from '../assets/site/Rib-adjust.jpg';
 const LAST_CHANGED = new Date('2026-08-02T00:00:00+10:00');
 ---
 
+{/* ⚠️ AG-14 F1 site 4 — THE SUBURB BELOW IS A DELIBERATE LITERAL. DO NOT
+    "FINISH THE JOB" BY INTERPOLATING IT.
+    SM-32 converted the three ADDRESS STATEMENTS on /contact/ to
+    business.address.addressLocality, and deliberately left this one and the
+    treatment-page title alone. This is a LOCAL-SEO KEYWORD placement, not a
+    statement of where the clinic is: coupling it to the address field would
+    silently turn a marketing decision into a side effect of editing NAP data.
+    The same address already targets a different keyword for Restore Health
+    ("Chiropractor Collaroy"), which is the proof the two are separable.
+    If the suburb ever changes, changing this is a judgement call someone makes
+    ON PURPOSE — check-data.mjs pins addressLocality precisely so that edit
+    cannot happen quietly. */}
 <BaseLayout
   title={`Movement-Focused Chiropractor, Northern Beaches | ${business.name}`}
   description="Movement-focused chiropractic in Wheeler Heights on Sydney's Northern Beaches. Get out of pain, find out why it happened, and build a body that keeps up. 30-minute appointments with Keegan Baldwin."

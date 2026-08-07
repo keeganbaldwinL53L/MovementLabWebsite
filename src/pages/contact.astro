@@ -61,13 +61,38 @@ const { address } = business;
 // names unreadable. Width, not zoom, is what buys the regional view.
 const mapWide = await getImage({ src: clinicMap, widths: [900, 1280], format: 'webp' });
 const mapNarrow = await getImage({ src: clinicMapNarrow, widths: [420, 620], format: 'webp' });
-const MAP_ALT =
-  'Map of the Northern Beaches showing the clinic at Wheeler Heights, between Collaroy and Cromer, with North Narrabeen to the north and Freshwater to the south';
+// AG-14 F1 site 1. Two defects, and only one of them was the suburb.
+//
+// (1) SINGLE-SOURCE. business.json:3-4 states that NAP is single-source and
+//     nothing may inline it. This read `Wheeler Heights` as a literal, so a
+//     one-line edit to business.json would have left the map alt describing the
+//     old suburb while the visible address below it described the new one.
+//
+// (2) IT DESCRIBED A MAP THAT NO LONGER EXISTS, which a token swap would have
+//     preserved. The alt claimed the map showed Cromer, North Narrabeen and
+//     Freshwater. It labels NONE of them: the CARTO Voyager rebuild (LN-20
+//     round 3, "i am used to seeing the google visual style of maps") labels
+//     far fewer suburbs than the basemap the sentence was written against, and
+//     Lens flagged that cost at the time. Opened BOTH png crops and read the
+//     labels rather than trusting either the old sentence or her note. Wide
+//     crop labels Collaroy, Belrose, Mona Vale, Elanora Heights and others;
+//     narrow crop labels Collaroy. Neither labels Wheeler Heights, Cromer,
+//     North Narrabeen or Freshwater.
+//
+// The alt is now true of BOTH crops, since one string serves both, and it is
+// the only thing carrying the pin's meaning — `.map-pin` is aria-hidden, so a
+// screen-reader user learns the clinic's position from this sentence alone.
+//
+// ⚠️ SEPARATE AND STILL OPEN, not fixed here: Keegan's stated acceptance test
+// for this image was that North Narrabeen and Freshwater both be legible. They
+// are not. That is Lens's open item with him, not an alt-text problem, and
+// writing the suburbs back into the alt would paper over it.
+const MAP_ALT = `Map of Sydney's Northern Beaches with a pin marking the clinic at ${address.addressLocality}, inland from Collaroy`;
 ---
 
 <BaseLayout
   title={`Book an Appointment | ${business.name}`}
-  description="Book a chiropractic, movement or group class session with Keegan Baldwin at Restore Health Clinic, Wheeler Heights. Questions before booking? Call or email first."
+  description={`Book a chiropractic, movement or group class session with Keegan Baldwin at ${address.venue}, ${address.addressLocality}. Questions before booking? Call or email first.`}
   updated={LAST_CHANGED}
 >
   {/* Story 1-16. The inner-page hero. The photograph is blurred and dimmed
@@ -104,7 +129,11 @@ const MAP_ALT =
       that could constrain it again. */}
   <section class="section section--sage">
     <div class="intro">
-      <p class="kicker">Wheeler Heights, Northern Beaches</p>
+      {/* AG-14 F1 site 3. The most visible of the five: a reader sees this
+          kicker and the full address further down the same page, so an
+          inlined suburb here is the one that would have produced a page
+          contradicting itself in two places a thumb-scroll apart. */}
+      <p class="kicker">{address.addressLocality}, Northern Beaches</p>
       <h2>Booking takes about a minute</h2>
       <p>
         Pick a type and a time below. If you have not seen me before, the one-hour new patient

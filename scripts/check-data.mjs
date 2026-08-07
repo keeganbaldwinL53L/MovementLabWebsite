@@ -158,6 +158,19 @@ if (!existsSync(join(DATA, 'business.json'))) {
   check('business: phone has an E.164 form for schema', biz.phoneE164 === '+61403887360');
   check('business: full street address present', biz.address?.streetAddress?.includes('Lantana'));
   check('business: postcode 2097', biz.address?.postalCode === '2097');
+  // AG-14 F1. The suburb was the ONE NAP field with no pin, and it is the one
+  // that had inlined copies. Pinning it does not stop the suburb changing — it
+  // stops it changing QUIETLY. Whoever edits business.json must come here too,
+  // and this message is what they read when they do.
+  check(
+    'business: suburb is Wheeler Heights',
+    biz.address?.addressLocality === 'Wheeler Heights',
+    `got ${biz.address?.addressLocality}. If this change is intended, TWO deliberate literals do ` +
+      `NOT follow it and must be decided separately, because they are local-SEO keywords rather ` +
+      `than address statements: src/pages/index.astro (meta description) and ` +
+      `src/pages/services/chiropractic-treatment.astro (title). Every ADDRESS STATEMENT already ` +
+      `interpolates and needs no edit. Then update this assertion.`,
+  );
   check('business: ABN present', biz.abn === '58 560 412 976');
   check('business: AHPRA registration present', biz.ahpra === 'CHI0002779763');
   // The invariant is "no such FIELD exists", so walk the keys rather than

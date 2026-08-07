@@ -365,6 +365,18 @@ for (const file of pages) {
     }
     if (!biz.telephone) fail(at('MedicalBusiness has no telephone'));
     if (!biz.address?.streetAddress) fail(at('MedicalBusiness has no street address'));
+    // AG-14 F1. The schema half of the NAP-consistency gap. `addressLocality`
+    // was the one NAP field nothing compared against business.json, on either
+    // side, which is how five inlined copies of the suburb accumulated without
+    // a single check noticing.
+    if (biz.address?.addressLocality !== business.address.addressLocality) {
+      fail(
+        at(
+          `schema addressLocality is "${biz.address?.addressLocality}", expected ` +
+            `"${business.address.addressLocality}" from business.json`,
+        ),
+      );
+    }
   }
 
   // -- the visible half. Schema is not what a human reads, and Google asked for
@@ -374,6 +386,29 @@ for (const file of pages) {
   }
   if (!body.includes(business.phone)) {
     fail(at(`the phone number (${business.phone}) is not visible on the page`));
+  }
+  // AG-14 F1, the visible half. Street address and phone were both asserted
+  // visible; the SUBURB was not, and it is the field Google uses hardest for
+  // corroboration. Footer.astro:46 renders it from business.json on every page,
+  // so this holds site-wide today and will keep holding whatever the suburb
+  // becomes — the assertion is derived from the data, never a literal.
+  //
+  // WHAT THIS DOES AND DOES NOT CATCH, stated because a gate people trust for
+  // the wrong reason is worse than none. It catches the suburb DISAPPEARING or
+  // the footer drifting off the single source. It does NOT catch a stale second
+  // suburb sitting elsewhere on the page: both would be present, and this is a
+  // presence check. The two deliberate local-SEO literals (index.astro,
+  // chiropractic-treatment.astro) are exactly that shape, which is why
+  // check-data.mjs PINS addressLocality — that pin, not this line, is what
+  // makes a suburb change impossible to do quietly.
+  if (!body.includes(business.address.addressLocality)) {
+    fail(
+      at(
+        `the suburb (${business.address.addressLocality}) is not visible on the page. ` +
+          `Footer.astro renders it from business.json on every page, so this means either the ` +
+          `footer was dropped or something stopped reading the single source.`,
+      ),
+    );
   }
 
   // -- AG-3 F10. The standing directive says the name is spelled identically
