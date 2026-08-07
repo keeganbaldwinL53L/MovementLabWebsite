@@ -155,35 +155,51 @@ const MAP_ALT =
     {address.addressLocality} {address.addressRegion} {address.postalCode}. Group classes are held
     separately at Just Train Gym in Cromer.
   </p>
-  {/* ⚠️ THE EXTENT IS THE ACCEPTANCE TEST, AND IT IS SET BY A SCREENSHOT.
-      Keegan first described it — "zoomed out enough that it gives context...
-      you can see north narrabean and fresh water" — and I built to that. He
-      said it "looked off" and sent a Google Maps screenshot: "this is what it
-      is meant to look like."
+  {/* ⚠️ TWO THINGS ARE PINNED HERE AND BOTH CAME FROM KEEGAN REJECTING A BUILD.
+      Read this before re-cropping, re-styling or re-centring either asset.
 
-      THE DIAGNOSIS WAS SHAPE, NOT ZOOM. Reconstructed from two labelled
-      suburbs and their pixel positions, his screenshot is 40.9km wide by
-      14.4km tall — a 2.9:1 panorama. My first build was 19.1 x 14.3km, the
-      SAME north-south span at less than half the width, so it read as a chunk
-      of coast rather than the region. This is now 40.7 x 14.3km, which is his
-      screenshot's footprint to within a few hundred metres.
+      (1) THE EXTENT, set by a screenshot. He said the first map "looked off"
+      and sent a Google Maps view: "this is what it is meant to look like."
+      Reconstructed from two labelled suburbs and their pixel positions, that
+      view is 40.9km wide by 14.4km tall — a 2.9:1 panorama. The build it
+      replaced was 19.1 x 14.3km: the SAME north-south span at less than half
+      the width, so it read as a chunk of coast rather than the region. THE
+      DIAGNOSIS WAS SHAPE, NOT ZOOM. This is 40.7 x 14.3km.
 
-      ⚠️ AND THE TRADE THAT CAME WITH IT, so nobody "fixes" it back: OSM's
-      standard style labels FEWER suburbs at this extent than Google does, so
-      North Narrabeen and Freshwater — the two names from his first
-      description — are no longer printed here. They are still legible on the
-      phone crop below, which stayed at the tighter zoom. Google shows both at
-      this width because its cartography is denser, not because the zoom
-      differs. Flagged to him rather than silently dropped.
+      (2) THE STYLE, and this is the third rejection. "there is something about
+      that map that just looks off. i think i am used to seeing the google
+      visual style of maps." OSM's standard style — bright red arterials, hard
+      green parkland — is what read as wrong. These tiles are CARTO Voyager:
+      the same OpenStreetMap data in a soft, muted palette with blue water,
+      which is the modern web-map look he is used to. Positron was built and
+      rejected as a candidate: elegant, but greyscale with no water colour, so
+      it reads as a data background rather than a map.
 
-      NOT A CROP OF HIS SCREENSHOT, deliberately. Google Maps imagery carries
-      its own terms on a commercial site, which is the entire reason the live
-      embed was scrapped (D6). Same view, rebuilt from OpenStreetMap.
-      Re-cropping or re-centring either asset means re-checking the extent.
+      🔴 GOOGLE'S OWN TILES ARE NOT AN OPTION AND THIS IS NOT A PREFERENCE.
+      They need an API key and their terms forbid caching or self-hosting the
+      imagery. He asked "can we do that" and offered "just crop this
+      screenshot" — a screenshot carries the same terms on a commercial site,
+      which is the entire reason the live embed was scrapped (D6). Voyager is
+      the closest legitimate match: no key, no cookies, no request at page
+      load, attribution only.
+
+      ⚠️ THE COST OF THE STYLE CHANGE, so nobody rediscovers it as a bug:
+      Voyager prints FAR fewer suburb labels than OSM's standard style at the
+      same zoom. North Narrabeen and Freshwater — the two names from his
+      original description — are on neither crop now. Flagged to him rather
+      than swallowed. If suburb names ever matter more than the look, OSM
+      standard at z12/z13 is the trade to reverse.
+
+      THE PHONE CROP IS A DIFFERENT MAP ON PURPOSE. The wide view squeezed into
+      a 327px column is unreadable at any style, so the narrow asset is z14 over
+      6.2 x 4.9km — close enough to print Pittwater Road, Wakehurst Parkway,
+      Narrabeen Lagoon and Collaroy, which is what actually helps someone find
+      the place on a phone. He is on a Samsung; the phone case is the one he
+      checks.
 
       The pin is a CSS overlay at dead centre rather than burnt into the raster,
-      because the image is composited centred on the coordinates — so the marker
-      cannot drift out of agreement with the map the way a drawn-on pin could. */}
+      because both images are composited centred on his coordinates — so the
+      marker cannot drift out of agreement with the map. */}
   <figure class="map">
     <div class="map-frame">
       <picture>
@@ -192,7 +208,7 @@ const MAP_ALT =
           srcset={mapNarrow.srcSet.attribute}
           sizes="100vw"
           width={620}
-          height={900}
+          height={780}
         />
         <img
           src={mapWide.src}
@@ -208,8 +224,14 @@ const MAP_ALT =
       <span class="map-pin" aria-hidden="true"></span>
     </div>
     <figcaption>
+      {/* ⚠️ BOTH CREDITS ARE REQUIRED, NOT DECORATIVE. The DATA is
+          OpenStreetMap (ODbL); the TILE STYLE is CARTO Voyager, whose free
+          basemap terms require the CARTO credit. Removing either is a licence
+          breach on a commercial site, which is exactly the exposure the whole
+          still-image route exists to avoid. */}
       {address.venue}, {address.streetAddress}. Map data &copy;{' '}
-      <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap contributors</a>.
+      <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap contributors</a>,
+      tiles &copy; <a href="https://carto.com/attributions" rel="noopener">CARTO</a>.
     </figcaption>
   </figure>
   {/* SM-9. The URL was the blank I refused to guess, because a fabricated

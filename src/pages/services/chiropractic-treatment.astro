@@ -25,7 +25,8 @@ import business from '../../data/business.json' with { type: 'json' };
 // four of these questions verbatim without a second hand-copied array.
 import { TREATMENT_FAQ } from '../../data/faq.mjs';
 import assessing from '../../assets/site/Keegan-Photos-31.jpg';
-import adjusting from '../../assets/site/Rib-adjust.jpg';
+// T4 — see the note beside the "What is chiropractic?" split.
+import cervicalTx from '../../assets/site/C-spine-tx.jpg';
 import fold from '../../assets/site/IMG_1604-scaled.jpg';
 // Story 1-16 hero ground. Hands-on soft-tissue work, distinct from the three
 // pictures already used as real content further down this page.
@@ -121,15 +122,33 @@ const SERVICE_NODES = ['new-patient', 'existing-patient', 'movement-plan-analysi
       alternates against the split higher up this page, and so the heading
       still leads when it stacks on a phone.
 
-      🔴 THE IMAGE ITSELF IS STILL HIS CALL AND HAS NOT BEEN CHANGED. His
-      instinct about variety has a concrete cause: Rib-adjust.jpg is on the
-      home page too, in the "Who is this for?" split, so a reader arriving here
-      from home meets the same photograph twice. Unused clinical alternatives
-      already in the library: C-spine-tx, cranial-palpation-2, wrist-tx,
-      seated-C-spine-test-2, Psoas-test-2, Supine-lat-rom-scaled — all 0.67
-      portrait, so any of them drops in without touching this layout. There is
-      no unused LANDSCAPE clinical shot, which is why his first preference
-      needs a photograph he has not supplied. */}
+      ✅ THE IMAGE IS NOW SWAPPED, AND THE PICK IS PROVISIONAL BY HIS OWN
+      TERMS. He reversed the hold the same day once he understood this did not
+      need his photo dump: "oh if you have the photos change them now but i may
+      veto them later when i pass over the site again and we have more photos."
+      So expect a veto pass; do not treat this as settled.
+
+      WHAT WAS WRONG: Rib-adjust.jpg is ALSO on the home page, in the "Who is
+      this for?" split, so a reader arriving here from home met the same
+      photograph twice. That is the concrete cause behind his "change it for
+      variety" — not a vague preference.
+
+      WHY C-spine-tx: verified unused site-wide before placing (that
+      duplication is the entire reason T4 exists), 0.67 portrait so it drops
+      into the alongside layout untouched, and I OPENED IT rather than trusting
+      the filename — it is a genuine hands-on cervical treatment, which answers
+      "What is chiropractic?" directly and stays clearly distinct from the
+      prone thoracic adjustment further down this page.
+
+      THE RUNNER-UP, recorded for his veto pass: wrist-tx, the only LIMB
+      treatment in the library. It backs the "spinal and limb joint
+      adjustments" line the copy pass just added, and its anatomy charts read
+      well — but its focal point sits above a large expanse of bare torso,
+      which is weaker at the ~320px this column renders. Also unused:
+      cranial-palpation-2, seated-C-spine-test-2, Psoas-test-2,
+      Supine-lat-rom-scaled. There is still no unused LANDSCAPE clinical shot,
+      which is why his first preference needs a photograph he has not
+      supplied. */}
   <div class="split">
     <div>
       <h2>What is chiropractic?</h2>
@@ -155,8 +174,8 @@ const SERVICE_NODES = ['new-patient', 'existing-patient', 'movement-plan-analysi
     </div>
 
     <Image
-      src={adjusting}
-      alt="Keegan performing a hands-on thoracic adjustment on a patient lying face down"
+      src={cervicalTx}
+      alt="Keegan supporting a patient's head and neck with both hands during a gentle cervical treatment, the patient lying face up on the table"
       widths={[480, 800]}
       sizes="(max-width: 44rem) 100vw, 24rem"
     />
