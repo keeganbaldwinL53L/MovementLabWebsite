@@ -40,8 +40,12 @@
     "venue": "Restore Health Clinic"
   },
 
-  "geo": null,
-  "geoNote": "DELIBERATELY NULL, not forgotten. Spec G-8 wants a geo node on the MedicalBusiness schema, but inventing coordinates for a real clinic address would be fabricating a fact that sends people to a physical location. Needs a real lookup (Google Maps 'copy coordinates' on the pin, or a geocoder) before 1-5 emits it. 1-5 must OMIT the geo node while this is null rather than guess.",
+  "geo": {
+    "@type": "GeoCoordinates",
+    "latitude": -33.7249985,
+    "longitude": 151.2850029
+  },
+  "geoNote": "✅ POPULATED 2026-08-07 (LN-19) FROM KEEGAN'S OWN GOOGLE MAPS PIN, which is exactly the lookup this note demanded — he supplied -33.724998523863526, 151.28500291187592 and it is trimmed to 7 decimal places (~1cm) here. It was DELIBERATELY NULL until then, not forgotten: inventing coordinates for a real clinic address would fabricate a fact that sends people to a physical location, and an OpenStreetMap geocode was tried first and REFUSED as insufficient — OSM has no record of the venue or of house number 29, and returns the road centroid for two different Lantana Avenues in postcode 2097. schema.mjs already reads this field and compact() was dropping it while null, so the MedicalBusiness node now emits geo with no code change. Same coordinates centre the static location map on /contact/.",
 
   "sameAs": [],
   "sameAsNote": "Spec G-8 wants the Google Business Profile URL and Instagram here — sameAs is a strong entity signal and the profile link is what ties the two together. Neither URL is recorded in any project artifact. Needs Keegan before 1-5.",

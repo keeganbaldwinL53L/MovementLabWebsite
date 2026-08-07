@@ -33,10 +33,33 @@ import business from '../data/business.json' with { type: 'json' };
 // Story 1-16 hero ground. A treatment photograph rather than a room shot:
 // the page is the booking page, so the ground should be the thing being booked.
 import heroTreatment from '../assets/site/prone-tx.jpg';
+// B3 — a STILL map, not a live embed. Keegan scrapped the Google Maps widget
+// once it was priced: an iframe would have added an overseas data recipient to
+// the privacy policy, set cookies against the deliberately cookieless analytics
+// choice (D6), and reintroduced the consent-banner question the site does not
+// need. This is a self-hosted PNG composited once from OpenStreetMap tiles —
+// no API key, no cookies, and no third-party request when the page loads.
+import clinicMap from '../assets/site/clinic-location-map.png';
+// ART DIRECTION, and it is not decoration — see the zoom note beside the figure.
+// The wide crop's labels are unreadable squeezed into a 327px phone column, and
+// "you can see North Narrabeen and Freshwater" is Keegan's acceptance test, not
+// a preference. Both crops are the SAME zoom and the same 14.3km north-to-south
+// span; the narrow one just spends its pixels on height instead of width, which
+// roughly doubles the rendered label size on a phone. He uses a Samsung, so the
+// phone case is the one he will actually check.
+import clinicMapNarrow from '../assets/site/clinic-location-map-narrow.png';
+import { getImage } from 'astro:assets';
 import { Image } from 'astro:assets';
 
 const LAST_CHANGED = new Date('2026-07-31T00:00:00+10:00');
 const { address } = business;
+
+// <Image> cannot art-direct between two DIFFERENT source images, so the two
+// crops are processed here and handed to a plain <picture>.
+const mapWide = await getImage({ src: clinicMap, widths: [704, 1200], format: 'webp' });
+const mapNarrow = await getImage({ src: clinicMapNarrow, widths: [420, 620], format: 'webp' });
+const MAP_ALT =
+  'Map of the Northern Beaches showing the clinic at Wheeler Heights, between Collaroy and Cromer, with North Narrabeen to the north and Freshwater to the south';
 ---
 
 <BaseLayout
@@ -129,6 +152,47 @@ const { address } = business;
     {address.addressLocality} {address.addressRegion} {address.postalCode}. Group classes are held
     separately at Just Train Gym in Cromer.
   </p>
+  {/* ⚠️ THE ZOOM IS THE ACCEPTANCE TEST, NOT A PREFERENCE. Keegan, 2026-08-07:
+      "make sure the image chosen is zoomed out enough that it gives context.
+      the dafualt zoom on my current site is far enoughout that you can see
+      north narrabean and fresh water." So this is built at OSM zoom 13 over
+      1200x900, which spans 14.3km north to south — North Narrabeen (~3km N)
+      and Freshwater (~6km S) are both inside the frame AND their labels are
+      still legible. Zooming in loses them; zooming out to 12 keeps them but
+      shrinks every label. Verified by reading the rendered image.
+      Re-cropping or re-centring this asset means re-checking those two names.
+
+      The pin is a CSS overlay at dead centre rather than burnt into the raster,
+      because the image is composited centred on the coordinates — so the marker
+      cannot drift out of agreement with the map the way a drawn-on pin could. */}
+  <figure class="map">
+    <div class="map-frame">
+      <picture>
+        <source
+          media="(max-width: 40rem)"
+          srcset={mapNarrow.srcSet.attribute}
+          sizes="100vw"
+          width={620}
+          height={900}
+        />
+        <img
+          src={mapWide.src}
+          srcset={mapWide.srcSet.attribute}
+          sizes="(max-width: 44rem) 100vw, 44rem"
+          width={1200}
+          height={900}
+          alt={MAP_ALT}
+          loading="lazy"
+          decoding="async"
+        />
+      </picture>
+      <span class="map-pin" aria-hidden="true"></span>
+    </div>
+    <figcaption>
+      {address.venue}, {address.streetAddress}. Map data &copy;{' '}
+      <a href="https://www.openstreetmap.org/copyright" rel="noopener">OpenStreetMap contributors</a>.
+    </figcaption>
+  </figure>
   {/* SM-9. The URL was the blank I refused to guess, because a fabricated
       domain sends real patients somewhere nobody checked. Keegan supplied it
       2026-07-31 and I confirmed it before publishing: 200, and the page is
@@ -159,5 +223,41 @@ const { address } = business;
 <style>
   .lead {
     font-size: 1.125rem;
+  }
+  .map {
+    margin: 1.5rem 0 0;
+  }
+  /* The frame is what the pin is positioned against, so it has to wrap the
+     image tightly — `display: block` on the img kills the inline-descender gap
+     that would otherwise offset the pin by a few pixels. */
+  .map-frame {
+    position: relative;
+    border-radius: 14px;
+    overflow: hidden;
+  }
+  .map-frame :global(img) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+  /* Dead centre = the clinic, because the raster was composited around those
+     coordinates. Orange is the accent's proper job here: a marker is a graphic,
+     never text. The paper ring keeps it visible over both the green parkland
+     and the grey street fill underneath. */
+  .map-pin {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 18px;
+    height: 18px;
+    margin: -9px 0 0 -9px;
+    border-radius: 50%;
+    background: var(--ml-accent);
+    box-shadow: 0 0 0 3px var(--ml-paper), 0 1px 4px rgba(0, 0, 0, 0.4);
+  }
+  figcaption {
+    margin-top: 0.5rem;
+    font-size: 0.9375rem;
+    color: var(--ml-muted);
   }
 </style>
