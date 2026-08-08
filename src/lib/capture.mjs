@@ -72,13 +72,37 @@ export const KIT_EMBED_SRC = `https://${KIT_ACCOUNT}.kit.com/${KIT_FORM_ID}/inde
 export const DELIVERABLE_ROUTE = '/screen/';
 
 /**
- * The publish switch. Flipping this alone is not enough and cannot be — the
- * gate cross-checks it against KIT_FORM_ID and against DELIVERABLE_ROUTE really
- * being in the build.
+ * The publish switch, expressed as a DATE rather than a boolean. AG-15 F2.
  *
- * STAYS FALSE UNTIL 1-21 SHIPS. Foundry's hard constraint, SM-26.
+ * `null` = not published. An ISO date = published, and that date is the day the
+ * policy's wording changed because of it.
+ *
+ * WHY A DATE AND NOT A BOOLEAN, which is the whole point of the change: the
+ * privacy policy tells the reader "the date at the top will tell you when it
+ * last changed", and its collection rows are DERIVED from this flag. With a
+ * boolean, flipping it rewrote the policy and left the date untouched — both
+ * steady states honest, the transition a lie, and nothing could catch it because
+ * nothing knew the flag had moved.
+ *
+ * Making the switch itself carry the date means you CANNOT publish without
+ * supplying one. Not a rule to remember and not a gate to satisfy — there is no
+ * expressible state where capture is live and the policy date does not know
+ * when that started. (base-rules § SAFETY BY CONSTRUCTION: remove the bad state
+ * rather than checking for it.)
+ *
+ * Flipping this alone is still not enough and cannot be — the gate cross-checks
+ * it against KIT_FORM_ID and against DELIVERABLE_ROUTE really being in the
+ * build.
+ *
+ * STAYS null UNTIL 1-21 SHIPS. Foundry's hard constraint, SM-26.
  */
-export const CAPTURE_PUBLISHED = false;
+export const CAPTURE_PUBLISHED_SINCE = null;
+
+/**
+ * Kept as a boolean so every existing consumer is untouched — the gate, the
+ * embed component and the policy all still read this exact name.
+ */
+export const CAPTURE_PUBLISHED = CAPTURE_PUBLISHED_SINCE !== null;
 
 /** The only thing a consumer should branch on. */
 export const IS_CAPTURE_LIVE = CAPTURE_PUBLISHED && KIT_FORM_ID !== '';

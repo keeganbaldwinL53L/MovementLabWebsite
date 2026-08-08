@@ -42,9 +42,20 @@ const { promise } = Astro.props;
           reconstructed it from memory once and it 404'd. */}
       <script async data-uid={KIT_FORM_ID} src={KIT_EMBED_SRC} />
 
+      {/* AG-15 F3. Story 1-8 requires the privacy link "site-wide in the footer
+          PLUS beside every collection point". Measured at the time of the
+          finding: exactly one href="/privacy/" per page, the footer, and none
+          in this component. LOW while capture is dark and MEDIUM the day 1-19
+          ships, so it goes in now rather than depending on someone remembering
+          at the moment the form first renders — which is precisely the moment
+          nobody is thinking about the footer.
+          It sits INSIDE the consent context, next to what arrives and how to
+          stop it, because that is where a reader deciding whether to tick is
+          actually looking. */}
       <p class="capture-fineprint">
-        You will get an email asking you to confirm — that is Kit checking the address is
-        really yours. Unsubscribe from any email in one click. We do not share your address.
+        You will get an email asking you to confirm. That is Kit checking the address is really
+        yours. Unsubscribe from any email in one click. We do not share your address, and our{' '}
+        <a href="/privacy/">privacy policy</a> says what we do with it.
       </p>
     </section>
   )

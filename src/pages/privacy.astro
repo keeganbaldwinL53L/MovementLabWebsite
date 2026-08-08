@@ -27,15 +27,36 @@
 // Researched and drafted, NOT legal advice.
 import BaseLayout from '../layouts/BaseLayout.astro';
 import business from '../data/business.json' with { type: 'json' };
-import { IS_ANALYTICS_ENABLED } from '../lib/analytics.mjs';
-import { IS_CAPTURE_LIVE, CAPTURE_PROVIDER } from '../lib/capture.mjs';
+import { IS_ANALYTICS_ENABLED, ANALYTICS_ENABLED_SINCE } from '../lib/analytics.mjs';
+import { IS_CAPTURE_LIVE, CAPTURE_PROVIDER, CAPTURE_PUBLISHED_SINCE } from '../lib/capture.mjs';
 
 // DELIBERATELY NOT the build date. A privacy policy's "last updated" means the
 // date the POLICY changed. Wiring it to the build would bump it on every deploy
 // and tell readers the terms changed when they did not. Edit this by hand, and
 // only when the wording actually changes.
 const POLICY_LAST_UPDATED = new Date('2026-07-31T00:00:00+10:00');
-const policyDate = POLICY_LAST_UPDATED.toLocaleDateString('en-AU', {
+
+// AG-15 F2. The hand-edited date above is necessary but was not sufficient, and
+// the gap was on the TRANSITION rather than in either steady state.
+//
+// Several statements below are DERIVED from feature flags. The day a flag
+// flips, the policy's words change — and the hand-edited date, by definition,
+// does not. So the document promised at :210 that "the date at the top will
+// tell you when it last changed" and then broke that promise on exactly the
+// edits that matter most: the ones that add or remove a category of collection.
+//
+// The date is now the LATEST of the hand-edited date and the start date of
+// every derived claim currently being made. A flag that is off contributes
+// nothing, so the steady state is unchanged; a flag that is on cannot be on
+// without a date, so the transition can no longer be silent.
+const claimDates = [
+  POLICY_LAST_UPDATED,
+  IS_CAPTURE_LIVE && CAPTURE_PUBLISHED_SINCE ? new Date(CAPTURE_PUBLISHED_SINCE) : null,
+  IS_ANALYTICS_ENABLED && ANALYTICS_ENABLED_SINCE ? new Date(ANALYTICS_ENABLED_SINCE) : null,
+].filter((d) => d instanceof Date && !Number.isNaN(d.valueOf()));
+const EFFECTIVE_UPDATED = new Date(Math.max(...claimDates.map((d) => d.valueOf())));
+
+const policyDate = EFFECTIVE_UPDATED.toLocaleDateString('en-AU', {
   timeZone: 'Australia/Sydney',
   day: 'numeric',
   month: 'long',
@@ -99,7 +120,23 @@ const providers = [
     <h2>What we collect</h2>
     <ul>
       <li><strong>When you contact us</strong>: your name, email address, phone number, and whatever you choose to write in your message.</li>
-      <li><strong>When you subscribe</strong>: your name and email address.</li>
+      {
+        /* AG-15 F1. This sat UNCONDITIONAL in the same <ul> as the analytics
+           item below, which is derived for exactly this reason. There is no
+           subscription mechanism on the site: zero <form>, <input>, <textarea>
+           or <select> across all 9 built pages, CAPTURE_PUBLISHED is null and
+           EmailCapture renders nothing. So the policy described a category of
+           collection that cannot happen — and because the Kit processor row is
+           correctly derived and therefore absent, it claimed to collect
+           subscription emails while naming no processor for them.
+           The data attribute is the gate's handle, same contract as
+           data-analytics-claim above: stable under rewording. Do not remove it. */
+        IS_CAPTURE_LIVE ? (
+          <li data-subscription-claim="collecting">
+            <strong>When you subscribe</strong>: your name and email address.
+          </li>
+        ) : null
+      }
       <li>
         <strong>When you book an appointment</strong>: bookings are handled by <strong>Cliniko</strong>,
         our practice management provider. Their booking form is embedded on this site, and the
@@ -122,9 +159,28 @@ const providers = [
             anything on your device, and does not identify or profile you individually.
           </li>
         ) : (
+          /* AG-16 F1. The previous wording was "does not set cookies, and does
+             not store anything on your device", full stop. Narrowly that was
+             about our own origin and defensible; in context it was not, and
+             /contact/ is where it bit. The Cliniko booking widget is embedded
+             there, and Cliniko's own response carries
+             `Set-Cookie: _cliniko_app_session` plus a Google Tag Manager
+             container and its own consent banner. So a reader could take this
+             sentence at face value on /privacy/, click to /contact/, and meet a
+             cookie banner inside the widget.
+             MEASURED, not inferred from markup: the Set-Cookie header is on the
+             live booking response, which is the server instructing the browser
+             to store. Stronger evidence than the GTM script tag AG-16 cited,
+             and the reason this is worded as fact rather than hedged.
+             FD-25 priced this exact cost when rejecting a Google Maps embed
+             ("would reintroduce the consent-banner question") without noticing
+             the booking embed already pays it. */
           <li data-analytics-claim="none">
-            <strong>Automatically, as you browse</strong>: nothing. This website does not currently
-            run analytics, does not set cookies, and does not store anything on your device.
+            <strong>Automatically, as you browse</strong>: nothing. This website does not run
+            analytics and sets no cookies of its own. The one exception is the booking widget on
+            our contact page: it is served by <strong>Cliniko</strong>, and loading it lets Cliniko
+            place its own cookies on your device and ask you separately about them. That happens
+            under Cliniko's arrangements, not ours, and only on that page.
           </li>
         )
       }
@@ -139,16 +195,36 @@ const providers = [
     <h2>Why we collect it</h2>
     <ul>
       <li>To answer your enquiry and arrange your appointment.</li>
-      <li>To send you the material you asked for, if you subscribed.</li>
-      <li>To understand which pages people read, so we can improve the site.</li>
+      {/* AG-15 F1, second of three. */}
+      {IS_CAPTURE_LIVE ? <li>To send you the material you asked for, if you subscribed.</li> : null}
+      {/* Analytics purpose follows the analytics flag for the same reason the
+          "what we collect" row does — stating a purpose we cannot act on is the
+          same defect in a different section. */}
+      {IS_ANALYTICS_ENABLED ? (
+        <li>To understand which pages people read, so we can improve the site.</li>
+      ) : null}
     </ul>
 
-    <h2>Email, and how to stop it</h2>
-    <p>
-      We only email marketing material to people who have asked for it. Every email we send
-      identifies us and carries a working unsubscribe link. Unsubscribing takes one click, and it
-      takes effect for all future marketing email.
-    </p>
+    {
+      /* AG-15 F1, third of three: the WHOLE section, not a sentence inside it.
+         An unsubscribe promise with nothing to unsubscribe from is not merely
+         redundant — "we only email marketing material to people who have asked
+         for it" tells a reader that marketing email exists and that they may be
+         on a list, which is the opposite of true while capture is dark. Kit
+         owns the double opt-in and the one-click unsubscribe the Spam Act 2003
+         requires (capture.mjs), so this section becomes accurate the moment
+         capture goes live and is misleading every moment before. */
+      IS_CAPTURE_LIVE ? (
+        <Fragment>
+          <h2 data-email-section="present">Email, and how to stop it</h2>
+          <p>
+            We only email marketing material to people who have asked for it. Every email we send
+            identifies us and carries a working unsubscribe link. Unsubscribing takes one click, and
+            it takes effect for all future marketing email.
+          </p>
+        </Fragment>
+      ) : null
+    }
 
     <h2>Who else sees your information</h2>
     <p>

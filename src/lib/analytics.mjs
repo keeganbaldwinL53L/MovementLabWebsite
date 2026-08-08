@@ -32,3 +32,20 @@ if (RAW !== '' && !LOOKS_VALID) {
 
 export const ANALYTICS_TOKEN = LOOKS_VALID ? RAW : null;
 export const IS_ANALYTICS_ENABLED = ANALYTICS_TOKEN !== null;
+
+/**
+ * AG-15 F2, the analytics half. The privacy policy's "what we collect" row is
+ * DERIVED from IS_ANALYTICS_ENABLED, so the day a token is set the policy text
+ * changes and its "last updated" date would not have.
+ *
+ * ⚠️ SET THIS IN THE SAME EDIT THAT SUPPLIES THE TOKEN. It is the day the
+ * policy's wording changes, not the day the token was minted.
+ *
+ * Weaker than the capture switch on purpose, and worth knowing why: capture is
+ * safe BY CONSTRUCTION because its switch IS the date (capture.mjs), so an
+ * undated publish cannot be expressed. Analytics cannot copy that — enablement
+ * is derived from an ENV VAR that CI supplies, so the code cannot demand a date
+ * alongside it. check-build.mjs asserts this is set whenever the beacon is
+ * running, which is a gate rather than a guarantee. Named rather than glossed.
+ */
+export const ANALYTICS_ENABLED_SINCE = null;

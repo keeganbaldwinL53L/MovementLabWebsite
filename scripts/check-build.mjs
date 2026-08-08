@@ -42,6 +42,7 @@ import {
   DELIVERABLE_ROUTE,
   CAPTURE_PROVIDER,
 } from '../src/lib/capture.mjs';
+import { IS_ANALYTICS_ENABLED, ANALYTICS_ENABLED_SINCE } from '../src/lib/analytics.mjs';
 
 const ROOT = fileURLToPath(new URL('..', import.meta.url));
 const DIST = process.argv.find((a) => a.startsWith('--dist='))?.slice('--dist='.length) ?? 'dist';
@@ -833,8 +834,45 @@ if (pages.length) console.log(`  ----  ${pages.length} page(s) examined: ${pages
             `the policy would be disclosing a data flow that is not happening.`,
         );
       }
+      // AG-15 F1. The PROCESSOR half above was gated; the COLLECTION half was
+      // not, and that asymmetry is how three unconditional statements survived.
+      // The policy could say "when you subscribe we collect your name and email"
+      // while naming no processor for it and offering no form to submit it —
+      // describing a category of collection that cannot happen, which is the
+      // exact defect the one-flag design exists to make impossible.
+      //
+      // Keyed on data attributes, not prose, for the same reason
+      // data-analytics-claim is: the copy is meant to be edited and a phrase
+      // grep would fail the build on a reflow.
+      for (const [attr, what] of [
+        ['data-subscription-claim="collecting"', 'claims it collects subscription addresses'],
+        ['data-email-section="present"', 'carries the "Email, and how to stop it" section'],
+      ]) {
+        if (html.includes(attr)) {
+          fail(
+            `the privacy policy ${what} but capture is NOT live ` +
+              `(CAPTURE_PUBLISHED_SINCE=null). There is no form on the site and no processor ` +
+              `disclosed, so the policy is describing collection that cannot happen.`,
+          );
+        }
+      }
     }
   }
+}
+
+// AG-15 F2, the analytics half. Capture is safe by construction — its switch IS
+// a date, so an undated publish cannot be expressed. Analytics is enabled by an
+// ENV VAR that CI supplies, so the code cannot demand a date alongside it and
+// this gate is the substitute. Without it, setting the token rewrites the
+// policy's "what we collect" row and leaves the "last updated" date behind,
+// which is the promise at privacy.astro's own closing section.
+if (IS_ANALYTICS_ENABLED && !ANALYTICS_ENABLED_SINCE) {
+  fail(
+    `analytics is enabled but ANALYTICS_ENABLED_SINCE is null in src/lib/analytics.mjs. ` +
+      `The privacy policy derives a collection statement from this flag, so the policy's ` +
+      `"last updated" date must know when that statement started being true. Set it to the ` +
+      `date the policy wording changes.`,
+  );
 }
 
 const distFile = (f) => join(DIST_ABS, f);
